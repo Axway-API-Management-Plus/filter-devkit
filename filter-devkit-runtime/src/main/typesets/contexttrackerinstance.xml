@@ -1,0 +1,5 @@
+<entityStoreData>
+	<entity type="MessageContextModule">
+		<fval name="name"><value>Message Context Provider</value></fval>
+	</entity>
+</entityStoreData>

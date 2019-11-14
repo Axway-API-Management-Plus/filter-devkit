@@ -1,0 +1,25 @@
+<entityStoreData>
+	<entityType extends="InitializerShortcutFilter" name="ScriptContextCallFilter">
+		<constant name="_version" type="integer" value="1" />
+		<constant name="class" type="string" value="com.vordel.circuit.script.bind.ScriptContextCallFilter" />
+
+		<!-- Input parameters mapping -->
+		<componentType cardinality="*" name="InputSelector" />
+
+		<!-- Attribute which contains context (policy will be called if not null) -->
+		<field cardinality="1" default="${script.context}" name="contextSelector" type="string" />
+
+		<!-- push an attribute frame  -->
+		<field cardinality="1" default="true" name="useInputFrame" type="boolean"/>
+		<field cardinality="1" default="false" name="useOutputFrame" type="boolean"/>
+
+		<!-- Name of invocable resource -->
+		<field cardinality="1" default="invocable" name="contextInvocable" type="string" />
+	</entityType>
+	<entityType extends="Entity" name="InputSelector">
+		<constant name="_version" type="integer" value="0" />
+		<field isKey="true" name="attribute" type="string" />
+		<field name="selector" type="string" />
+		<field name="coercion" type="string" default="java.lang.Object" />
+	</entityType>
+</entityStoreData>

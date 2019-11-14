@@ -1,0 +1,26 @@
+<entityStoreData>
+	<entityType extends="Filter" name="ScriptInvocationContextFilter">
+		<constant name="_version" type="integer" value="1" />
+		<constant name="class" type="string" value="com.vordel.circuit.script.context.ScriptInvocationContextFilter" />
+		
+		<!-- Define a set of function resources which will be binded at deploy time -->
+		<componentType cardinality="*" name="ScriptResource" />
+		
+		<!-- attribute name where context is saved -->
+		<field cardinality="1" name="attributeToUse" type="string" default="script.context" />
+	</entityType>
+	<entityType extends="Entity" name="ScriptResource">
+		<constant name="_version" type="integer" value="1" />
+
+		<!-- resource name and type -->		
+		<field isKey="true" name="name" type="string"/>
+		<field name="resourceType" type="string" default="CONFIGURATION_RESOURCE" />
+
+		<!-- configuration resource -->
+		<field cardinality="?" name="configurationReference" type="^Entity"/>
+
+		<!-- selector resource -->
+		<field cardinality="?" name="selectorExpression" type="string"/>
+		<field cardinality="?" name="selectorClazz" type="string" default="java.lang.Object" />
+	</entityType>
+</entityStoreData>

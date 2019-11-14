@@ -1,0 +1,17 @@
+<ui>
+	<panel columns="2">
+		<panel columns="2" fill="false">
+			<!-- filter name attribute -->
+			<NameAttribute />
+		</panel>
+
+		<panel columns="2" span="2" fill="false">
+			<ReferenceSelector
+				field="circuitPK"
+				selectableTypes="FilterCircuit"
+				searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+				label="GROOVYSHORTCUT_LABEL"
+				title="GROOVYSHORTCUT_TITLE" />
+		</panel>
+	</panel>
+</ui>

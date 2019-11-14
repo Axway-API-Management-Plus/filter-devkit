@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.axway.apigw</groupId>
+  <artifactId>filter-devkit</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+
+  	<org.eclipse.jdt.version>3.16.0</org.eclipse.jdt.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.eclipse.jdt</groupId>
+        <artifactId>ecj</artifactId>
+        <version>${org.eclipse.jdt.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <modules>
+  	<module>filter-devkit-runtime</module>
+  	<module>filter-devkit-studio</module>
+  	<module>filter-devkit-advanced-runtime</module>
+  	<module>filter-devkit-advanced-studio</module>
+  	<module>filter-devkit-dynamic</module>
+  	<module>filter-devkit-samples</module>
+  	<module>filter-devkit-export</module>
+  	<module>filter-devkit-delivery</module>
+  	<module>filter-devkit-mavenizer</module>
+  </modules>
+</project>

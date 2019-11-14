@@ -1,0 +1,10 @@
+<typeSet>
+	<!-- Assertion Filter Typedoc -->
+	<typedoc file="assertionfilterdesc.xml" />
+	<!-- Initializer Shortcut Filter Typedoc -->
+	<typedoc file="initializershortcutdesc.xml" />
+	<!-- MessageContextModule Typedoc -->
+	<typedoc file="contexttrackerdesc.xml" />
+	<!-- MessageContextModule Instance -->
+	<typedoc file="contexttrackerinstance.xml" />
+</typeSet>

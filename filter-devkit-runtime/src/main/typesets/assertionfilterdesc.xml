@@ -1,0 +1,24 @@
+<entityStoreData>
+	<entityType extends="Filter" name="AssertionFilterFilter">
+		<constant name="_version" type="integer" value="1" />
+		<constant name="class" type="string" value="com.vordel.circuit.assertion.AssertionFilter" />
+		
+		<!-- Define a set of properties for application -->
+		<componentType cardinality="*" name="Property" />
+		
+		<!-- Assertion condition, report type and message -->
+		<field cardinality="1" default="${1 + 1 == 2}" name="expression" type="string"/>
+		<field cardinality="1" default="REPORTAS_FAULT" name="reportErrorAs" type="string"/>
+		<field cardinality="1" default="Assertion Failure" name="errorMessage" type="string"/>
+
+		<field cardinality="1" default="true" name="useExistingCause" type="boolean"/>
+		<field cardinality="1" default="false" name="setHttpStatus" type="boolean"/>
+		<field cardinality="1" default="false" name="setResponseStatus" type="boolean"/>
+
+		<field cardinality="?" default="500" name="httpStatus" type="string"/>
+		<field cardinality="?" default="3" name="responseStatus" type="integer"/>
+
+		<!-- attribute name (for REPORTAS_FAILURE) -->
+		<field cardinality="?" default="circuit.failure.reason" name="errorAttribute" type="string"/>
+	</entityType>
+</entityStoreData>

@@ -1,0 +1,7 @@
+<entityStoreData>
+	<entityType extends="Filter" name="GroovyShortcut">
+		<constant name="_version" type="integer" value="1" />
+		
+		<field cardinality="?" name="circuitPK" type="^FilterCircuit"/>
+	</entityType>
+</entityStoreData>

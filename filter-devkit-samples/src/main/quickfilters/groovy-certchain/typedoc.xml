@@ -1,0 +1,14 @@
+<entityStoreData>
+	<entityType extends="Filter" name="GroovyCertChainCheck">
+		<constant name="_version" type="integer" value="1" />
+		
+		<field cardinality="1" default="${environment.VINSTDIR}/jks/sample.jks" name="location" type="string"/>
+		
+		<field cardinality="1" default="http.request.clientcert.ca" name="caOutput" type="string"/>
+		<field cardinality="1" default="${http.request.clientcert}" name="certificateSelector" type="string"/>
+		
+		<field cardinality="?" default="0" name="passwordType" type="integer"/>
+		<field cardinality="?" name="password" type="encrypted"/>
+		<field cardinality="?" name="passwordSelector" type="string"/>
+	</entityType>
+</entityStoreData>

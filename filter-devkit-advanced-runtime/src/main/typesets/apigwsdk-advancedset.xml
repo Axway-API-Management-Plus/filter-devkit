@@ -1,0 +1,6 @@
+<typeSet>
+	<!-- ScriptInvocationContext Filter Typedoc -->
+	<typedoc file="scriptinvocationcontextfilterdesc.xml" />
+	<!-- Initializer Filter and Scripting Context Call Filter Typedoc -->
+	<typedoc file="scriptcontextfilterdesc.xml" />
+</typeSet>

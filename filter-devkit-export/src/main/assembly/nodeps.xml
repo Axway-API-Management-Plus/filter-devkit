@@ -1,0 +1,35 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+	<id>nodeps</id>
+	<formats>
+		<format>zip</format>
+	</formats>
+
+	<includeBaseDirectory>false</includeBaseDirectory>
+
+	<fileSets>
+		<fileSet>
+			<directory>${project.basedir}/..</directory>
+			<outputDirectory>${project.parent.name}</outputDirectory>
+			
+			<excludes>
+				<exclude>filter-deps-runtime/dist/**</exclude>
+				<exclude>filter-deps-studio/dist/**</exclude>
+
+				<exclude>.project</exclude>
+				<exclude>.pydevproject</exclude>
+				<exclude>.classpath</exclude>
+				<exclude>.settings/**</exclude>
+				<exclude>target/**</exclude>
+
+				<exclude>*/.project</exclude>
+				<exclude>*/.pydevproject</exclude>
+				<exclude>*/.classpath</exclude>
+				<exclude>*/.settings/**</exclude>
+				<exclude>*/target/**</exclude>
+				<exclude>filter-devkit-samples/src/main/quickfilters/*/build</exclude>
+			</excludes>
+		</fileSet>
+	</fileSets>
+</assembly>

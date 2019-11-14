@@ -1,0 +1,7 @@
+<panel columns="2">
+	<panel columns="2" span="2" fill="false">
+		<MsgAttrAttribute field="attribute" label="ATTRIBUTE_NAME" required="true" />
+		<TextAttribute field="selector" label="VALUE_SELECTOR" required="true" />
+		<TextAttribute field="coercion" label="VALUE_COERCER" required="true" />
+	</panel>
+</panel>
