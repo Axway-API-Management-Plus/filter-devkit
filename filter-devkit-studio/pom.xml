@@ -3,16 +3,15 @@
   <parent>
     <groupId>com.axway.apigw</groupId>
     <artifactId>filter-devkit</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
   </parent>
   <artifactId>filter-devkit-studio</artifactId>
 
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>filter-deps-runtime</artifactId>
-      <version>[7.5,)</version>
-      <type>pom</type>
+      <artifactId>filter-devkit-runtime</artifactId>
+      <version>0.0.2-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
@@ -25,11 +24,6 @@
           <artifactId>filter-devkit-studio-runtime</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>filter-devkit-runtime</artifactId>
-      <version>${project.version}</version>
     </dependency>
   </dependencies>
 </project>

@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.axway.apigw</groupId>
   <artifactId>filter-devkit</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.2-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -31,8 +31,8 @@
   	<module>filter-devkit-advanced-studio</module>
   	<module>filter-devkit-dynamic</module>
   	<module>filter-devkit-samples</module>
-  	<module>filter-devkit-export</module>
   	<module>filter-devkit-delivery</module>
   	<module>filter-devkit-mavenizer</module>
+  	<module>filter-devkit-export</module>
   </modules>
 </project>

@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.axway.apigw</groupId>
     <artifactId>filter-devkit</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
   </parent>
   <artifactId>filter-devkit-delivery</artifactId>
   <packaging>pom</packaging>
@@ -11,27 +11,59 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>filter-devkit-studio</artifactId>
-      <version>${project.version}</version>
+      <artifactId>filter-devkit-advanced-runtime</artifactId>
+      <version>0.0.2-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>filter-devkit-advanced-runtime</artifactId>
+      <version>0.0.2-SNAPSHOT</version>
+      <classifier>typesets</classifier>
+      <type>zip</type>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>filter-devkit-advanced-studio</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>filter-devkit-samples</artifactId>
-      <version>${project.version}</version>
+      <version>0.0.2-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>filter-devkit-dynamic</artifactId>
-      <version>${project.version}</version>
+      <version>0.0.2-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>filter-devkit-runtime</artifactId>
+      <version>0.0.2-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>filter-devkit-runtime</artifactId>
+      <version>0.0.2-SNAPSHOT</version>
+      <classifier>typesets</classifier>
+      <type>zip</type>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>filter-devkit-samples</artifactId>
+      <version>0.0.2-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>filter-devkit-studio</artifactId>
+      <version>0.0.2-SNAPSHOT</version>
     </dependency>
   </dependencies>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>3.1.1</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -41,25 +73,13 @@
             <phase>package</phase>
             <configuration>
               <outputDirectory>${project.build.directory}/production-base</outputDirectory>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-runtime</artifactId>
-                  <version>${project.version}</version>
-                  <type>jar</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-studio</artifactId>
-                  <version>${project.version}</version>
-                  <type>jar</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-              </artifactItems>
+              <includeGroupIds>${project.groupId}</includeGroupIds>
+              <includeArtifactIds>filter-devkit-runtime,filter-devkit-studio</includeArtifactIds>
+              <excludeTransitive>true</excludeTransitive>
+              <excludeClassifiers>typesets</excludeClassifiers>
             </configuration>
             <goals>
-              <goal>copy</goal>
+              <goal>copy-dependencies</goal>
             </goals>
           </execution>
           <execution>
@@ -67,19 +87,13 @@
             <phase>package</phase>
             <configuration>
               <outputDirectory>${project.build.directory}/production-base</outputDirectory>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-runtime</artifactId>
-                  <version>${project.version}</version>
-                  <classifier>typesets</classifier>
-                  <type>zip</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-              </artifactItems>
+              <includeGroupIds>${project.groupId}</includeGroupIds>
+              <includeArtifactIds>filter-devkit-runtime</includeArtifactIds>
+              <includeClassifiers>typesets</includeClassifiers>
+              <excludeTransitive>true</excludeTransitive>
             </configuration>
             <goals>
-              <goal>unpack</goal>
+              <goal>unpack-dependencies</goal>
             </goals>
           </execution>
           <execution>
@@ -87,46 +101,13 @@
             <phase>package</phase>
             <configuration>
               <outputDirectory>${project.build.directory}/production-full</outputDirectory>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-samples</artifactId>
-                  <version>${project.version}</version>
-                  <type>jar</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-runtime</artifactId>
-                  <version>${project.version}</version>
-                  <type>jar</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-advanced-runtime</artifactId>
-                  <version>${project.version}</version>
-                  <type>jar</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-studio</artifactId>
-                  <version>${project.version}</version>
-                  <type>jar</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-advanced-studio</artifactId>
-                  <version>${project.version}</version>
-                  <type>jar</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-              </artifactItems>
+              <includeGroupIds>${project.groupId}</includeGroupIds>
+              <includeArtifactIds>filter-devkit-advanced-runtime,filter-devkit-advanced-studio,filter-devkit-runtime,filter-devkit-samples,filter-devkit-studio</includeArtifactIds>
+              <excludeTransitive>true</excludeTransitive>
+              <excludeClassifiers>typesets</excludeClassifiers>
             </configuration>
             <goals>
-              <goal>copy</goal>
+              <goal>copy-dependencies</goal>
             </goals>
           </execution>
           <execution>
@@ -134,27 +115,13 @@
             <phase>package</phase>
             <configuration>
               <outputDirectory>${project.build.directory}/production-full</outputDirectory>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-runtime</artifactId>
-                  <version>${project.version}</version>
-                  <classifier>typesets</classifier>
-                  <type>zip</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-advanced-runtime</artifactId>
-                  <version>${project.version}</version>
-                  <classifier>typesets</classifier>
-                  <type>zip</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-              </artifactItems>
+              <includeGroupIds>${project.groupId}</includeGroupIds>
+              <includeArtifactIds>filter-devkit-advanced-runtime,filter-devkit-runtime</includeArtifactIds>
+              <includeClassifiers>typesets</includeClassifiers>
+              <excludeTransitive>true</excludeTransitive>
             </configuration>
             <goals>
-              <goal>unpack</goal>
+              <goal>unpack-dependencies</goal>
             </goals>
           </execution>
           <execution>
@@ -162,60 +129,12 @@
             <phase>package</phase>
             <configuration>
               <outputDirectory>${project.build.directory}/developer</outputDirectory>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-dynamic</artifactId>
-                  <version>${project.version}</version>
-                  <type>jar</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.eclipse.jdt</groupId>
-                  <artifactId>ecj</artifactId>
-                  <version>${org.eclipse.jdt.version}</version>
-                  <type>jar</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-samples</artifactId>
-                  <version>${project.version}</version>
-                  <type>jar</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-runtime</artifactId>
-                  <version>${project.version}</version>
-                  <type>jar</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-advanced-runtime</artifactId>
-                  <version>${project.version}</version>
-                  <type>jar</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-studio</artifactId>
-                  <version>${project.version}</version>
-                  <type>jar</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-advanced-studio</artifactId>
-                  <version>${project.version}</version>
-                  <type>jar</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-              </artifactItems>
+              <includeGroupIds>org.eclipse.jdt,${project.groupId}</includeGroupIds>
+              <includeArtifactIds>ecj,filter-devkit-advanced-runtime,filter-devkit-advanced-studio,filter-devkit-dynamic,filter-devkit-runtime,filter-devkit-samples,filter-devkit-studio</includeArtifactIds>
+              <excludeClassifiers>typesets</excludeClassifiers>
             </configuration>
             <goals>
-              <goal>copy</goal>
+              <goal>copy-dependencies</goal>
             </goals>
           </execution>
           <execution>
@@ -223,27 +142,13 @@
             <phase>package</phase>
             <configuration>
               <outputDirectory>${project.build.directory}/developer</outputDirectory>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-runtime</artifactId>
-                  <version>${project.version}</version>
-                  <classifier>typesets</classifier>
-                  <type>zip</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>filter-devkit-advanced-runtime</artifactId>
-                  <version>${project.version}</version>
-                  <classifier>typesets</classifier>
-                  <type>zip</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-              </artifactItems>
+              <includeGroupIds>${project.groupId}</includeGroupIds>
+              <includeArtifactIds>filter-devkit-advanced-runtime,filter-devkit-runtime</includeArtifactIds>
+              <includeClassifiers>typesets</includeClassifiers>
+              <excludeTransitive>true</excludeTransitive>
             </configuration>
             <goals>
-              <goal>unpack</goal>
+              <goal>unpack-dependencies</goal>
             </goals>
           </execution>
         </executions>

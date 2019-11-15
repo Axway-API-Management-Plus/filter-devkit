@@ -180,11 +180,19 @@ public class GatewayRepoSys {
 //	}
 
 	public RepositorySystemSession getSession() {
+		return getSession(false);
+	}
+	
+	public RepositorySystemSession getOfflineSession() {
+		return getSession(true);
+	}
+	
+	private RepositorySystemSession getSession(boolean offline) {
 		DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
 		Map<Object, Object> configProps = new LinkedHashMap<Object, Object>();
 
 		session.setConfigProperties(configProps);
-		session.setOffline(false);
+		session.setOffline(offline);
 		session.setUserProperties(getUserProperties());
 		session.setProxySelector(getProxySelector());
 		session.setMirrorSelector(getMirrorSelector());

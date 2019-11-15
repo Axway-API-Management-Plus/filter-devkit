@@ -595,7 +595,7 @@ public class MavenizerRepository {
 		return out;
 	}
 
-	private static String sha1(File file) throws IOException {
+	public static String sha1(File file) throws IOException {
 		try {
 			MessageDigest digest = MessageDigest.getInstance("SHA-1");
 			byte[] data = digest.digest(readFile(file));

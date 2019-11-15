@@ -14,12 +14,14 @@
 			<outputDirectory>${project.parent.name}</outputDirectory>
 			
 			<excludes>
+				<exclude>.DS_Store</exclude>
 				<exclude>.project</exclude>
 				<exclude>.pydevproject</exclude>
 				<exclude>.classpath</exclude>
 				<exclude>.settings/**</exclude>
 				<exclude>target/**</exclude>
 
+				<exclude>*/.DS_Store</exclude>
 				<exclude>*/.project</exclude>
 				<exclude>*/.pydevproject</exclude>
 				<exclude>*/.classpath</exclude>
