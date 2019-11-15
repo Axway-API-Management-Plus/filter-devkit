@@ -1,0 +1,13 @@
+<ui>
+	<panel columns="2">
+		<panel columns="2" fill="false">
+			<!-- filter name attribute -->
+			<NameAttribute />
+		</panel>
+
+		<panel columns="2" span="2" fill="false">
+			<ButtonAttribute field="generateContentMD5" label="CONTENTMD5_LABEL" span="1" />
+			<FieldTable field="digestAlgorithms" label="DIGEST_ALGORITHMS_LABEL" />
+		</panel>
+	</panel>
+</ui>
