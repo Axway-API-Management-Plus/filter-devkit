@@ -62,7 +62,7 @@ The build command will compile all module, produce an export archive and deploy 
 ### Developer Install
 
 Stop you API Gateway instance, copy the following jars from the 'filter-devkit-delivery/target/developer' directory in the ext/lib directory of instance and start it back
- - ecj-3.16.0.jar (eclipse compiler plugin)
+ - ecj-*.jar (eclipse compiler plugin)
  - filter-devkit-advanced-runtime-*.jar (advanced scripting filters)
  - filter-devkit-dynamic-*.jar (dynamic compilation support for instance)
  - filter-devkit-runtime-*.jar (basic runtime)
@@ -92,13 +92,13 @@ In the policy studio, import the following jars as runtime dependencies and rest
  - filter-devkit-studio-*.jar
 
 In the policy studio, import the following typesets into a open configuration:
- - filter-devkit-delivery/target/developer/typesets/apigwsdkset.xml
+ - filter-devkit-delivery/target/production-base/typesets/apigwsdkset.xml
 
 _Warning_ : If you're in a Team Dev configuration, import sets in the project with Server Settings.
 
 ### Advanced Install (for production or deployment pipeline)
 
-Stop you API Gateway instance, copy the following jars from the 'filter-devkit-delivery/target/production-base' directory in the ext/lib directory of instance and start it back
+Stop you API Gateway instance, copy the following jars from the 'filter-devkit-delivery/target/production-full' directory in the ext/lib directory of instance and start it back
  - filter-devkit-advanced-runtime-*.jar (advanced scripting filters)
  - filter-devkit-runtime-*.jar (basic runtime)
 
@@ -109,7 +109,7 @@ In the policy studio, import the following jars as runtime dependencies and rest
  - filter-devkit-studio-*.jar
 
 In the policy studio, import the following typesets into a open configuration:
- - filter-devkit-delivery/target/developer/typesets/apigwsdkset.xml
- - filter-devkit-delivery/target/developer/typesets/apigwsdk-advancedset.xml
+ - filter-devkit-delivery/target/production-full/typesets/apigwsdkset.xml
+ - filter-devkit-delivery/target/production-full/typesets/apigwsdk-advancedset.xml
 
 _Warning_ : If you're in a Team Dev configuration, import sets in the project with Server Settings.
