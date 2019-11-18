@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -52,6 +53,7 @@ import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.graph.Exclusion;
 import org.eclipse.aether.installation.InstallRequest;
 import org.eclipse.aether.installation.InstallationException;
+import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
@@ -322,7 +324,7 @@ public class MavenizerRepository {
 					result = file;
 				} else {
 					try {
-						Iterator<File> iterator = files.keySet().iterator();
+						Iterator<File> iterator = new HashSet<File>(files.values()).iterator();
 						byte[] data = readFile(file);
 
 						while ((result == null) && iterator.hasNext()) {
@@ -394,7 +396,7 @@ public class MavenizerRepository {
 
 		return match(artifact, scanned);
 	}
-	
+
 	public void register(Set<File> scanned) {
 		Iterator<File> iterator = scanned.iterator();
 
@@ -527,7 +529,7 @@ public class MavenizerRepository {
 
 		return artifacts.get(ArtifactIdUtils.toId(artifact));
 	}
-	
+
 	public Artifact findArtifact(File file) {
 		return findArtifact(file, false);
 	}
@@ -814,7 +816,6 @@ public class MavenizerRepository {
 			System.out.println(String.format("collecting dependencies for '%s'", artifact.toString()));
 
 			Dependency dependency = new Dependency(artifact, JavaScopes.COMPILE);
-			Map<String, Repository> repositoryMap = new HashMap<String, Repository>();
 			CollectRequest request = new CollectRequest();
 
 			request.setRoot(dependency);
@@ -826,9 +827,15 @@ public class MavenizerRepository {
 					repository = repository(repository);
 
 					if (repository != null) {
-						request.addRepository(ArtifactDescriptorUtils.toRemoteRepository(repository));
+						RemoteRepository remote = ArtifactDescriptorUtils.toRemoteRepository(repository);
+						Proxy proxy = session.getProxySelector().getProxy(remote);
 
-						repositoryMap.put(repository.getUrl(), repository);
+						if (proxy != null) {
+							/* XXX help proxy selector (does not seems to work out of the box) */
+							remote = new RemoteRepository.Builder(remote).setProxy(proxy).build();
+						}
+
+						request.addRepository(remote);
 					}
 				}
 
@@ -842,8 +849,17 @@ public class MavenizerRepository {
 			}
 
 			if (result == null) {
+				RemoteRepository remote = CENTRAL_REPOSITORY;
+
 				request.getRepositories().clear();
-				request.addRepository(CENTRAL_REPOSITORY);
+				Proxy proxy = session.getProxySelector().getProxy(remote);
+
+				if (proxy != null) {
+					/* XXX help proxy selector (does not seems to work out of the box) */
+					remote = new RemoteRepository.Builder(remote).setProxy(proxy).build();
+				}
+
+				request.addRepository(remote);
 
 				try {
 					result = system.collectDependencies(session, request);
@@ -931,6 +947,21 @@ public class MavenizerRepository {
 				request.addRepository(CENTRAL_REPOSITORY);
 			}
 
+
+			ListIterator<RemoteRepository> repositories = request.getRepositories().listIterator();
+
+			while(repositories.hasNext()) {
+				RemoteRepository repository = repositories.next();
+				Proxy proxy = session.getProxySelector().getProxy(repository);
+
+				if (proxy != null) {
+					/* XXX help proxy selector (does not seems to work out of the box) */
+					repository = new RemoteRepository.Builder(repository).setProxy(proxy).build();
+
+					repositories.set(repository);
+				}
+			}
+
 			try {
 				system.resolveArtifact(session, request);
 
@@ -959,7 +990,7 @@ public class MavenizerRepository {
 			}
 		}
 	}
-	
+
 	private Artifact asFileArtifact(Artifact artifact) throws IOException {
 		File file = artifact.getFile();
 
@@ -973,7 +1004,7 @@ public class MavenizerRepository {
 
 			files.put(file, generated);
 		}
-		
+
 		return artifact;
 	}
 
@@ -986,7 +1017,7 @@ public class MavenizerRepository {
 
 		try {
 			InstallRequest request = new InstallRequest().addArtifact(asFileArtifact(artifact));
-			
+
 			system.install(session, request);
 
 			System.out.println(String.format("installed artifact '%s'", artifact));
@@ -1143,7 +1174,7 @@ public class MavenizerRepository {
 		List<org.apache.maven.model.Dependency> dependencies = target.getDependencies();
 		List<org.apache.maven.model.Dependency> managedDependencies = managed.getDependencies();
 		List<Repository> repositories = target.getRepositories();
-		
+
 		repositories.clear();
 
 		for (Artifact artifact : filtered) {

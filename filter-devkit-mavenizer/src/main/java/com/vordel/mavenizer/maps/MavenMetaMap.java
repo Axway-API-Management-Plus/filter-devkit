@@ -334,6 +334,11 @@ public class MavenMetaMap extends AbstractMap<String, MetaPOM> {
 				next = null;
 			}
 		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	public static class MetaPOM extends AbstractArtifact implements Map.Entry<String, MetaPOM> {

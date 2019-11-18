@@ -231,6 +231,11 @@ public class BundleMap extends AbstractMap<String, Bundle> {
 				next = null;
 			}
 		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	public static class Bundle implements Map.Entry<String, Bundle> {

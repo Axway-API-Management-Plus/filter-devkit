@@ -1,7 +1,9 @@
 package com.vordel.mavenizer.dist;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.UnknownHostException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -9,6 +11,7 @@ import java.util.Properties;
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.NTCredentials;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.maven.cli.configuration.SettingsXmlConfigurationProcessor;
@@ -85,7 +88,7 @@ public class GatewayRepoSys {
 	private final Properties systemProperties = new Properties();
 
 	private final WorkspaceReader workspace;
-	
+
 	public static RemoteRepository CENTRAL_REPOSITORY = getCentralRepository();
 
 	private static <T> boolean eq(T o1, T o2) {
@@ -94,7 +97,7 @@ public class GatewayRepoSys {
 
 	private static RemoteRepository getCentralRepository() {
 		RemoteRepository.Builder builder = new RemoteRepository.Builder("central", "default", "http://repo.maven.apache.org/maven2");
-		
+
 		return builder.build();
 	}
 
@@ -125,7 +128,7 @@ public class GatewayRepoSys {
 		} catch (ComponentLookupException e) {
 			throw new IllegalStateException(e);
 		}
-		
+
 		this.workspace = workspace;
 		this.systemProperties.putAll(System.getProperties());
 	}
@@ -145,7 +148,21 @@ public class GatewayRepoSys {
 				params.setProxy(proxy.getHost(), proxy.getPort());
 
 				if (user != null) {
-					Credentials creds = new UsernamePasswordCredentials(user, password);
+					int separator = user.indexOf('\\');
+					Credentials creds = null;
+
+					if (separator != -1) {
+						String domain = user.substring(0, separator);
+
+						try {
+							creds = new NTCredentials(user.substring(separator + 1), password, InetAddress.getLocalHost().getHostName(), domain);
+						} catch (UnknownHostException e) {
+						}
+					}
+					
+					if (creds == null) {					
+						creds = new UsernamePasswordCredentials(user, password);
+					}
 
 					client.getState().setProxyCredentials(AuthScope.ANY, creds);
 				}
@@ -169,24 +186,14 @@ public class GatewayRepoSys {
 		return repoSys;
 	}
 
-//	private synchronized RemoteRepositoryManager getRemoteRepoMan() {
-//		if (remoteRepoMan == null) {
-//			remoteRepoMan = locator.getService(RemoteRepositoryManager.class);
-//			if (remoteRepoMan == null) {
-//				throw new IllegalStateException("The repository system could not be initialized");
-//			}
-//		}
-//		return remoteRepoMan;
-//	}
-
 	public RepositorySystemSession getSession() {
 		return getSession(false);
 	}
-	
+
 	public RepositorySystemSession getOfflineSession() {
 		return getSession(true);
 	}
-	
+
 	private RepositorySystemSession getSession(boolean offline) {
 		DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
 		Map<Object, Object> configProps = new LinkedHashMap<Object, Object>();
@@ -246,12 +253,14 @@ public class GatewayRepoSys {
 
 	private ProxySelector getProxySelector() {
 		DefaultProxySelector selector = new DefaultProxySelector();
-
 		Settings settings = getSettings();
+
 		for (Proxy proxy : settings.getProxies()) {
-			AuthenticationBuilder auth = new AuthenticationBuilder();
-			auth.addUsername(proxy.getUsername()).addPassword(proxy.getPassword());
-			selector.add(new org.eclipse.aether.repository.Proxy(proxy.getProtocol(), proxy.getHost(), proxy.getPort(), auth.build()), proxy.getNonProxyHosts());
+			if (proxy.isActive()) {
+				AuthenticationBuilder auth = new AuthenticationBuilder();
+				auth.addUsername(proxy.getUsername()).addPassword(proxy.getPassword());
+				selector.add(new org.eclipse.aether.repository.Proxy(proxy.getProtocol(), proxy.getHost(), proxy.getPort(), auth.build()), proxy.getNonProxyHosts());
+			}
 		}
 
 		return selector;

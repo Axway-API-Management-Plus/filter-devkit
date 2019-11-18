@@ -15,6 +15,7 @@ import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.collection.CollectResult;
 import org.eclipse.aether.collection.DependencyCollectionException;
 import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
@@ -64,6 +65,8 @@ public class DeployScriptGenerator {
 
 			dependencyRequest.setRoot(collectResult.getRoot());
 
+			resolveMissing(sys.getSession(), system, collectResult.getRoot());
+
 			DependencyResult dependencyResult = system.resolveDependencies(session, dependencyRequest);
 
 			for(ArtifactResult artifactResult : dependencyResult.getArtifactResults()) {
@@ -104,6 +107,38 @@ public class DeployScriptGenerator {
 			usage("got exception during dependency collection");
 		} catch (IOException e) {
 			usage("got exception writing deploy script");
+		}
+	}
+
+	private static void resolveMissing(RepositorySystemSession session, RepositorySystem system, DependencyNode node) {
+		ArtifactRequest request = new ArtifactRequest();
+		ArtifactResult result = null;
+		try {
+			request.setArtifact(node.getArtifact());
+			result = system.resolveArtifact(session, request);
+		} catch (ArtifactResolutionException ignore) {
+		}
+
+		if (result == null) {
+			try {
+				request.setRepositories(node.getRepositories());
+				result = system.resolveArtifact(session, request);
+			} catch (ArtifactResolutionException e) {
+			}
+		}
+
+		if (result == null) {
+			try {
+				request.getRepositories().clear();
+				request.addRepository(MavenizerRepository.CENTRAL_REPOSITORY);
+				result = system.resolveArtifact(session, request);
+			} catch (ArtifactResolutionException e) {
+				usage("got exception resolving artifact");
+			}
+		}
+
+		for(DependencyNode child : node.getChildren()) {
+			resolveMissing(session, system, child);
 		}
 	}
 
