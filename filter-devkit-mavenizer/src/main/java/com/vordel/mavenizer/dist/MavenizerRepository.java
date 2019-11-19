@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -53,7 +52,6 @@ import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.graph.Exclusion;
 import org.eclipse.aether.installation.InstallRequest;
 import org.eclipse.aether.installation.InstallationException;
-import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
@@ -828,12 +826,6 @@ public class MavenizerRepository {
 
 					if (repository != null) {
 						RemoteRepository remote = ArtifactDescriptorUtils.toRemoteRepository(repository);
-						Proxy proxy = session.getProxySelector().getProxy(remote);
-
-						if (proxy != null) {
-							/* XXX help proxy selector (does not seems to work out of the box) */
-							remote = new RemoteRepository.Builder(remote).setProxy(proxy).build();
-						}
 
 						request.addRepository(remote);
 					}
@@ -841,6 +833,8 @@ public class MavenizerRepository {
 
 				if (!request.getRepositories().isEmpty()) {
 					try {
+						AetherUtils.setRemoteRepositoriesProxy(session, request.getRepositories());
+
 						result = system.collectDependencies(session, request);
 					} catch (DependencyCollectionException e) {
 						/* means repositories are invalid... */
@@ -849,19 +843,12 @@ public class MavenizerRepository {
 			}
 
 			if (result == null) {
-				RemoteRepository remote = CENTRAL_REPOSITORY;
-
 				request.getRepositories().clear();
-				Proxy proxy = session.getProxySelector().getProxy(remote);
-
-				if (proxy != null) {
-					/* XXX help proxy selector (does not seems to work out of the box) */
-					remote = new RemoteRepository.Builder(remote).setProxy(proxy).build();
-				}
-
-				request.addRepository(remote);
+				request.addRepository(CENTRAL_REPOSITORY);
 
 				try {
+					AetherUtils.setRemoteRepositoriesProxy(session, request.getRepositories());
+
 					result = system.collectDependencies(session, request);
 				} catch (DependencyCollectionException e) {
 					System.out.println(String.format("failed to collect dependencies for '%s'", artifact.toString()));
@@ -947,20 +934,7 @@ public class MavenizerRepository {
 				request.addRepository(CENTRAL_REPOSITORY);
 			}
 
-
-			ListIterator<RemoteRepository> repositories = request.getRepositories().listIterator();
-
-			while(repositories.hasNext()) {
-				RemoteRepository repository = repositories.next();
-				Proxy proxy = session.getProxySelector().getProxy(repository);
-
-				if (proxy != null) {
-					/* XXX help proxy selector (does not seems to work out of the box) */
-					repository = new RemoteRepository.Builder(repository).setProxy(proxy).build();
-
-					repositories.set(repository);
-				}
-			}
+			AetherUtils.setRemoteRepositoriesProxy(session, request.getRepositories());
 
 			try {
 				system.resolveArtifact(session, request);

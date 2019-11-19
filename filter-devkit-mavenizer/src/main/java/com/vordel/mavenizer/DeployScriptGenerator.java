@@ -3,6 +3,7 @@ package com.vordel.mavenizer;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
@@ -24,6 +25,7 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.resolution.DependencyResult;
 import org.eclipse.aether.util.artifact.JavaScopes;
 
+import com.vordel.mavenizer.dist.AetherUtils;
 import com.vordel.mavenizer.dist.GatewayRepoSys;
 import com.vordel.mavenizer.dist.MavenizerRepository;
 
@@ -113,6 +115,7 @@ public class DeployScriptGenerator {
 	private static void resolveMissing(RepositorySystemSession session, RepositorySystem system, DependencyNode node) {
 		ArtifactRequest request = new ArtifactRequest();
 		ArtifactResult result = null;
+
 		try {
 			request.setArtifact(node.getArtifact());
 			result = system.resolveArtifact(session, request);
@@ -122,6 +125,7 @@ public class DeployScriptGenerator {
 		if (result == null) {
 			try {
 				request.setRepositories(node.getRepositories());
+				AetherUtils.setRemoteRepositoriesProxy(session, request.getRepositories());
 				result = system.resolveArtifact(session, request);
 			} catch (ArtifactResolutionException e) {
 			}
@@ -131,6 +135,7 @@ public class DeployScriptGenerator {
 			try {
 				request.getRepositories().clear();
 				request.addRepository(MavenizerRepository.CENTRAL_REPOSITORY);
+				AetherUtils.setRemoteRepositoriesProxy(session, request.getRepositories());
 				result = system.resolveArtifact(session, request);
 			} catch (ArtifactResolutionException e) {
 				usage("got exception resolving artifact");
@@ -164,6 +169,7 @@ public class DeployScriptGenerator {
 
 	private static void appendArtifact(File root, StringBuilder builder, Artifact artifact, Artifact pom, String repositoryId, String url) throws IOException {
 		String extension = artifact.getExtension();
+		URI uri = root.toURI();
 
 		if ("pom".equals(extension) || "jar".equals(extension)) {
 			String classifier = artifact.getClassifier();
@@ -178,11 +184,11 @@ public class DeployScriptGenerator {
 			if (pom != null) {
 				pom = copyArtifact(pom, root);
 
-				builder.append(String.format("-DpomFile=\"%s\" ", pom.getFile()));
+				builder.append(String.format("-DpomFile=\"%s\" ", uri.relativize(pom.getFile().toURI())));
 			} else {
 			}
 
-			builder.append(String.format("-Dpackaging=%s -Dfile=\"%s\" -DrepositoryId=%s -Durl=%s -DgeneratePom=false\n", extension, artifact.getFile(), repositoryId, url));
+			builder.append(String.format("-Dpackaging=%s -Dfile=\"%s\" -DrepositoryId=%s -Durl=%s -DgeneratePom=false\n", extension, uri.relativize(artifact.getFile().toURI()), repositoryId, url));
 		} else {
 			throw new IllegalStateException("unknown packaging");
 		}

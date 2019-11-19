@@ -1,6 +1,7 @@
 # Quick Java Filters
 
 The Quick Java Filter feature allow to package a Java classes as first order filters (i.e appears in pallette etc). It works using class path scanning and annotations.
+A [tutorial](QuickJavaFilterTutorial.md) is provided for Quick Java Filter development. 
 
 ## Differences with [Quick Script Filters](QuickScriptFilter.md)
 

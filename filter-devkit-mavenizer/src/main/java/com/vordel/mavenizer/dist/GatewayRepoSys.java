@@ -76,7 +76,7 @@ public class GatewayRepoSys {
 
 	private RepositorySystem repoSys = null;
 
-	//private RemoteRepositoryManager remoteRepoMan = null;
+	// private RemoteRepositoryManager remoteRepoMan = null;
 
 	private Settings settings = null;
 
@@ -155,12 +155,13 @@ public class GatewayRepoSys {
 						String domain = user.substring(0, separator);
 
 						try {
-							creds = new NTCredentials(user.substring(separator + 1), password, InetAddress.getLocalHost().getHostName(), domain);
+							creds = new NTCredentials(user.substring(separator
+									+ 1), password, InetAddress.getLocalHost().getHostName(), domain);
 						} catch (UnknownHostException e) {
 						}
 					}
-					
-					if (creds == null) {					
+
+					if (creds == null) {
 						creds = new UsernamePasswordCredentials(user, password);
 					}
 
@@ -258,6 +259,7 @@ public class GatewayRepoSys {
 		for (Proxy proxy : settings.getProxies()) {
 			if (proxy.isActive()) {
 				AuthenticationBuilder auth = new AuthenticationBuilder();
+
 				auth.addUsername(proxy.getUsername()).addPassword(proxy.getPassword());
 				selector.add(new org.eclipse.aether.repository.Proxy(proxy.getProtocol(), proxy.getHost(), proxy.getPort(), auth.build()), proxy.getNonProxyHosts());
 			}

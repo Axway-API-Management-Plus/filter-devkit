@@ -3,15 +3,15 @@
   <parent>
     <groupId>com.axway.apigw</groupId>
     <artifactId>filter-devkit</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
+    <version>0.0.4-SNAPSHOT</version>
   </parent>
   <artifactId>filter-devkit-samples</artifactId>
   
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>filter-devkit-advanced-runtime</artifactId>
-      <version>0.0.3-SNAPSHOT</version>
+      <artifactId>filter-devkit-runtime</artifactId>
+      <version>0.0.4-SNAPSHOT</version>
     </dependency>
   </dependencies>
 </project>
