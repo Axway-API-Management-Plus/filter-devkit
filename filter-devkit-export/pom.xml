@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.axway.apigw</groupId>
     <artifactId>filter-devkit</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>0</version>
   </parent>
   <artifactId>filter-devkit-export</artifactId>
   <packaging>pom</packaging>

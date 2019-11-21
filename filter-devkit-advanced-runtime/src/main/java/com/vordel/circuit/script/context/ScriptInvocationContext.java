@@ -17,17 +17,20 @@ import com.vordel.common.Dictionary;
 public interface ScriptInvocationContext extends ContextResourceProvider {
 	/**
 	 * get status of previous executed filter.
-	 * @param m TODO
-	 * @param index
 	 * 
-	 * @return
-	 * @throws CircuitAbortException
+	 * @param m     current message
+	 * @param index negative index of filter (-1 is last filter)
+	 * 
+	 * @return status of filter execution
+	 * @throws CircuitAbortException is previous filter invocation returned an
+	 *                               exception
 	 */
 	public boolean getPreviousStatus(Message m, int index) throws CircuitAbortException;
 
 	/**
 	 * retrieves the named message attibute
-	 * @param m TODO
+	 * 
+	 * @param m    current message
 	 * @param name name of the target attribute
 	 * 
 	 * @return current attribute value
@@ -36,7 +39,8 @@ public interface ScriptInvocationContext extends ContextResourceProvider {
 
 	/**
 	 * removes the named message attibute
-	 * @param m TODO
+	 * 
+	 * @param m    current message
 	 * @param name name of the target attribute
 	 * 
 	 * @return current attribute value
@@ -45,7 +49,8 @@ public interface ScriptInvocationContext extends ContextResourceProvider {
 
 	/**
 	 * sets the value of the named message attibute
-	 * @param m TODO
+	 * 
+	 * @param m     current message
 	 * @param name  - name of the target attribute
 	 * @param value - value of the target attribute
 	 * 
@@ -55,7 +60,8 @@ public interface ScriptInvocationContext extends ContextResourceProvider {
 
 	/**
 	 * Retrieve the given user attribute (stored in 'attribute.lookup.list')
-	 * @param m TODO
+	 * 
+	 * @param m         current message
 	 * @param name      name of the attribute
 	 * @param namespace namespace of the attribute, may be null for no namespace.
 	 * 
@@ -65,7 +71,8 @@ public interface ScriptInvocationContext extends ContextResourceProvider {
 
 	/**
 	 * Removes the given user attribute (stored in 'attribute.lookup.list')
-	 * @param m TODO
+	 * 
+	 * @param m         current message
 	 * @param name      name of the attribute
 	 * @param namespace namespace of the attribute, may be null for no namespace.
 	 */
@@ -74,7 +81,8 @@ public interface ScriptInvocationContext extends ContextResourceProvider {
 	/**
 	 * Adds a value to the list of specified user attribute (stored in
 	 * 'attribute.lookup.list')
-	 * @param m TODO
+	 * 
+	 * @param m         current message
 	 * @param name      name of the attribute
 	 * @param namespace namespace of the attribute, may be null for no namespace.
 	 * @param value     value to be added
@@ -83,7 +91,8 @@ public interface ScriptInvocationContext extends ContextResourceProvider {
 
 	/**
 	 * Replaces the specified user attribute list by the given value
-	 * @param m TODO
+	 * 
+	 * @param m         current message
 	 * @param name      name of the attribute
 	 * @param namespace namespace of the attribute, may be null for no namespace.
 	 * @param value     value to be set
@@ -92,8 +101,9 @@ public interface ScriptInvocationContext extends ContextResourceProvider {
 
 	/**
 	 * evaluates the given selector expression. The method
-	 * {@link #substitute(Message, String)} should be used for better performances.
-	 * @param m TODO
+	 * {@link #substitute(Dictionary, String)} should be used for better performances.
+	 * 
+	 * @param m          current message
 	 * @param expression expression to be evaluated
 	 * 
 	 * @return evaluation result
@@ -103,6 +113,7 @@ public interface ScriptInvocationContext extends ContextResourceProvider {
 
 	/**
 	 * Retrieve the Cache instance for the given resource
+	 * 
 	 * @param dict TODO
 	 * @param name cache resource name
 	 * 
@@ -112,7 +123,8 @@ public interface ScriptInvocationContext extends ContextResourceProvider {
 
 	/**
 	 * Set the http status for the current message
-	 * @param m TODO
+	 * 
+	 * @param m      current message
 	 * @param status http status code
 	 */
 	public void setHttpStatus(Message m, int status);

@@ -26,8 +26,8 @@ public class MessageInvocationContext extends AbstractInvocationContext {
 	 * Builds a message invocation context, register a message listener for update
 	 * and sets the according message attribut with the newly created instance
 	 * 
-	 * @param resources
-	 *            context resource map (if null, an empty map is used).
+	 * @param resources context resource map (if null, an empty map is used).
+	 * @param parent    parent context resource map (for inheritance)
 	 */
 	protected MessageInvocationContext(Map<String, ContextResource> resources, ContextResourceProvider parent) {
 		if (resources == null) {

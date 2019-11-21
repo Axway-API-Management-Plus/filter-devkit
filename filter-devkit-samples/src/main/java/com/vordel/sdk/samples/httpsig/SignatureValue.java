@@ -37,9 +37,10 @@ public class SignatureValue<H> extends SignatureTemplate<H> {
 	/**
 	 * Parse the signature http header
 	 * 
-	 * @param headers
-	 * @param parser
-	 * @return
+	 * @param <H> header object type
+	 * @param headers header object
+	 * @param parser header parser object
+	 * @return an unverified {@link SignatureValue} object
 	 */
 	public static <H> SignatureValue<H> parseSignatureHeader(H headers, HeaderParser<H> parser) {
 		List<String> values = parser.getHeaderValues(headers, "Signature");
@@ -55,9 +56,10 @@ public class SignatureValue<H> extends SignatureTemplate<H> {
 	/**
 	 * Parse a signature authorization scheme
 	 * 
-	 * @param headers
-	 * @param parser
-	 * @return
+	 * @param <H> header object type
+	 * @param headers header object
+	 * @param parser header parser object
+	 * @return an unverified {@link SignatureValue} object
 	 */
 	public static <H> SignatureValue<H> parseSignatureAuthorization(H headers, HeaderParser<H> parser) {
 		List<String> values = parser.getHeaderValues(headers, "Authorization");
@@ -83,6 +85,7 @@ public class SignatureValue<H> extends SignatureTemplate<H> {
 	/**
 	 * parse signature parameters and returns a SignatureHeader object
 	 * 
+	 * @param <H> header object type
 	 * @param header unparsed signature header
 	 * @param parser HeaderParser which will be used in the newly created
 	 *               SignatureHeader.

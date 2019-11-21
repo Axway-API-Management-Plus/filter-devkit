@@ -35,7 +35,7 @@ public abstract class CacheResource implements ContextResource, ViewableResource
 	 *            value to be checked. should be serializable depending on the
 	 *            underlying implementation
 	 * @return 'true' if a mapping exists containing this value. 'false' otherwise.
-	 * @throws CircuitAbortException
+	 * @throws CircuitAbortException is unable to query cache
 	 */
 	public abstract boolean isValueInCache(Object value) throws CircuitAbortException;
 
@@ -212,7 +212,7 @@ public abstract class CacheResource implements ContextResource, ViewableResource
 	 * retrieve cache keys as Iterator
 	 * 
 	 * @return all keys present in cache.
-	 * @throws CircuitAbortException
+	 * @throws CircuitAbortException if unable to retrieve cache key iterator
 	 */
 	public abstract Iterator<?> keys() throws CircuitAbortException;
 
@@ -220,7 +220,7 @@ public abstract class CacheResource implements ContextResource, ViewableResource
 	 * retrieve cache values as iterator
 	 * 
 	 * @return all values present in cache
-	 * @throws CircuitAbortException
+	 * @throws CircuitAbortException if unable to retrieve cache value iterator
 	 */
 	public Iterator<?> values() throws CircuitAbortException {
 		/*
@@ -337,7 +337,7 @@ public abstract class CacheResource implements ContextResource, ViewableResource
 	}
 
 	/**
-	 * @return a Map<Object,Object> representing this cache resource.
+	 * @return a Map&lt;Object,Object&gt; representing this cache resource.
 	 */
 	@Override
 	public final CacheMapView getResourceView() {
@@ -348,8 +348,9 @@ public abstract class CacheResource implements ContextResource, ViewableResource
 	 * wraps an existing key iterator to add the capability of removing keys by
 	 * calling iterator's remove() method.
 	 * 
-	 * @param iterator
-	 * @return
+	 * @param <T> key type
+	 * @param iterator input key iterator
+	 * @return wrapped key iterator with remove() capability
 	 */
 	protected final <T> Iterator<T> wrapKeyIterator(final Iterator<T> iterator) {
 		return new Iterator<T>() {
@@ -403,9 +404,9 @@ public abstract class CacheResource implements ContextResource, ViewableResource
 	/**
 	 * wraps an existing cache resource overriding the default cache TTL.
 	 * 
-	 * @param resource
-	 * @param ttl
-	 * @return
+	 * @param resource input cache resource
+	 * @param ttl ttl to be applied
+	 * @return wrapped cache resource with the given ttl
 	 */
 	public static CacheResource wrap(CacheResource resource, int ttl) {
 		return new CacheResource() {

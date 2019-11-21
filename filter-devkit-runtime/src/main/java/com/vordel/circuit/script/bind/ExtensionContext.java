@@ -194,8 +194,9 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	/**
 	 * register a java class instance as apigateway resources.
 	 * 
+	 * @param <T>      class type
 	 * @param instance instance to be bound
-	 * @param clazz type which contains method exports
+	 * @param clazz    type which contains method exports
 	 * @return an ExtensionContext which reflects exported methods of the given
 	 *         class.
 	 */

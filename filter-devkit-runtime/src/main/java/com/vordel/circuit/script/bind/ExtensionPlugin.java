@@ -6,9 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marker annotation for automatic registration of
- * {@link ExtensionContext}. Any class with this annotation will be
- * registered in the message 'extensions' dictionary.
+ * Marker annotation for automatic registration of {@link ExtensionContext}. Any
+ * class with this annotation will be registered in the message 'extensions'
+ * dictionary.
  * 
  * @author rdesaintleger@axway.com
  */
@@ -16,10 +16,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ExtensionPlugin {
 	/**
-	 * name of extension within the global dictionary. if empty, the full class name
-	 * will be used.
-	 * 
-	 * @return
+	 * @return name of extension within the global dictionary. if empty, the full
+	 *         class name will be used.
 	 */
 	String value() default "";
 }

@@ -1,5 +1,6 @@
 package com.vordel.circuit.script.bind;
 
+import com.vordel.circuit.script.context.MessageContextModule;
 import com.vordel.config.ConfigContext;
 import com.vordel.es.EntityStoreException;
 

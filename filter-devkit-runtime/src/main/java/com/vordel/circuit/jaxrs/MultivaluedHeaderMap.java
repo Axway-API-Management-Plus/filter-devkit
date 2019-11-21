@@ -41,9 +41,10 @@ public class MultivaluedHeaderMap extends AbstractMultivaluedHeaderMap {
 	/**
 	 * copy headers from a Headers object into another Headers object
 	 * 
-	 * @param to
-	 * @param from
-	 * @return
+	 * @param <T> headers type
+	 * @param to   header target headers
+	 * @param from source headers
+	 * @return target headers
 	 */
 	public static <T extends Headers> T fromHeaders(T to, Headers from) {
 		if (to != null) {
@@ -62,11 +63,12 @@ public class MultivaluedHeaderMap extends AbstractMultivaluedHeaderMap {
 	}
 
 	/**
-	 * copy headers from a Headers object into a MultivaluedMap<String, String>
+	 * copy headers from a Headers object into a header map
 	 * 
-	 * @param to
-	 * @param from
-	 * @return
+	 * @param <T> header map type
+	 * @param to   target header map
+	 * @param from source headers
+	 * @return target header map
 	 */
 	public static <T extends MultivaluedMap<String, String>> T fromHeaders(T to, Headers from) {
 		if (to != null) {
@@ -86,12 +88,13 @@ public class MultivaluedHeaderMap extends AbstractMultivaluedHeaderMap {
 	}
 
 	/**
-	 * copy headers from a MultivaluedMap<String, String> object into a
-	 * MultivaluedMap<String, String>
+	 * copy headers from a header map object into a header map
 	 * 
-	 * @param to
-	 * @param from
-	 * @return
+	 * @param <T> header map type
+	 * @param <E> header value type
+	 * @param to   target header map
+	 * @param from source header map
+	 * @return target header map
 	 */
 	public static <T extends MultivaluedMap<String, E>, E> T mergeHeaders(T to, MultivaluedMap<String, E> from) {
 		if (to != null) {
@@ -112,10 +115,10 @@ public class MultivaluedHeaderMap extends AbstractMultivaluedHeaderMap {
 	}
 
 	/**
-	 * wraps a Headers object into a JAX-RS MultivaluedMap<String, String>
+	 * wraps a Headers object into a JAX-RS header map
 	 * 
 	 * @param from original headers object
-	 * @return JAX-RS MultivaluedMap<String, String>
+	 * @return JAX-RS header map
 	 */
 	public static MultivaluedHeaderMap wrapHeaders(Headers from) {
 		return new MultivaluedHeaderMap(from);

@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.axway.apigw</groupId>
     <artifactId>filter-devkit</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>0</version>
   </parent>
   <artifactId>filter-devkit-delivery</artifactId>
   <packaging>pom</packaging>
@@ -12,46 +12,46 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>filter-devkit-advanced-runtime</artifactId>
-      <version>0.0.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>filter-devkit-advanced-runtime</artifactId>
-      <version>0.0.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
       <classifier>typesets</classifier>
       <type>zip</type>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>filter-devkit-advanced-studio</artifactId>
-      <version>0.0.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>filter-devkit-dynamic</artifactId>
-      <version>0.0.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>filter-devkit-runtime</artifactId>
-      <version>0.0.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>filter-devkit-runtime</artifactId>
-      <version>0.0.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
       <classifier>typesets</classifier>
       <type>zip</type>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>filter-devkit-samples</artifactId>
-      <version>0.0.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>filter-devkit-studio</artifactId>
-      <version>0.0.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
   </dependencies>
 

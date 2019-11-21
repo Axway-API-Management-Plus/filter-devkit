@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.axway.apigw</groupId>
     <artifactId>filter-devkit</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>0</version>
   </parent>
   <artifactId>filter-devkit-dynamic</artifactId>
 
@@ -11,7 +11,7 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>filter-devkit-runtime</artifactId>
-      <version>0.0.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jdt</groupId>
@@ -32,24 +32,25 @@
   <build>
     <plugins>
       <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
         <executions>
           <execution>
-            <id>copy</id>
-            <phase>package</phase>
-            <configuration>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>org.eclipse.jdt</groupId>
-                  <artifactId>ecj</artifactId>
-                  <version>${org.eclipse.jdt.version}</version>
-                  <type>jar</type>
-                  <overWrite>true</overWrite>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
+            <id>attach-sources</id>
             <goals>
-              <goal>copy</goal>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
             </goals>
           </execution>
         </executions>

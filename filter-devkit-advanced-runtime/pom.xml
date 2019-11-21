@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.axway.apigw</groupId>
     <artifactId>filter-devkit</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>0</version>
   </parent>
   <artifactId>filter-devkit-advanced-runtime</artifactId>
 
@@ -11,7 +11,7 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>filter-devkit-runtime</artifactId>
-      <version>0.0.4-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
   </dependencies>
   
@@ -30,6 +30,30 @@
             <phase>package</phase>
             <goals>
               <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
             </goals>
           </execution>
         </executions>
