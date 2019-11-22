@@ -1083,7 +1083,7 @@ public class MavenizerRepository {
 	}
 
 	public void setDependencies(RepositorySystem system, RepositorySystemSession session, Model target, Set<File> scanned, boolean all) {
-		Map<String, MetaPOM> metaPoms = new HashMap<String, MetaPOM>(new MavenMetaMap(scanned));
+		//Map<String, MetaPOM> metaPoms = new HashMap<String, MetaPOM>(new MavenMetaMap(scanned));
 
 		/*
 		 * The excluded map contains the list of computed exclusions. It is built in two
@@ -1143,13 +1143,13 @@ public class MavenizerRepository {
 			target.setDependencyManagement(managed);
 		}
 
-		Set<String> repositoryIds = new HashSet<String>();
+		//Set<String> repositoryIds = new HashSet<String>();
 
 		List<org.apache.maven.model.Dependency> dependencies = target.getDependencies();
 		List<org.apache.maven.model.Dependency> managedDependencies = managed.getDependencies();
-		List<Repository> repositories = target.getRepositories();
+		//List<Repository> repositories = target.getRepositories();
 
-		repositories.clear();
+		//repositories.clear();
 
 		for (Artifact artifact : filtered) {
 			org.apache.maven.model.Dependency dependency = new org.apache.maven.model.Dependency();
@@ -1184,29 +1184,29 @@ public class MavenizerRepository {
 			managedDependencies.add(dependency);
 
 			if (all || requested.contains(artifact)) {
-				CollectResult collect = collected.get(ArtifactIdUtils.toId(artifact));
-
-				if (collect != null) {
-					MetaPOM pom = metaPoms.get(ArtifactIdUtils.toId(ArtifactDescriptorUtils.toPomArtifact(artifact)));
-
-					if (pom != null) {
-						for (Repository repository : pom.getModel().getRepositories()) {
-							repository = repository(repository);
-
-							if (repository != null) {
-								String id = repository.getId();
-
-								if (repositoryIds.add(id)) {
-									for (RemoteRepository remote : collect.getRoot().getRepositories()) {
-										if (remote.getId().equals(repository.getId())) {
-											repositories.add(repository);
-										}
-									}
-								}
-							}
-						}
-					}
-				}
+//				CollectResult collect = collected.get(ArtifactIdUtils.toId(artifact));
+//
+//				if (collect != null) {
+//					MetaPOM pom = metaPoms.get(ArtifactIdUtils.toId(ArtifactDescriptorUtils.toPomArtifact(artifact)));
+//
+//					if (pom != null) {
+//						for (Repository repository : pom.getModel().getRepositories()) {
+//							repository = repository(repository);
+//
+//							if (repository != null) {
+//								String id = repository.getId();
+//
+//								if (repositoryIds.add(id)) {
+//									for (RemoteRepository remote : collect.getRoot().getRepositories()) {
+//										if (remote.getId().equals(repository.getId())) {
+//											repositories.add(repository);
+//										}
+//									}
+//								}
+//							}
+//						}
+//					}
+//				}
 
 				dependency = new org.apache.maven.model.Dependency();
 

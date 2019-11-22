@@ -1,6 +1,15 @@
 <entityStoreData xmlns="http://www.vordel.com/2005/06/24/entityStore">
 <metaInfo flags="138">
 	<exportRoots>
+		<key type='CircuitContainer'>
+			<id field='name' value='Training'/>
+			<key type='FilterCircuit'>
+				<id field='name' value='TypeSet'/>
+			</key>
+		</key>
+		<key type='ESConfiguration'>
+			<id field='name' value='Entity Store Configuration'/>
+		</key>
 		<key type='NetService'>
 			<id field='name' value='Service'/>
 			<key type='HTTP'>
@@ -11,20 +20,11 @@
 				</key>
 			</key>
 		</key>
-		<key type='ESConfiguration'>
-			<id field='name' value='Entity Store Configuration'/>
-		</key>
-		<key type='CircuitContainer'>
-			<id field='name' value='Training'/>
-			<key type='FilterCircuit'>
-				<id field='name' value='TypeSet'/>
-			</key>
-		</key>
 	</exportRoots>
 	<typeVersions>
 		<type name="CircuitContainer" version="1"/>
 		<type name="CircuitReference" version="2"/>
-		<type name="ESConfiguration" version="30"/>
+		<type name="ESConfiguration" version="21"/>
 		<type name="Entity" version="0"/>
 		<type name="Filter" version="5"/>
 		<type name="FilterCircuit" version="4"/>
@@ -40,7 +40,7 @@
 		<type name="ScriptContextCallFilter" version="1"/>
 		<type name="SocketProtocol" version="1"/>
 		<type name="SoftCircuitReference" version="0"/>
-		<type name="URIHandler" version="6"/>
+		<type name="URIHandler" version="5"/>
 		<type name="XMLFirewall" version="9"/>
 	</typeVersions>
 	<realizedTypes><![CDATA[
@@ -69,7 +69,7 @@
         <field cardinality="?" default="-1" name="corsProfile" type="^CORS"/>
     </entityType>
 <entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" extends="RootChild" name="ESConfiguration">
-        <constant name="_version" type="integer" value="30"/>
+        <constant name="_version" type="integer" value="21"/>
         <!--
             Give this singleton a key.
         -->
@@ -129,14 +129,13 @@
         </field>
 	</entityType>
 <entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" abstract="true" extends="Entity" name="URIHandler">
-        <constant name="_version" type="integer" value="6"/>
+        <constant name="_version" type="integer" value="5"/>
         <constant name="class" type="string" value="com.vordel.dwe.http.URIHandler"/>
 		<field cardinality="1" default="" isKey="true" name="uriprefix" type="string"/>
         <field cardinality="1" default="*" isKey="true" name="httpMethod" type="string"/>
     	<field cardinality="1" default="LONGEST" name="pathMatching" type="string"/> <!-- EXACT, LONGEST -->
         <field cardinality="?" default="-1" name="corsProfile" type="^CORS"/>
     	<field cardinality="1" default="HTTP" name="corsUsage" type="string"/> <!-- HTTP, URIHANDLER -->
-        <field cardinality="1" default="true" name="trafficMonitoringEnabled" type="boolean"/>
 	</entityType>
 <entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" extends="URIHandler" name="XMLFirewall">
     <constant name="_version" type="integer" value="9"/>
@@ -225,106 +224,6 @@
 </entityStoreData>
 	]]></realizedTypes>
 </metaInfo>
-<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="XMLFirewall">
-	<key type='NetService'>
-		<id field='name' value='Service'/>
-		<key type='HTTP'>
-			<id field='name' value='Default Services'/>
-		</key>
-	</key>
-	<fval name="corsProfile"><value contentType="reference">-1</value></fval>
-	<fval name="corsUsage"><value>HTTP</value></fval>
-	<fval name="enableAccessLogging"><value>0</value></fval>
-	<fval name="enabled"><value>1</value></fval>
-	<fval name="evaluate"><value>1</value></fval>
-	<fval name="filterCircuit"><value contentType="reference">
-<key type='CircuitContainer'><id field='name' value='Training'/><key type='FilterCircuit'><id field='name' value='TypeSet'/></key></key>	</value></fval>
-	<fval name="httpMethod"><value>*</value></fval>
-	<fval name="logMask"><value>2</value></fval>
-	<fval name="pathMatching"><value>LONGEST</value></fval>
-	<fval name="payloadMask"><value>0</value></fval>
-	<fval name="trafficMonitoringEnabled"><value>1</value></fval>
-	<fval name="uriprefix"><value>/typeset</value></fval>
-</entity>
-<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="PortableCircuitReference">
-	<key type='NetService'>
-		<id field='name' value='Service'/>
-		<key type='HTTP'>
-			<id field='name' value='Default Services'/>
-			<key type='XMLFirewall'>
-				<id field='uriprefix' value='/typeset'/>
-				<id field='httpMethod' value='*'/>
-			</key>
-		</key>
-	</key>
-	<fval name="circuitPK"><value contentType="reference">-1</value></fval>
-	<fval name="evaluate"><value>true</value></fval>
-	<fval name="name"><value>CUSTOM_POLICY_RSP</value></fval>
-	<fval name="priority"><value>3</value></fval>
-</entity>
-<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="SoftCircuitReference">
-	<key type='NetService'>
-		<id field='name' value='Service'/>
-		<key type='HTTP'>
-			<id field='name' value='Default Services'/>
-			<key type='XMLFirewall'>
-				<id field='uriprefix' value='/typeset'/>
-				<id field='httpMethod' value='*'/>
-			</key>
-		</key>
-	</key>
-	<fval name="circuitPK"><value>system.policy.request</value></fval>
-	<fval name="evaluate"><value>1</value></fval>
-	<fval name="name"><value>GLOBAL_POLICY_REQ</value></fval>
-	<fval name="priority"><value>0</value></fval>
-</entity>
-<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="PortableCircuitReference">
-	<key type='NetService'>
-		<id field='name' value='Service'/>
-		<key type='HTTP'>
-			<id field='name' value='Default Services'/>
-			<key type='XMLFirewall'>
-				<id field='uriprefix' value='/typeset'/>
-				<id field='httpMethod' value='*'/>
-			</key>
-		</key>
-	</key>
-	<fval name="circuitPK"><value contentType="reference">-1</value></fval>
-	<fval name="evaluate"><value>true</value></fval>
-	<fval name="name"><value>CUSTOM_POLICY_REQ</value></fval>
-	<fval name="priority"><value>1</value></fval>
-</entity>
-<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="SoftCircuitReference">
-	<key type='NetService'>
-		<id field='name' value='Service'/>
-		<key type='HTTP'>
-			<id field='name' value='Default Services'/>
-			<key type='XMLFirewall'>
-				<id field='uriprefix' value='/typeset'/>
-				<id field='httpMethod' value='*'/>
-			</key>
-		</key>
-	</key>
-	<fval name="circuitPK"><value>system.policy.response</value></fval>
-	<fval name="evaluate"><value>1</value></fval>
-	<fval name="name"><value>GLOBAL_POLICY_RSP</value></fval>
-	<fval name="priority"><value>4</value></fval>
-</entity>
-<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="HTTP">
-	<key type='NetService'>
-		<id field='name' value='Service'/>
-	</key>
-	<fval name="name"><value>Default Services</value></fval>
-</entity>
-<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="NetService">
-	<fval name="name"><value>Service</value></fval>
-</entity>
-<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="ESConfiguration">
-	<fval name="name"><value>Entity Store Configuration</value></fval>
-	<fval name="passphraseTest"><value>aHR0cDsvL3d3dy52b3JkZWwuY29t</value></fval>
-	<fval name="productKey"><value>VordelGateway</value></fval>
-	<fval name="version"><value>7.7.0</value></fval>
-</entity>
 <entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="FilterCircuit">
 	<key type='CircuitContainer'>
 		<id field='name' value='Training'/>
@@ -377,11 +276,109 @@
 	<fval name="logMaskType"><value>SERVICE</value></fval>
 	<fval name="logSuccess"><value>Filter passed</value></fval>
 	<fval name="name"><value>Scripting Context Call : Generate Instance TypeSet</value></fval>
-	<fval name="successNode"><value contentType="reference">-1</value></fval>
-	<fval name="useInputFrame"><value>0</value></fval>
+	<fval name="useInputFrame"><value>1</value></fval>
 	<fval name="useOutputFrame"><value>0</value></fval>
 </entity>
 <entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="CircuitContainer">
 	<fval name="name"><value>Training</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="ESConfiguration">
+	<fval name="name"><value>Entity Store Configuration</value></fval>
+	<fval name="passphraseTest"><value>aHR0cDsvL3d3dy52b3JkZWwuY29t</value></fval>
+	<fval name="productKey"><value>VordelGateway</value></fval>
+	<fval name="version"><value>7.5.3</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="XMLFirewall">
+	<key type='NetService'>
+		<id field='name' value='Service'/>
+		<key type='HTTP'>
+			<id field='name' value='Default Services'/>
+		</key>
+	</key>
+	<fval name="corsProfile"><value contentType="reference">-1</value></fval>
+	<fval name="corsUsage"><value>HTTP</value></fval>
+	<fval name="enableAccessLogging"><value>0</value></fval>
+	<fval name="enabled"><value>1</value></fval>
+	<fval name="evaluate"><value>1</value></fval>
+	<fval name="filterCircuit"><value contentType="reference">
+<key type='CircuitContainer'><id field='name' value='Training'/><key type='FilterCircuit'><id field='name' value='TypeSet'/></key></key>	</value></fval>
+	<fval name="httpMethod"><value>*</value></fval>
+	<fval name="logMask"><value>2</value></fval>
+	<fval name="pathMatching"><value>LONGEST</value></fval>
+	<fval name="payloadMask"><value>0</value></fval>
+	<fval name="uriprefix"><value>/typeset</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="SoftCircuitReference">
+	<key type='NetService'>
+		<id field='name' value='Service'/>
+		<key type='HTTP'>
+			<id field='name' value='Default Services'/>
+			<key type='XMLFirewall'>
+				<id field='uriprefix' value='/typeset'/>
+				<id field='httpMethod' value='*'/>
+			</key>
+		</key>
+	</key>
+	<fval name="circuitPK"><value>system.policy.response</value></fval>
+	<fval name="evaluate"><value>1</value></fval>
+	<fval name="name"><value>GLOBAL_POLICY_RSP</value></fval>
+	<fval name="priority"><value>4</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="SoftCircuitReference">
+	<key type='NetService'>
+		<id field='name' value='Service'/>
+		<key type='HTTP'>
+			<id field='name' value='Default Services'/>
+			<key type='XMLFirewall'>
+				<id field='uriprefix' value='/typeset'/>
+				<id field='httpMethod' value='*'/>
+			</key>
+		</key>
+	</key>
+	<fval name="circuitPK"><value>system.policy.request</value></fval>
+	<fval name="evaluate"><value>1</value></fval>
+	<fval name="name"><value>GLOBAL_POLICY_REQ</value></fval>
+	<fval name="priority"><value>0</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="PortableCircuitReference">
+	<key type='NetService'>
+		<id field='name' value='Service'/>
+		<key type='HTTP'>
+			<id field='name' value='Default Services'/>
+			<key type='XMLFirewall'>
+				<id field='uriprefix' value='/typeset'/>
+				<id field='httpMethod' value='*'/>
+			</key>
+		</key>
+	</key>
+	<fval name="circuitPK"><value contentType="reference">-1</value></fval>
+	<fval name="evaluate"><value>true</value></fval>
+	<fval name="name"><value>CUSTOM_POLICY_REQ</value></fval>
+	<fval name="priority"><value>1</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="PortableCircuitReference">
+	<key type='NetService'>
+		<id field='name' value='Service'/>
+		<key type='HTTP'>
+			<id field='name' value='Default Services'/>
+			<key type='XMLFirewall'>
+				<id field='uriprefix' value='/typeset'/>
+				<id field='httpMethod' value='*'/>
+			</key>
+		</key>
+	</key>
+	<fval name="circuitPK"><value contentType="reference">-1</value></fval>
+	<fval name="evaluate"><value>true</value></fval>
+	<fval name="name"><value>CUSTOM_POLICY_RSP</value></fval>
+	<fval name="priority"><value>3</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="HTTP">
+	<key type='NetService'>
+		<id field='name' value='Service'/>
+	</key>
+	<fval name="name"><value>Default Services</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="NetService">
+	<fval name="name"><value>Service</value></fval>
 </entity>
 </entityStoreData>

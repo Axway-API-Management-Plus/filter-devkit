@@ -77,6 +77,7 @@
             <id>production-base-unpack</id>
             <phase>package</phase>
             <configuration>
+              <markersDirectory>${project.build.directory}/dependency-maven-plugin-markers/production-base</markersDirectory>
               <outputDirectory>${project.build.directory}/production-base</outputDirectory>
               <includeGroupIds>${project.groupId}</includeGroupIds>
               <includeArtifactIds>filter-devkit-runtime</includeArtifactIds>
@@ -103,6 +104,7 @@
             <id>production-full-unpack</id>
             <phase>package</phase>
             <configuration>
+              <markersDirectory>${project.build.directory}/dependency-maven-plugin-markers/production-full</markersDirectory>
               <outputDirectory>${project.build.directory}/production-full</outputDirectory>
               <includeGroupIds>${project.groupId}</includeGroupIds>
               <includeArtifactIds>filter-devkit-advanced-runtime,filter-devkit-runtime</includeArtifactIds>
@@ -129,6 +131,7 @@
             <id>developer-unpack</id>
             <phase>package</phase>
             <configuration>
+              <markersDirectory>${project.build.directory}/dependency-maven-plugin-markers/developer</markersDirectory>
               <outputDirectory>${project.build.directory}/developer</outputDirectory>
               <includeGroupIds>${project.groupId}</includeGroupIds>
               <includeArtifactIds>filter-devkit-advanced-runtime,filter-devkit-runtime</includeArtifactIds>
