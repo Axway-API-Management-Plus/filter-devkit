@@ -166,7 +166,7 @@ public class MessageAttributesLayers extends AbstractMap<String, Object> {
 			if (whiteouts.contains(key)) {
 				/* value is hidden by a whiteout */
 			} else if (forceStoreLookup | storeLookup) {
-				if (store.containsKey(key)) {
+				if ((store != null) && store.containsKey(key)) {
 					/* apply get to local layer if the key is in store or whiteouts */
 					value = store.get(key);
 				} else if (parent != null) {
@@ -179,19 +179,16 @@ public class MessageAttributesLayers extends AbstractMap<String, Object> {
 		}
 
 		private boolean containsKey(Object key, boolean forceStoreLookup) {
-			/*
-			 * this implementation of containsKey will return true for stored values and
-			 * whiteouts. Be aware that entrySet() and keySet() will skip whiteouts (they
-			 * won't be seen by iterators). Only this method allow to check for whiteouts.
-			 */
-			boolean contained = whiteouts.contains(key);
+			boolean contained = false;
 
 			if (forceStoreLookup | storeLookup) {
-				contained |= store.containsKey(key);
+				if (!whiteouts.contains(key)) {
+					contained |= (store != null) && store.containsKey(key);
 
-				if ((!contained) && (parent != null)) {
-					/* if the key is not known, delegates to parent */
-					contained = parent.containsKey(key, forceStoreLookup);
+					if ((!contained) && (parent != null)) {
+						/* if the key is not known, delegates to parent */
+						contained = parent.containsKey(key, forceStoreLookup);
+					}
 				}
 			}
 
@@ -200,7 +197,7 @@ public class MessageAttributesLayers extends AbstractMap<String, Object> {
 
 		@Override
 		public Object get(Object key) {
-			return get(key, false);
+			return get(key, true);
 		}
 
 		@Override
@@ -223,7 +220,7 @@ public class MessageAttributesLayers extends AbstractMap<String, Object> {
 				 */
 				previous = parent.get(key);
 				store.put(key, value);
-			} else if (store != null) {
+			} else {
 				/*
 				 * last case, no key in hierarchy, juste store mapping in backing store.
 				 */
@@ -238,7 +235,7 @@ public class MessageAttributesLayers extends AbstractMap<String, Object> {
 
 		@Override
 		public boolean containsKey(Object key) {
-			return containsKey(key, false);
+			return containsKey(key, true);
 		}
 
 		@Override

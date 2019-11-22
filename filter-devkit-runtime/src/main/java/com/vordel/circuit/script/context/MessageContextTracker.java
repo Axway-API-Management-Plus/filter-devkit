@@ -60,10 +60,9 @@ public final class MessageContextTracker {
 
 	private MessageContextTracker(Message message) {
 		MessageAttributesLayers union = new MessageAttributesLayers();
-		Map<String, Object> globals = null;
 
 		/* retrieve top level attribute map */
-		message.push(globals = message.pop());
+		Map<String, Object> globals = message.pop();
 
 		/* push global layer in attributes union */
 		union.push(new Layer(globals, new HashSet<Object>(), new HashSet<Object>(), null, false));
