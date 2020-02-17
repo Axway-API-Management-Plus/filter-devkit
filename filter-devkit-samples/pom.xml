@@ -9,7 +9,7 @@
 
 	<properties>
 		<aws.sdk.version>1.11.538</aws.sdk.version>
-		<nimbus.jose.version>4.35</nimbus.jose.version>
+		<nimbus.jose.version>7.9</nimbus.jose.version>
 	</properties>
   
   <dependencies>
