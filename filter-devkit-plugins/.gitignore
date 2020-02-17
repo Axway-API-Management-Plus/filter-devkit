@@ -3,6 +3,3 @@
 /.settings
 /.classpath
 /target/
-/.pydevproject
-/src/main/quickfilters/*/build
-

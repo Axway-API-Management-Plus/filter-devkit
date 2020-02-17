@@ -1,0 +1,144 @@
+<ui>
+	<panel columns="2" span="2" fill="true">
+		<panel columns="2">
+			<!-- filter name attribute -->
+			<NameAttribute />
+		</panel>
+
+		<panel columns="2" span="2">
+			<tabFolder span = "2">
+				<tab label="SIGNATURE_ALGORITHM_TAB">
+					<panel columns="2" span="2" fill="false">
+						<group label="SIGNATURE_ALGORITHM_GROUP" span="2">
+							<RadioGroupAttribute field="signatureAlgorithmType" columns="2">
+								<choice span="2" value="0" label="SIGNATURE_ALGORITHMLEVEL" />
+								<panel columns="2" span="2">
+									<TextAttribute field="signatureAlgorithmLevel" label="SIGNATURE_ALGORITHMLEVEL_LABEL" />
+								</panel>
+								<choice span="2" value="1" label="SIGNATURE_ALGORITHMFIXED" />
+								<panel columns="2" span="2">
+									<TextAttribute field="signatureAlgorithmFixed" label="SIGNATURE_ALGORITHMFIXED_LABEL" />
+								</panel>
+							</RadioGroupAttribute>
+						</group>
+
+						<group label="SIGNATURE_KEY_GROUP" span="2">
+							<RadioGroupAttribute field="signatureKeyType" columns="2">
+								<choice span="2" value="0" label="SIGNATURE_KEYINSTORE" />
+								<panel columns="2" span="2">
+									<certSelector field="signatureCertificate" label="SIGNATURE_CERTIFICATE_LABEL" view="privateKey"/>
+									<group label="SIGNATURE_KEYID_LABEL" columns="2" span="2">
+										<panel span="2">
+											<RadioGroupAttribute field="signatureKeyId" columns="2">
+												<choice span="2" value="0" label="SIGNATURE_KEYID_ALIAS" />
+												<choice span="2" value="1" label="SIGNATURE_KEYID_X5T" />
+												<choice span="2" value="2" label="SIGNATURE_KEYID_X5T256" />
+											</RadioGroupAttribute>
+										</panel>
+									</group>
+								</panel>
+								<choice span="2" value="1" label="SIGNATURE_KEYSELECTOR" />
+								<panel columns="2" span="2">
+									<TextAttribute field="signatureKeySelector" label="SIGNATURE_KEYSELECTOR_LABEL" />
+									<TextAttribute field="signatureKeyIdSelector" label="SIGNATURE_KEYSELECTORID_LABEL" />
+								</panel>
+							</RadioGroupAttribute>
+						</group>
+					</panel>
+				</tab>
+				<tab label="SIGNATURE_JWSHEADER_TAB">
+					<panel columns="2" span="2" fill="false">
+						<ButtonAttribute field="generateTYP" label="CLAIM_TYP_LABEL" span="2" />
+						<ButtonAttribute field="generateKID" label="CLAIM_KID_LABEL" span="2" />
+						<TextAttribute field="generateJKU" label="CLAIM_JKU_LABEL" required="false" />
+						<group label="SIGNATURE_JWSCERTIFICATE_GROUP" columns="2" span="2">
+							<ButtonAttribute field="generateJWK" label="CLAIM_JWK_LABEL" span="2" />
+							<ButtonAttribute field="generateX5T" label="CLAIM_X5T_LABEL" span="2" />
+							<ButtonAttribute field="generateX5T256" label="CLAIM_X5T256_LABEL" span="2" />
+							<ButtonAttribute field="generateX5C" label="CLAIM_X5C_LABEL" span="2" />
+							<TextAttribute field="generateX5U" label="CLAIM_X5U_LABEL" required="false" />
+						</group>
+					</panel>
+				</tab>
+				<tab label="SIGNATURE_JWSPAYLOAD_TAB">
+					<panel columns="2" span="2" fill="false">
+						<RadioGroupAttribute field="signaturePayloadType" columns="2" span="2">
+							<choice span="2" value="0" label="SIGNATURE_JWS" />
+							<panel columns="2" span="2">
+								<ButtonAttribute field="generateCTY" label="CLAIM_CTY_LABEL" span="2" />
+								<ButtonAttribute field="deflatePayload" label="CLAIM_DEF_LABEL" span="2" />
+							</panel>
+							<choice span="2" value="1" label="SIGNATURE_JWT" />
+							<scrollpanel>
+								<panel columns="2" span="2">
+									<panel columns="2" span="2">
+										<TextAttribute label="SIGNATURE_JWTTEMPLATE_LABEL" field="signaturePayloadSelector" />
+										<TextAttribute field="generateISS" label="CLAIM_ISS_LABEL" required="false" />
+										<TextAttribute field="generateSUB" label="CLAIM_SUB_LABEL" required="false" />
+										<TextAttribute field="generateJTI" label="CLAIM_JTI_LABEL" required="false" />
+										<TextAttribute field="generateAUD" label="CLAIM_AUD_LABEL" required="false" />
+									</panel>
+									<group label="JWSPAYLOAD_LIFETIME_GROUP" columns="2" span="2">
+										<panel columns="2" span="2">
+											<TextAttribute field="generateNBF" label="CLAIM_NBF_LABEL" required="false" />
+											<TextAttribute field="generateEXP" label="CLAIM_EXP_LABEL" required="false" />
+											<ButtonAttribute field="generateIAT" label="CLAIM_IAT_LABEL" span="2" />
+										</panel>
+									</group>
+									<group label="SIGNATURE_OPENID_GROUP" columns="2" span="2">
+										<panel columns="2" span="2">
+											<TextAttribute field="generateOIDATH" label="CLAIM_OIDATH_LABEL" required="false" />
+											<TextAttribute field="generateOIDCH" label="CLAIM_OIDCH_LABEL" required="false" />
+										</panel>
+									</group>
+								</panel>
+							</scrollpanel>
+						</RadioGroupAttribute>
+					</panel>
+				</tab>
+				<tab label="SIGNATURE_ADVANCED_TAB">
+					<panel columns="2" span="2" fill="false">
+						<FieldTable field="headerExtensions" label="CLAIM_CRIT_LABEL" />
+						<FieldTable field="payloadAudiences" label="CLAIMS_AUD_LABEL" />
+						<TextAttribute field="signaturePrivateKeySelector" label="SIGNATURE_PRIVATEKEY_LABEL" />
+						<TextAttribute field="signatureKeyChainSelector" label="SIGNATURE_KEYCHAIN_LABEL" />
+						<ReferenceSelector
+							field="headerExtensionCircuit"
+							selectableTypes="FilterCircuit"
+							searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+							label="JWSEXTENSIONPOLICY_LABEL"
+							title="JWSEXTENSIONPOLICY_TITLE" />
+						<ReferenceSelector
+							field="payloadExtensionCircuit"
+							selectableTypes="FilterCircuit"
+							searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+							label="JWTEXTENSIONPOLICY_LABEL"
+							title="JWTEXTENSIONPOLICY_TITLE" />
+					</panel>
+				</tab>
+				<tab label="SIGNATURE_OUTPUT_TAB">
+					<panel columns="2" span="2" fill="false">
+						<ButtonAttribute field="signatureOutputBody" label="SIGNATURE_OUTBODY" span="2" />
+						<ButtonAttribute field="signatureOutputAttribute" label="SIGNATURE_OUTATTRIBUTE" span="2" />
+						<panel columns="2" span="2" label="SIGNATURE_OUTATTRIBUTE_PANEL">
+							<MsgAttrAttribute field="signatureOutputAttributeName" label="OUTPUT_ATTRIBUTENAME_LABEL" />
+						</panel>
+						<ButtonAttribute field="signatureOutputHeader" label="SIGNATURE_OUTHEADER" span="2" />
+						<panel columns="2" span="2" label="SIGNATURE_OUTHEADER_PANEL">
+							<TextAttribute field="signatureOutputHeaderName" label="OUTPUT_HEADERNAME_LABEL" required="false" />
+							<ButtonAttribute field="overwriteExistingHeader" label="OUTPUT_HEADER_OVERWRITE" span="2" />
+							<panel columns="1" span="2">
+								<RadioGroupAttribute field="signatureOutputHeaderLocation" columns="2">
+									<choice value="body" label="OUTPUT_HEADERS_BODY" />
+									<choice value="httpheaders" label="OUTPUT_HEADERS_MESSAGE" />
+								</RadioGroupAttribute>
+							</panel>
+						</panel>
+						<binding driver="SIGNATURE_OUTATTRIBUTE" driven="SIGNATURE_OUTATTRIBUTE_PANEL" class="com.vordel.client.ui.declarative.Enabler" />
+						<binding driver="SIGNATURE_OUTHEADER" driven="SIGNATURE_OUTHEADER_PANEL" class="com.vordel.client.ui.declarative.Enabler" />
+					</panel>
+				</tab>
+			</tabFolder>
+		</panel>
+	</panel>
+</ui>

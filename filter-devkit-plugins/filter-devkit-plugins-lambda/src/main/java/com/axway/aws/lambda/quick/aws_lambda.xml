@@ -1,0 +1,30 @@
+<ui>
+	<panel columns="2" span="2">
+		<NameAttribute />
+
+		<group label="AWS_SETTINGS" fill="false" span="2">
+			<ComboAttribute field="region" label="AWS_REGION_LABEL" required="true" contentSource="com.vordel.circuit.aws.RegionUtils.regions" stretch="true" />
+			<ReferenceSelector field="clientConfiguration" required="true" selectableTypes="AWSClientConfiguration" label="AWS_CLIENT_CONFIGURATION" title="AWS_CLIENT_CONFIGURATION_DIALOG_TITLE" searches="AWSSettings" />
+			<RadioGroupAttribute field="authAWSWith" fill="false" columns="2">
+				<choice value="ASSUME_ROLE_TRUE" label="RADIO_ASSUME_ROLE" span="2" />
+				<panel columns="2" span="2" fill="false">
+					<TextAttribute field="awsRoleARN" label="AWS_LAMBDA_ROLE_ARN_LABEL" displayName="AWS_LAMBDA_ROLE_ARN_NAME" />
+					<TextAttribute field="awsRoleSessionName" label="AWS_LAMBDA_ROLE_SESSIONNAME_LABEL" displayName="AWS_LAMBDA_ROLE_SESSIONNAME_NAME" />
+					<TextAttribute field="awsExternalId" label="AWS_EXTERNAL_ID_LABEL" displayName="AWS_EXTERNAL_ID_NAME" />
+					<TextAttribute field="awsSessionDuration" label="AWS_SESSION_DURATION_LABEL" displayName="AWS_SESSION_DURATION_NAME" />
+				</panel>
+				<choice value="ASSUME_ROLE_FALSE" label="RADIO_AWS_CREDENTIAL" span="2" />
+				<panel columns="2" span="2" fill="false">
+					<ReferenceSelector field="awsCredential" required="true" selectableTypes="ApiKeyProfile" label="CHOOSE_AWS_CREDENTTIAL_LABEL" title="CHOOSE_AWS_CREDENTTIAL_DIALOG_TITLE" searches="AuthProfilesGroup,ApiKeyGroup,ApiKeyProviderProfile" />
+				</panel>
+			</RadioGroupAttribute>
+
+		</group>
+
+		<!-- Chat Settings -->
+		<group label="AWS_LAMBDA_SETTINGS_LABEL" columns="2" span="2" fill="false">
+			<TextAttribute field="functionName" label="AWS_LAMBDA_FUNCTION_LABEL" displayName="AWS_LAMBDA_FUNCTION_NAME" />
+		</group>
+
+	</panel>
+</ui>

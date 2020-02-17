@@ -1,0 +1,5 @@
+<entityStoreData>
+	<entityType extends="Filter" name="GroovyTrueTutorial">
+		<constant name="_version" type="integer" value="1" />
+	</entityType>
+</entityStoreData>

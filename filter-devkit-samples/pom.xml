@@ -6,11 +6,42 @@
     <version>0</version>
   </parent>
   <artifactId>filter-devkit-samples</artifactId>
+
+	<properties>
+		<aws.sdk.version>1.11.538</aws.sdk.version>
+		<nimbus.jose.version>4.35</nimbus.jose.version>
+	</properties>
   
   <dependencies>
     <dependency>
+      <groupId>com.nimbusds</groupId>
+      <artifactId>nimbus-jose-jwt</artifactId>
+      <version>${nimbus.jose.version}</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>jcip-annotations</artifactId>
+          <groupId>com.github.stephenc.jcip</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-lambda</artifactId>
+      <version>${aws.sdk.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-sts</artifactId>
+      <version>${aws.sdk.version}</version>
+    </dependency>
+    <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>filter-devkit-runtime</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>filter-devkit-advanced-runtime</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
   </dependencies>

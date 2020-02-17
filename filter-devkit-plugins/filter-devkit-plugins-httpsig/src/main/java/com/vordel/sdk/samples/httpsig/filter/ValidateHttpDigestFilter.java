@@ -13,6 +13,7 @@ import com.vordel.circuit.Message;
 import com.vordel.circuit.ext.filter.quick.QuickFilterField;
 import com.vordel.circuit.ext.filter.quick.QuickFilterType;
 import com.vordel.circuit.ext.filter.quick.QuickJavaFilterDefinition;
+import com.vordel.circuit.script.context.resources.SelectorResource;
 import com.vordel.config.Circuit;
 import com.vordel.config.ConfigContext;
 import com.vordel.el.Selector;
@@ -23,21 +24,27 @@ import com.vordel.trace.Trace;
 
 @QuickFilterType(name = "ValidateHttpDigestFilter", resources = "validate_digest.properties", ui = "validate_digest.xml")
 public class ValidateHttpDigestFilter extends QuickJavaFilterDefinition {
-	private final List<Selector<String>> selectors = new ArrayList<Selector<String>>();;
-	private boolean validateContentMD5 = false;
+	private final List<Selector<String>> requiredAlgorithms = new ArrayList<Selector<String>>();;
+	private Selector<Boolean> validateContentMD5 = null;
 
 	@QuickFilterField(name = "validateContentMD5", cardinality = "?", type = "integer")
 	private void generateContentMD5(ConfigContext ctx, Entity entity, String field) {
-		validateContentMD5 = entity.getBooleanValue(field);
+		validateContentMD5 = SelectorResource.fromLiteral(entity.getStringValue(field), Boolean.class, true);
 	}
 
 	@QuickFilterField(name = "digestAlgorithms", cardinality = "*", type = "string")
 	private void setDigestAlgorithms(ConfigContext ctx, Entity entity, String field) {
 		Collection<String> values = entity.getStringValues(field);
 
+		requiredAlgorithms.clear();
+
 		if (values != null) {
 			for (String value : values) {
-				selectors.add(new Selector<String>(value, String.class));
+				Selector<String> selector = SelectorResource.fromLiteral(value, String.class, true);
+
+				if (selector != null) {
+					requiredAlgorithms.add(selector);
+				}
 			}
 		}
 	}
@@ -49,7 +56,7 @@ public class ValidateHttpDigestFilter extends QuickJavaFilterDefinition {
 		 * indicated if this header is mandatory. Any invalid hash in headers (even if
 		 * not requested) will trigger an error.
 		 */
-		boolean result = validateContentMD5(m, validateContentMD5);
+		boolean result = validateContentMD5(m, validateContentMD5 == null ? false : validateContentMD5.substitute(m));
 
 		if (result) {
 			/* validate digest header and record available algorithms */
@@ -59,7 +66,7 @@ public class ValidateHttpDigestFilter extends QuickJavaFilterDefinition {
 				/* if validation was successfull, resolve requested algorithms */
 				Set<DigestAlgorithm> required = new HashSet<DigestAlgorithm>();
 
-				for (Selector<String> selector : selectors) {
+				for (Selector<String> selector : requiredAlgorithms) {
 					String value = selector.substitute(m);
 
 					if (value != null) {
@@ -100,8 +107,8 @@ public class ValidateHttpDigestFilter extends QuickJavaFilterDefinition {
 
 	@Override
 	public void detachFilter() {
-		validateContentMD5 = false;
-		selectors.clear();
+		validateContentMD5 = null;
+		requiredAlgorithms.clear();
 	}
 
 	public static boolean validateContentMD5(Message msg, boolean failIfMissing) {

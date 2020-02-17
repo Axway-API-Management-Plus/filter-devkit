@@ -1,0 +1,56 @@
+<ui>
+	<panel columns="2">
+		<panel columns="2" fill="false">
+			<!-- filter name attribute -->
+			<NameAttribute />
+		</panel>
+
+		<panel columns="2" span="2" fill="false">
+			<tabFolder span = "2">
+				<tab label="SIGNATURECONFIG_TAB">
+					<panel columns="2" span="2" fill="false">
+						<group label="SIGNATURE_TYPE" span="2">
+							<RadioGroupAttribute field="signatureType" columns="2" span="2">
+								<choice span="2" value="0" label="SIGNATURE_HEADER" />
+								<choice span="2" value="1" label="SIGNATURE_AUTHENTICATE" />
+							</RadioGroupAttribute>
+						</group>
+						<group label="SIGNATURE_KEYTYPE" span="2">
+							<RadioGroupAttribute field="signatureKeyType" columns="2" span="2">
+								<choice span="2" value="0" label="SIGNATURE_KEYINSTORE" />
+								<panel columns="2" span="2" fill="false">
+									<RadioGroupAttribute field="signatureKeyId" columns="2" span="2">
+										<choice span="2" value="0" label="SIGNATURE_KEYID_ALIAS" />
+										<choice span="2" value="1" label="SIGNATURE_KEYID_X5T" />
+									</RadioGroupAttribute>
+								</panel>
+								<choice span="2" value="1" label="SIGNATURE_KEYSELECTOR" />
+								<panel columns="2" span="2" fill="false">
+									<TextAttribute field="signatureKeySelector"/>
+								</panel>
+								<choice span="2" value="2" label="SIGNATURE_KEYCIRCUIT" />
+								<panel columns="2" span="2" fill="false">
+									<MsgAttrAttribute field="signatureCircuitKeyId" label="INPUT_KEYID_LABEL" />
+									<TextAttribute field="signatureCircuitKey" label="OUTPUT_KEY_LABEL" />
+									<ReferenceSelector
+										field="signatureCircuit"
+										selectableTypes="FilterCircuit"
+										searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+										label="SIGNATURE_KEYCIRCUIT_LABEL"
+										title="SIGNATURE_KEYCIRCUIT_TITLE" />
+								</panel>
+							</RadioGroupAttribute>
+						</group>
+					</panel>
+				</tab>
+				<tab label="SIGNATUREHEADERS_TAB">
+					<panel columns="2" span="2" fill="false">
+						<FieldTable field="requiredHeaders" label="SIGNATURE_REQUIREDHEADERS_LABEL" />
+						<ButtonAttribute field="validateContentMD5" label="CONTENTMD5_LABEL" span="1" />
+						<FieldTable field="digestAlgorithms" label="DIGEST_ALGORITHMS_LABEL" />
+					</panel>
+				</tab>
+			</tabFolder>
+		</panel>
+	</panel>
+</ui>
