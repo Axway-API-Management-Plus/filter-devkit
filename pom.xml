@@ -50,4 +50,12 @@
       </plugins>
     </pluginManagement>
   </build>
+  
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub Axway-API-Management-Plus packages</name>
+      <url>https://maven.pkg.github.com/Axway-API-Management-Plus/filter-devkit</url>
+    </repository>
+  </distributionManagement>
 </project>
