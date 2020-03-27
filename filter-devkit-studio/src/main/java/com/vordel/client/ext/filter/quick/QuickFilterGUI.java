@@ -6,13 +6,13 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 
 import com.vordel.circuit.ext.filter.quick.QuickFilterSupport;
+import com.vordel.client.ext.filter.DefaultGUIFilterCompat;
 import com.vordel.client.manager.Images;
-import com.vordel.client.manager.filter.DefaultGUIFilter;
 import com.vordel.client.manager.wizard.VordelPage;
 import com.vordel.es.Entity;
 import com.vordel.es.EntityType;
 
-public class QuickFilterGUI extends DefaultGUIFilter {
+public class QuickFilterGUI extends DefaultGUIFilterCompat {
 	private static final String DEFAULT_NAME = "Quick Filter";
 
 	@Override
