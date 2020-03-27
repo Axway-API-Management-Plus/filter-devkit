@@ -8,6 +8,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.io.StringWriter;
+import java.nio.Buffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 
@@ -652,7 +653,7 @@ public class ScriptHelper {
 	private static char handleUnicodeEscape(CharBuffer encoded, CharBuffer escape) {
 		int remaining = 4;
 
-		escape.clear();
+		((Buffer) escape).clear(); /* Silly workaround for Java 8 >= release 211*/
 
 		while ((remaining > 0) && hasHexDigit(encoded)) {
 			/* copy escape character */
@@ -666,11 +667,11 @@ public class ScriptHelper {
 			throw new IllegalStateException("invalid unicode escape sequence");
 		}
 
-		return (char) Integer.parseInt(escape.flip().toString().toLowerCase(), 16);
+		return (char) Integer.parseInt(((Buffer) escape).flip().toString().toLowerCase(), 16);
 	}
 
 	private static char handleOctalEscape(char c, CharBuffer encoded, CharBuffer escape, int maxLength) {
-		escape.clear();
+		((Buffer) escape).clear(); /* Silly workaround for Java 8 >= release 211*/
 		escape.put(c);
 
 		/* we put the first character, report it */
@@ -684,7 +685,7 @@ public class ScriptHelper {
 			maxLength--;
 		}
 
-		return (char) Integer.parseInt(escape.flip().toString(), 8);
+		return (char) Integer.parseInt(((Buffer) escape).flip().toString(), 8);
 	}
 
 	private static boolean hasOctalDigit(CharBuffer encoded) {
