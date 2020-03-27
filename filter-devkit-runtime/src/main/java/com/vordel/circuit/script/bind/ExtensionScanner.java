@@ -21,8 +21,8 @@ import java.util.jar.JarFile;
 
 import javax.annotation.Priority;
 
-import com.vordel.circuit.ext.filter.quick.QuickJavaFilterDefinition;
 import com.vordel.circuit.ext.filter.quick.QuickFilterType;
+import com.vordel.circuit.ext.filter.quick.QuickJavaFilterDefinition;
 import com.vordel.circuit.script.context.MessageContextModule;
 import com.vordel.config.ConfigContext;
 import com.vordel.trace.Trace;
@@ -219,6 +219,8 @@ public class ExtensionScanner {
 
 				try {
 					listener.process(is);
+				} catch(RuntimeException e) {
+					Trace.debug(String.format("skipping class '%s'", name));
 				} finally {
 					is.close();
 				}
