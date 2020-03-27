@@ -43,11 +43,11 @@ public class ScriptContextCallGUIFilter extends DefaultGUIFilter {
 	}
 
 	public String[] getCategories() {
-		return new String[] { _("FILTER_GROUP_BOUNDCALL") };
+		return new String[] { resolve("FILTER_GROUP_BOUNDCALL") };
 	}
 
 	public String getTypeName() {
-		return _("SCRIPTCONTEXTCALL_PALETTE_NAME");
+		return resolve("SCRIPTCONTEXTCALL_PALETTE_NAME");
 	}
 
 	@Override
@@ -159,7 +159,7 @@ public class ScriptContextCallGUIFilter extends DefaultGUIFilter {
 
 	private class JumpToInitializerCircuit extends Action {
 		public JumpToInitializerCircuit() {
-			super(_("GOTO_INITIALIZER"));
+			super(resolve("GOTO_INITIALIZER"));
 		}
 
 		public void run() {

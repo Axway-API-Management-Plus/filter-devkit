@@ -9,8 +9,6 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.server.monitoring.RequestEventListener;
 import org.glassfish.jersey.server.spi.ContainerResponseWriter;
 
-import com.vordel.circuit.jaxrs.JerseyResponseWriter;
-
 @Provider
 public class JerseyMethodMatchListener implements RequestEventListener, ApplicationEventListener {
 	@Override

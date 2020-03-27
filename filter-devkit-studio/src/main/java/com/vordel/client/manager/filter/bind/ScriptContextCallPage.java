@@ -5,14 +5,14 @@ import java.io.InputStream;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.swt.widgets.Composite;
 
-import com.vordel.client.manager.wizard.VordelPage;
+import com.vordel.client.ext.filter.VordelPageCompat;
 
-public class ScriptContextCallPage extends VordelPage {
+public class ScriptContextCallPage extends VordelPageCompat {
 	public ScriptContextCallPage() {
 		super("ScriptContextCallPage");
 
-		setTitle(_("SCRIPTCONTEXTCALL_PAGE_TITLE"));
-		setDescription(_("SCRIPTCONTEXTCALL_PAGE_DESCRIPTION"));
+		setTitle(resolve("SCRIPTCONTEXTCALL_PAGE_TITLE"));
+		setDescription(resolve("SCRIPTCONTEXTCALL_PAGE_DESCRIPTION"));
 		setPageComplete(true);
 	}
 

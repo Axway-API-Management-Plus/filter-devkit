@@ -6,16 +6,16 @@ import java.util.Vector;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 
+import com.vordel.client.ext.filter.DefaultGUIFilterCompat;
 import com.vordel.client.manager.Images;
 import com.vordel.client.manager.Manager;
-import com.vordel.client.manager.filter.DefaultGUIFilter;
 import com.vordel.client.manager.wizard.VordelPage;
 import com.vordel.es.ESPK;
 import com.vordel.es.Entity;
 import com.vordel.es.EntityStore;
 import com.vordel.es.EntityType;
 
-public class ScriptInvocationContextGUIFilter extends DefaultGUIFilter {
+public class ScriptInvocationContextGUIFilter extends DefaultGUIFilterCompat {
 	@Override
 	public String getSmallIconId() {
 		return "copy";
@@ -34,11 +34,11 @@ public class ScriptInvocationContextGUIFilter extends DefaultGUIFilter {
 	}
 
 	public String[] getCategories() {
-		return new String[] { _("FILTER_GROUP_SCRIPTCONTEXT") };
+		return new String[] { resolve("FILTER_GROUP_SCRIPTCONTEXT") };
 	}
 
 	public String getTypeName() {
-		return _("SCRIPTCONTEXT_PALETTE_NAME");
+		return resolve("SCRIPTCONTEXT_PALETTE_NAME");
 	}
 
 	@Override

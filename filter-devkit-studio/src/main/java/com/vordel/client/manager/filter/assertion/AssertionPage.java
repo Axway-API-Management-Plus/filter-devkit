@@ -5,14 +5,14 @@ import java.io.InputStream;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.swt.widgets.Composite;
 
-import com.vordel.client.manager.wizard.VordelPage;
+import com.vordel.client.ext.filter.VordelPageCompat;
 
-public class AssertionPage extends VordelPage {
+public class AssertionPage extends VordelPageCompat {
 	public AssertionPage() {
 		super("AssertionPage");
 
-		setTitle(_("ASSERTION_PAGE_TITLE"));
-		setDescription(_("ASSERTION_PAGE_DESCRIPTION"));
+		setTitle(resolve("ASSERTION_PAGE_TITLE"));
+		setDescription(resolve("ASSERTION_PAGE_DESCRIPTION"));
 		setPageComplete(true);
 	}
 

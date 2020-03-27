@@ -5,14 +5,14 @@ import java.io.InputStream;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.swt.widgets.Composite;
 
-import com.vordel.client.manager.wizard.VordelPage;
+import com.vordel.client.ext.filter.VordelPageCompat;
 
-public class InitializerShortcutPage extends VordelPage {
+public class InitializerShortcutPage extends VordelPageCompat {
 	public InitializerShortcutPage() {
 		super("InitializerShortcutPage");
 
-		setTitle(_("INITIALIZERSHORTCUT_PAGE_TITLE"));
-		setDescription(_("INITIALIZERSHORTCUT_PAGE_DESCRIPTION"));
+		setTitle(resolve("INITIALIZERSHORTCUT_PAGE_TITLE"));
+		setDescription(resolve("INITIALIZERSHORTCUT_PAGE_DESCRIPTION"));
 		setPageComplete(true);
 	}
 
