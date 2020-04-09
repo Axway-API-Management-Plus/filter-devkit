@@ -1,0 +1,186 @@
+<ui>
+<validator class="com.vordel.client.manager.filter.oauth2.provider.ScopeGenerationValidator" />
+	<panel columns="2">
+		<panel columns="2" fill="false">
+			<NameAttribute />
+		</panel>
+
+		<panel columns="2" span="2">
+			<tabFolder span="2">
+				<tab label="OAUTH_APPLICATION_VALIDATION">
+					<panel columns="2" fill="false" span="2">
+						<panel columns="1" fill="false" span="2">
+							<ButtonAttribute field="enableHttpGET" label="OAUTH_TOKEN_ALLOWGET"/>
+							<ButtonAttribute field="enableJsonPOST" label="OAUTH_TOKEN_ALLOWJSONPOST"/>
+							<ButtonAttribute field="enableGrantTypeFilter" label="OAUTH_TOKEN_GRANTYPE_FILTER"/>
+							<ReferenceSelector field="authzCodeCache"
+								selectableTypes="AuthzCodePersist"
+								searches="OAuth2StoresGroup,AuthzCodeStoreGroup"
+								label="OAUTH_VERIFY_AUTHZ_CODE_LABEL"
+								title="OAUTH_VERIFY_AUTHZ_CODE_TITLE" />
+						</panel>
+						<group span="2" label="OAUTH_FIND_APP" fill="false">
+							<RadioGroupAttribute field="enableClientAuthFilter" span="2">
+								<choice value="1" label="OAUTH_APPAUTH_USETAG" />
+								<choice value="0" label="OAUTH_APPAUTH_NOFILTER" />
+								<panel columns="2" fill="false">
+									<panel columns="1" fill="false" span="2">
+										<ButtonAttribute field="enableFormClientAuth" label="OAUTH_APPAUTH_ENABLEFORM"/>
+										<ButtonAttribute field="enableBasicClientAuth" label="OAUTH_APPAUTH_ENABLEBASIC"/>
+									</panel>
+								</panel>
+							</RadioGroupAttribute>
+							<ButtonAttribute field="enableClientSecretQueryCheck" label="OAUTH_APPAUTH_CHECKQUERY"/>
+							<ButtonAttribute field="forceClientSecret" label="OAUTH_APPAUTH_FORCESECRET"/>
+							<panel columns="2">
+								<ReferenceSelector
+									field="clientAssertionValidator"
+									selectableTypes="FilterCircuit"
+									searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+									label="OAUTH_APPAUTH_ASSERTIONCIRCUIT_LABEL"
+									title="OAUTH_APPAUTH_ASSERTIONCIRCUIT_TITLE" />
+								<ReferenceSelector
+									field="clientAuthorizationValidator"
+									selectableTypes="FilterCircuit"
+									searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+									label="OAUTH_APPAUTH_HTTPCIRCUIT_LABEL"
+									title="OAUTH_APPAUTH_HTTPCIRCUIT_TITLE" />
+							</panel>
+						</group>
+				    </panel>
+				</tab>
+
+				<tab label="OAUTH_ACCESS_TOKEN_GENERATION">
+					<scrollpanel>
+						<panel>
+							<panel columns="3" fill="false">
+								<ReferenceSelector field="tokenStore"
+									selectableTypes="AccessTokenPersist" searches="OAuth2StoresGroup,AccessTokenStoreGroup"
+									label="OAUTH_CACHE_ACCESS_TOKEN" title="OAUTH_CACHE_ACCESS_TOKEN"
+									required="true" />
+						
+							</panel>
+						
+							<group label="ACCESS_TOKEN_DETAILS" fill="false">
+								<panel columns="6" margin="0,0,0,10" horizontalSpacing="12">
+									<TextAttribute field="accessTokenExpiresInSecs" label="OAUTH_ACCESS_TOKEN_EXPIRES_IN"
+										required="true" />
+									<TextAttribute field="accessTokenlength" label="OAUTH_ACCESS_TOKEN_LENGTH"
+										required="true" />
+									<TextAttribute field="accessTokenType" label="ACCESS_TOKEN_TYPE"
+										required="true" />
+								</panel>
+							</group>
+							<group label="REFRESH_TOKEN_DETAILS" columns="6" fill="false">
+								<RadioGroupAttribute field="refreshChoice">
+									<choice value="NewRefresh" label="GENERATE_NEW_REFRESH" span="2" />
+									<panel span="6" columns="4">
+										<panel span="4" indent="25" columns="1" fill="false">
+											<RadioGroupAttribute field="preserveChoice">
+												<choice value="Preserve" label="OAUTH_REFRESH_TOKEN_PRESERVEREFRESH" />
+												<choice value="Sliding" label="OAUTH_REFRESH_TOKEN_SLIDING" />
+												<choice value="NewToken" label="OAUTH_REFRESH_TOKEN_GENERATENEW" />
+											</RadioGroupAttribute>
+										</panel>
+										<panel span="4" indent="25" columns="4" margin="0,0,0,10" horizontalSpacing="12" fill="false">
+											<TextAttribute field="refreshTokenExpiresInSecs" label="OAUTH_REFRESH_TOKEN_EXPIRES_IN" required="true" />
+											<TextAttribute field="refreshTokenlength" label="OAUTH_REFRESH_TOKEN_LENGTH" required="true" />
+										</panel>
+									</panel>
+						
+									<choice value="NoRefresh" label="DONT_GENERATE_REFRESH" span="2" />
+								</RadioGroupAttribute>
+							</group>
+							<group label="ISSUE_TOKEN_GROUP" fill="false">
+								<RadioGroupAttribute field="scopeChoice" columns="4">
+									<choice value="Application" label="USING_APPLICATION" />
+									<panel indent="30" columns="3" span="4" margin="1">
+										<ComboAttribute field="scopesMustMatch" label="SCOPES_MATCH"
+											contentSource="com.vordel.client.manager.filter.oauth2.provider.ScopesMatch.VALUES"
+											includeBlank="false" required="true" readOnly="true" />
+										<label label="SCOPES_REGISTERED" />
+									</panel>
+						
+									<panel indent="30" columns="3" span="4" margin="1">
+										<label label="NO_SCOPES_REGISTERED" />
+									</panel>
+						
+									<choice value="Circuit" label="USING_POLICY" />
+									<panel indent="30" columns="2" fill="false" span="2" margin="1">
+										<ReferenceSelector field="scopeCircuitPK"
+											selectableTypes="FilterCircuit"
+											searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+											title="GET_SCOPES_USING_CIRCUIT" />
+									</panel>
+									
+									<panel indent="30" columns="2" span="2" fill="true" margin="1">
+										<TextAttribute field="scopesForToken" label="STORE_SCOPES_IN"
+											readOnly="false" />
+									</panel> 
+						
+								</RadioGroupAttribute>
+							</group>
+						</panel>
+					</scrollpanel>
+				</tab>
+
+				<tab label="OAUTH_TOKEN_ADVANCED">
+					<panel>
+						<group label="OAUTH_ADDITIONAL_FIELDS_FOR_TOKEN" columns="2" span="2" fill="false">
+							<TablePage type="Property" tableHeight="150"
+								dialogClass="com.vordel.client.manager.filter.oauth2.dlg.OAuth2TokenFieldsDialog"
+								columnProperties="name,value" columnResources="OAUTHMETA_NAME,OAUTHMETA_VALUE"
+								columnWidths="300,200" deleteText="OAUTHMETA_DELETE"
+								dialog.setFlavor="oauth2tokenfields.xml" />
+						</group>
+						<FieldTable field="extendedGrantNames" label="OAUTH_REQUEST_EXTENDEDGRANTS" />
+						<panel columns="2" span="1">
+							<ReferenceSelector
+								field="grantDecoderCircuit"
+								selectableTypes="FilterCircuit"
+								searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+								label="OAUTH_REQUEST_DECODECIRCUIT_LABEL"
+								title="OAUTH_REQUEST_DECODECIRCUIT_TITLE" />
+							<ReferenceSelector
+								field="grantAuthenticator"
+								selectableTypes="FilterCircuit"
+								searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+								label="OAUTH_REQUEST_AUTHNCIRCUIT_LABEL"
+								title="OAUTH_REQUEST_AUTHNCIRCUIT_TITLE" />
+							<ReferenceSelector
+								field="grantValidator"
+								selectableTypes="FilterCircuit"
+								searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+								label="OAUTH_REQUEST_AUTHZCIRCUIT_LABEL"
+								title="OAUTH_REQUEST_AUTHZCIRCUIT_TITLE" />
+							<ReferenceSelector
+								field="accessTokenTransformer"
+								selectableTypes="FilterCircuit"
+								searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+								label="OAUTH_REQUEST_TOKENTRANSFORMER_LABEL"
+								title="OAUTH_REQUEST_TOKENTRANSFORMER_TITLE" />
+						</panel>
+						<ButtonAttribute field="allowOpenIDScope" label="OAUTH_ACCESS_TOKEN_OPENID"/>
+						<ButtonAttribute field="refreshRequireOfflineAccess" label="OAUTH_REFRESH_TOKEN_REQUIRESCOPE"/>
+						<ButtonAttribute field="skipUserConsent" label="OAUTH_ACCESS_TOKEN_SKIPCONSENT"/>
+						<ButtonAttribute field="allowPublicClientCredentials" label="OAUTH_APPAUTH_ALLOWPUBLIC_CLIENTCREDENTIALS"/>
+					</panel>
+				</tab>
+
+				<tab label="OAUTH_MONITORING_SETTINGS">
+					<panel>
+					    <group label="OAUTH_SERVICE_MONITOR_PANEL" columns="2" fill="false">
+					        <BitMaskAttribute field="metricsMask">
+					            <choice value="1" label="OAUTH_SERVICE_MONITOR_WEBSERVICE_USAGE" />
+					        </BitMaskAttribute>
+					        
+					        <TextAttribute field="clientAttributeName" label="OAUTH_SERVICE_MONITOR_CLIENT_ATTRIBUTE_NAME"/>
+					        <ButtonAttribute field="compositeContext" label="OAUTH_SERVICE_MONITOR_COMPOSITE_CONTEXT" />
+					    </group>
+					</panel>
+				</tab>
+			</tabFolder>
+		</panel>
+
+	</panel>
+</ui>

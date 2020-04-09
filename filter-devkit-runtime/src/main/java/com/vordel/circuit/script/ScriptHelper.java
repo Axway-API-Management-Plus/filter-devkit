@@ -654,7 +654,7 @@ public class ScriptHelper {
 		int remaining = 4;
 
 		((Buffer) escape).clear(); /* Silly workaround for Java 8 >= release 211*/
-
+		
 		while ((remaining > 0) && hasHexDigit(encoded)) {
 			/* copy escape character */
 			escape.put(encoded.get());

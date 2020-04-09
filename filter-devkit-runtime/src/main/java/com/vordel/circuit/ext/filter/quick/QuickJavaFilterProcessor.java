@@ -3,6 +3,8 @@ package com.vordel.circuit.ext.filter.quick;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -14,8 +16,11 @@ import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.script.context.MessageContextModule;
 import com.vordel.config.Circuit;
 import com.vordel.config.ConfigContext;
+import com.vordel.es.ESPK;
 import com.vordel.es.Entity;
+import com.vordel.es.EntityStore;
 import com.vordel.es.EntityStoreException;
+import com.vordel.es.EntityType;
 import com.vordel.trace.Trace;
 
 public class QuickJavaFilterProcessor extends MessageProcessor {
@@ -35,8 +40,15 @@ public class QuickJavaFilterProcessor extends MessageProcessor {
 
 		try {
 			Set<String> duplicates = new HashSet<String>();
-			Map<Method, QuickFilterField> methods = QuickJavaFilter.scanFields(definitionClazz, duplicates);
 			Constructor<?> contructor = definitionClazz.getDeclaredConstructor();
+
+			Map<Method, QuickFilterComponent> components = QuickJavaFilter.scanComponents(definitionClazz, duplicates);
+
+			for(String duplicate : duplicates) {
+				Trace.error(String.format("got duplicate component '%s' declaration for filter '%s' (class '%s')", duplicate, definitionName, definitionClazz.getName()));
+			}
+			
+			Map<Method, QuickFilterField> fields = QuickJavaFilter.scanFields(definitionClazz, duplicates);
 
 			for(String duplicate : duplicates) {
 				Trace.error(String.format("got duplicate field '%s' declaration for filter '%s' (class '%s')", duplicate, definitionName, definitionClazz.getName()));
@@ -44,7 +56,7 @@ public class QuickJavaFilterProcessor extends MessageProcessor {
 			
 			try {
 				contructor.setAccessible(true);
-				instance = filterAttached(ctx, entity, QuickJavaFilterDefinition.class.cast(contructor.newInstance()), methods);
+				instance = filterAttached(ctx, entity, QuickJavaFilterDefinition.class.cast(contructor.newInstance()), fields, components);
 			} finally {
 				contructor.setAccessible(false);
 			}
@@ -61,10 +73,41 @@ public class QuickJavaFilterProcessor extends MessageProcessor {
 		}
 	}
 	
-	private static QuickJavaFilterDefinition filterAttached(ConfigContext ctx, Entity entity, QuickJavaFilterDefinition instance, Map<Method, QuickFilterField> methods) {
+	private static QuickJavaFilterDefinition filterAttached(ConfigContext ctx, Entity entity, QuickJavaFilterDefinition instance, Map<Method, QuickFilterField> fields, Map<Method, QuickFilterComponent> components) {
 		Class<?> definitionClazz = instance.getClass();
+		EntityStore es = ctx.getStore();
 
-		for(Entry<Method, QuickFilterField> entry : methods.entrySet()) {
+		for(Entry<Method, QuickFilterComponent> entry : components.entrySet()) {
+			QuickFilterComponent component = entry.getValue();
+			Method method = entry.getKey();
+			
+			try {
+				method.setAccessible(true);
+				
+				Trace.debug(String.format("calling '%s' for component '%s'", method.getName(), component.name()));
+
+				EntityType propertyType = es.getTypeForName(component.name());
+				Collection<ESPK> espks = es.listChildren(entity.getPK(), propertyType);
+				
+				if (espks == null) {
+					espks = Collections.emptySet();
+				}
+				
+				method.invoke(instance, ctx, entity, espks);
+			} catch (IllegalArgumentException e) {
+				Trace.error(String.format("got error setting component '%s' parameter for class '%s'", component.name(), definitionClazz.getName()), e);
+			} catch (InvocationTargetException e) {
+				Throwable cause = e.getCause();
+
+				Trace.error(String.format("got error setting component '%s' parameter for class '%s'", component.name(), definitionClazz.getName()), cause);
+			} catch (IllegalAccessException e) {
+				Trace.error(String.format("got error setting component '%s' parameter for class '%s'", component.name(), definitionClazz.getName()), e);
+			} finally {
+				method.setAccessible(false);
+			}
+		}
+
+		for(Entry<Method, QuickFilterField> entry : fields.entrySet()) {
 			QuickFilterField field = entry.getValue();
 			Method method = entry.getKey();
 			

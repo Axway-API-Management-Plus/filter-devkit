@@ -41,6 +41,7 @@ import org.xml.sax.SAXException;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProperties;
+import com.vordel.circuit.ext.filter.quick.QuickFilterComponent;
 import com.vordel.circuit.ext.filter.quick.QuickFilterField;
 import com.vordel.circuit.ext.filter.quick.QuickFilterSupport;
 import com.vordel.circuit.ext.filter.quick.QuickFilterType;
@@ -293,9 +294,21 @@ public class DynamicCompilerService implements ExtensionModule {
 					if (entityTypeNode != null) {
 						Document document = data.getOwnerDocument();
 
-						Map<Method, QuickFilterField> methods = QuickJavaFilter.scanFields(clazz, null);
+						Map<Method, QuickFilterComponent> components = QuickJavaFilter.scanComponents(clazz, null);
+						
+						for (QuickFilterComponent component : components.values()) {
+							Element componentElement = document.createElement("componentType");
 
-						for (QuickFilterField field : methods.values()) {
+							componentElement.setAttribute("cardinality", component.cardinality());
+							componentElement.setAttribute("name", component.name());
+
+							entityTypeNode.appendChild(document.createTextNode("\n"));
+							entityTypeNode.appendChild(componentElement);
+						}
+
+						Map<Method, QuickFilterField> fields = QuickJavaFilter.scanFields(clazz, null);
+
+						for (QuickFilterField field : fields.values()) {
 							Element fieldElement = document.createElement("field");
 							String[] defaults = field.defaults();
 

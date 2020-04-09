@@ -15,7 +15,8 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
 public class SignatureValue<H> extends SignatureTemplate<H> {
-	private static final Pattern AUTHORIZATION = Pattern.compile("Signature\\s+(\\S.*)", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+	public static final Pattern AUTHORIZATION = Pattern.compile("Signature\\s+(\\S.*)", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+
 	private static final Pattern KEYPAIR = Pattern.compile("\\s*([^\\s=]+)\\s*=\\s*\"((?:[^\"]|\\\\|\\\")*)\"\\s*", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
 	private final byte[] signature;

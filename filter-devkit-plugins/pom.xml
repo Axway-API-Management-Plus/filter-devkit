@@ -34,5 +34,6 @@
   	<module>filter-devkit-plugins-lambda</module>
   	<module>filter-devkit-plugins-httpsig</module>
   	<module>filter-devkit-plugins-jose</module>
+  	<module>filter-devkit-plugins-oauth</module>
   </modules>
 </project>

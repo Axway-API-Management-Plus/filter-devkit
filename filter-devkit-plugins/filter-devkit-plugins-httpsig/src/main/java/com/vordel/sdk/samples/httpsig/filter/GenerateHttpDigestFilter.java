@@ -26,7 +26,7 @@ import com.vordel.sdk.samples.httpsig.DigestValue;
 public class GenerateHttpDigestFilter extends QuickJavaFilterDefinition {
 	protected static final Selector<Body> BODY_SELECTOR = SelectorResource.fromExpression(MessageProperties.CONTENT_BODY, Body.class);
 
-	private final List<Selector<String>> selectors = new ArrayList<Selector<String>>();;
+	private final List<Selector<String>> selectors = new ArrayList<Selector<String>>();
 	private boolean generateContentMD5 = false;
 
 	@QuickFilterField(name = "generateContentMD5", cardinality = "?", type = "integer")
