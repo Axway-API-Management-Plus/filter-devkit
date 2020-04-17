@@ -294,7 +294,7 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 
 				Set<String> scopes = getScopesForToken(msg, circuit, parsed, details, generator, null);
 
-				return generator.createAccessToken(circuit, msg, parsed, details, details.getClientID(), scopes, false);
+				return generator.createAccessToken(circuit, msg, parsed, details, null, scopes, false);
 			} else if (GRANTTYPE_JWT.equals(grant_type) || GRANTTYPE_SAML2.equals(grant_type) || GRANTTYPE_PASSWORD.equals(grant_type)) {
 				PolicyResource authenticator = getGrantAuthenticatorCircuit();
 
@@ -345,7 +345,13 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 				boolean authenticate = false;
 
 				if (subject != null) {
-					msg.put(MessageProperties.AUTHN_SUBJECT_ID, subjectName = subject.getAuthenticationSubject());
+					subjectName = subject.getAuthenticationSubject();
+					
+					if ((subjectName == null) || subjectName.isEmpty()) {
+						subjectName = null;
+					}
+					
+					msg.put(MessageProperties.AUTHN_SUBJECT_ID, subjectName == null ? subject.getClientID() : subjectName);
 					msg.put("oauth.request.subject.token", subject);
 				} else {
 					authenticate |= true;
@@ -505,6 +511,8 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 		} catch (CircuitAbortException e) {
 			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unexpected error occured", e);
 		} catch (RuntimeException e) {
+			Trace.error("Unexpected error", e);
+
 			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unexpected error occured", e);
 		}
 	}
@@ -547,18 +555,6 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 				token = generator.generateToken(msg, refresh_token);
 			} else {
 				throw new OAuthException(err_rfc6749_invalid_grant, null, String.format("requested token type for %s is unknown", subject_param));
-			}
-
-			String subject = token.getAuthenticationSubject();
-
-			if ((subject != null) && (subject.length() == 0)) {
-				subject = null;
-			}
-
-			if (subject == null) {
-				Trace.error(String.format("invalid %s (no subject)", subject_param));
-
-				throw new OAuthException(err_rfc6749_invalid_grant, null, String.format("%s parameter is invalid", subject_param));
 			}
 		}
 

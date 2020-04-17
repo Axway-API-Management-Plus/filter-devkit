@@ -1,5 +1,6 @@
 package com.vordel.sdk.plugins.oauth2.jaxrs;
 
+import static com.vordel.sdk.plugins.oauth2.jaxrs.OAuthTokenEndpoint.GRANTTYPE_TOKEN;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.err_invalid_request;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.err_rfc6749_invalid_grant;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.err_rfc6749_invalid_scope;
@@ -9,6 +10,7 @@ import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_audience;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_code_challenge;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_code_challenge_method;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_expires_in;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_grant_type;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_id_token;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_issued_token_type;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_refresh_token;
@@ -111,14 +113,14 @@ public abstract class OAuthAccessTokenGenerator {
 		internal.add(param_code_challenge_method);
 
 		/* persist token exchange related parameters */
-		internal.add(param_resource);
-		internal.add(param_audience);
+		reserved.add(param_resource);
+		reserved.add(param_audience);
 
 		/* persist id token if any */
 		reserved.add(param_id_token);
 
 		/* issued token type for token exchange */
-		reserved.add(param_issued_token_type);
+		internal.add(param_issued_token_type);
 
 		reserved.addAll(internal);
 
@@ -157,7 +159,7 @@ public abstract class OAuthAccessTokenGenerator {
 
 		if (matchSelection != null) {
 			if (scopes.isEmpty()) {
-				parsed.put(param_scope, ScopeSet.asString(details.getDefaultScopes().iterator(), (scope) -> scope.getScope()));
+				parsed.parse(param_scope, ScopeSet.asString(details.getDefaultScopes().iterator(), (scope) -> scope.getScope()), null);
 			} else {
 				Set<String> applicationScopes = new HashSet<String>();
 
@@ -183,7 +185,7 @@ public abstract class OAuthAccessTokenGenerator {
 			if ((circuitScopes == null) || circuitScopes.isEmpty()) {
 				scopes.clear();
 			} else {
-				parsed.put(param_scope, ScopeSet.asString(circuitScopes.iterator(), (scope) -> scope instanceof String ? null : (String) scope));
+				parsed.parse(param_scope, ScopeSet.asString(circuitScopes.iterator(), (scope) -> scope instanceof String ? null : (String) scope), null);
 			}
 		}
 
@@ -240,7 +242,7 @@ public abstract class OAuthAccessTokenGenerator {
 			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, null);
 		}
 
-		return returnToken(token, null, saved_refresh_token);
+		return returnToken(token, null, saved_refresh_token, (String) parsed.get(param_grant_type));
 	}
 
 
@@ -259,7 +261,7 @@ public abstract class OAuthAccessTokenGenerator {
 			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, null);
 		}
 
-		return returnToken(token, (String) parsed.get(param_state), null);
+		return returnToken(token, (String) parsed.get(param_state), null, (String) parsed.get(param_grant_type));
 	}
 
 	public Response createAccessToken(Circuit circuit, Message msg, OAuthParameters parsed, ApplicationDetails details, String subject, Set<String> scopes, boolean forceRefresh) throws CircuitAbortException {
@@ -271,10 +273,10 @@ public abstract class OAuthAccessTokenGenerator {
 			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, null);
 		}
 
-		return returnToken(token, (String) parsed.get(param_state), null);
+		return returnToken(token, (String) parsed.get(param_state), null, (String) parsed.get(param_grant_type));
 	}
 
-	private Response returnToken(OAuth2AccessToken token, String state, String previous_refresh) {
+	private Response returnToken(OAuth2AccessToken token, String state, String previous_refresh, String grant_type) {
 		CacheControl cache = CacheControl.valueOf("no-store");
 		ObjectNode node = null;
 
@@ -289,6 +291,7 @@ public abstract class OAuthAccessTokenGenerator {
 
 			if ((issued_token_type == null) || issued_token_type.isEmpty() || uri_token_type_access_token.equals(issued_token_type)) {
 				/* result is a regular access token */
+				issued_token_type = uri_token_type_access_token;
 				
 				if (state != null) {
 					/* add state claim if available */
@@ -311,18 +314,22 @@ public abstract class OAuthAccessTokenGenerator {
 					node.remove(param_expires_in);
 				}
 			}
+			
+			if ((previous_refresh != null) && previous_refresh.equals(node.path(param_refresh_token).asText(null))) {
+				/* remove the refresh token if it has not been generated here */
+				node.remove(param_refresh_token);
+			}
+
+			node.remove(INTERNAL_INFORMATION);
+			
+			if ((issued_token_type != null) && GRANTTYPE_TOKEN.equals(grant_type)) {
+				node.put(param_issued_token_type, issued_token_type);
+			}
 		} catch (IOException e) {
 			Trace.error("unable to generate token json response");
 
 			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, null, e);
 		}
-		
-		if ((previous_refresh != null) && previous_refresh.equals(node.path(param_refresh_token).asText(null))) {
-			/* remove the refresh token if it has not been generated here */
-			node.remove(param_refresh_token);
-		}
-
-		node.remove(RESERVED_INFORMATION);
 
 		return Response.ok(node, MediaType.APPLICATION_JSON_TYPE).cacheControl(cache).header("Pragma", "no-cache").build();
 	}
@@ -356,7 +363,7 @@ public abstract class OAuthAccessTokenGenerator {
 		boolean forceTransform = false;
 
 		if (requested_token_type != null) {
-			forceTransform = (!uri_token_type_access_token.equals(requested_token_type)) || (!uri_token_type_refresh_token.equals(requested_token_type));
+			forceTransform = (!uri_token_type_access_token.equals(requested_token_type)) && (!uri_token_type_refresh_token.equals(requested_token_type));
 		}
 
 		if (OAuthServiceEndpoint.isValidPolicy(transformer)) {
@@ -524,7 +531,10 @@ public abstract class OAuthAccessTokenGenerator {
 		token.setScope(new HashSet<String>(authz.getScope()));
 		token.setAdditionalInformation(refresh_token.getAdditionalInformation());
 		token.setIdToken(token.getAdditionalInformation().get(param_id_token));
-		token.setAuthenticationSubject(authn.getUserAuthentication());
+		
+		if (!authn.isClientOnly()) {
+			token.setAuthenticationSubject(authn.getUserAuthentication());
+		}
 
 		token.setOAuth2RefreshToken(refresh_token);
 

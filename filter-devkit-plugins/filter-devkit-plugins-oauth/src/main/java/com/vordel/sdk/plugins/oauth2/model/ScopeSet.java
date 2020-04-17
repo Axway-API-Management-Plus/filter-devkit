@@ -61,7 +61,7 @@ public class ScopeSet extends AbstractSet<String> {
 		String scope = null;
 
 		if ((iterator != null) && iterator.hasNext()) {
-			StringBuilder builder = new StringBuilder().append(iterator.next());
+			StringBuilder builder = new StringBuilder().append(converter.apply(iterator.next()));
 			Set<String> used = new HashSet<String>();
 
 			while (iterator.hasNext()) {
@@ -197,7 +197,6 @@ public class ScopeSet extends AbstractSet<String> {
 						if (!parser.region(start, end).find(start) || (!parser.group(1).equals(group))) {
 							throw new OAuthException(err_rfc6749_invalid_scope, null, String.format("'%s' is not a valid scope (RFC6749 appendix A.4)", group));
 						} else {
-							this.cursor = group;
 							this.start = start;
 							this.end = end;
 
@@ -207,6 +206,8 @@ public class ScopeSet extends AbstractSet<String> {
 
 								/* remove it */
 								remove();
+							} else {
+								this.cursor = group;
 							}
 						}
 					}

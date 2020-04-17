@@ -157,45 +157,43 @@ public abstract class OAuthAuthenticatedEndpoint extends OAuthServiceEndpoint {
 			}
 		}
 
-		client_secret = parsed.parse(param_client_secret, body, merged, (key, value) -> {
-			String authorization_secret = getSingleValueParameter(key, value, authorization);
+		/* parse secret from authorization header */
+		String authorization_secret = getSingleValueParameter(param_client_secret, (String) null, authorization);
 
-			if (authorization_secret != null) {
-				authentication_methods.add(auth_client_secret_basic);
+		if (authorization_secret != null) {
+			authentication_methods.add(auth_client_secret_basic);
 
-				if (!enableBasicClientAuth(msg)) {
-					throw new OAuthException(err_invalid_request, null, "http basic authentication is not allowed");
-				}
+			if (!enableBasicClientAuth(msg)) {
+				throw new OAuthException(err_invalid_request, null, "http basic authentication is not allowed");
 			}
+		}
 
-			if (value != null) {
-				authentication_methods.add(auth_client_secret_post);
+		/* parse secret from form body */
+		client_secret = parsed.parse(param_client_secret, body, merged, null).asText(null);
 
-				if (!enableFormClientAuth(msg)) {
-					throw new OAuthException(err_invalid_request, null, "form based authentication is not allowed");
-				}
+		if (client_secret == null) {
+			client_secret = authorization_secret;
+		} else if (authorization_secret != null) {
+			throw new OAuthException(err_invalid_request, null, "client_secret parameter conflicts with authorization header");
+		} else {
+			authentication_methods.add(auth_client_secret_post);
+
+			if (!enableFormClientAuth(msg)) {
+				throw new OAuthException(err_invalid_request, null, "form based authentication is not allowed");
 			}
+		}
+		
+		String authorization_id = getSingleValueParameter(param_client_id, (String) null, authorization);
+		String client_id = parsed.parse(param_client_id, body, merged, null).asText(null);
 
-			if (value == null) {
-				value = authorization_secret;
-			} else if (authorization_secret != null) {
-				throw new OAuthException(err_invalid_request, null, "client_secret parameter conflicts with authorization header");
-			}
+		if (client_id == null) {
+			client_id = authorization_id;
+			
+			parsed.getObjectNode().put(param_client_id, client_id);
+		} else if ((authorization_id != null) && (!client_id.equals(authorization_id))) {
+			throw new OAuthException(err_invalid_request, null, "client_id parameter conflicts with authorization header");
+		}
 
-			return value;
-		}).asText(null);
-
-		String client_id = parsed.parse(param_client_id, body, merged, (key, value) -> {
-			String authorization_id = getSingleValueParameter(key, value, authorization);
-
-			if (value == null) {
-				value = authorization_id;
-			} else if ((authorization_id != null) && (!value.equals(authorization_id))) {
-				throw new OAuthException(err_invalid_request, null, "client_id parameter conflicts with authorization header");
-			}
-
-			return value;
-		}).asText(null);
 		String client_assertion = parsed.parse(param_client_assertion, body, merged, (key, value) -> {
 			if ((value != null) && (!value.isEmpty())) {
 				String assertion_type = parsed.parse(param_client_assertion_type, body, merged, null).asText(null);
