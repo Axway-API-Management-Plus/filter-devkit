@@ -12,6 +12,7 @@ import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_actor_tok
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_assertion;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_audience;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_client_assertion;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_client_assertion_type;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_client_id;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_client_secret;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_code;
@@ -126,6 +127,7 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 		set.add(param_client_id);
 		set.add(param_client_secret);
 		set.add(param_client_assertion);
+		set.add(param_client_assertion_type);
 
 		for (String parameter : params) {
 			set.add(parameter);
@@ -153,10 +155,6 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 
 		if ((!allowOpenIDScope(msg)) && scopes.contains("openid")) {
 			throw new OAuthException(err_rfc6749_invalid_scope, null, "scope 'openid' is not valid for token flows");
-		}
-
-		if (details.getClientID().equals(subject) || details.getApplicationID().equals(subject)) {
-			subject = null;
 		}
 
 		return generator.applyOwnerConsent(msg, subject, details, scopes, subject == null ? true : skipUserConsent(msg));
@@ -351,8 +349,17 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 						subjectName = null;
 					}
 					
-					msg.put(MessageProperties.AUTHN_SUBJECT_ID, subjectName == null ? subject.getClientID() : subjectName);
+					msg.put(MessageProperties.AUTHN_SUBJECT_ID, subjectName);
 					msg.put("oauth.request.subject.token", subject);
+					
+					TokenStore store = generator.getTokenStore();
+					OAuth2Authentication authn = store.readAuthenticationFromToken(subject);
+					AuthorizationRequest authz = authn.getAuthorizationRequest();
+					
+					if (authn.isClientOnly() || (authz.getClientId().equals(subject.getClientID()))) {
+						/* special case for client_credentials */
+						subjectName = null;
+					}
 				} else {
 					authenticate |= true;
 				}

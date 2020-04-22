@@ -32,7 +32,7 @@ public class ScopeSet extends AbstractSet<String> {
 	}
 	
 	public static Iterator<String> iterator(String scope) {
-		return new ScopeIterator(scope);
+		return new ScopeIterator(scope, false);
 	}
 
 	public static String asString(Iterator<String> iterator) {
@@ -83,7 +83,7 @@ public class ScopeSet extends AbstractSet<String> {
 	public Iterator<String> iterator() {
 		String scope = parameters == null ? null : parameters.path(param_scope).asText(null);
 
-		return new ScopeIterator(scope) {
+		return new ScopeIterator(scope, true) {
 			@Override
 			protected void update(String scope) {
 				if ((scope == null) || (scope.isEmpty())) {
@@ -110,7 +110,7 @@ public class ScopeSet extends AbstractSet<String> {
 
 	@Override
 	public boolean add(String e) {
-		Iterator<String> iterator = new ScopeIterator(e);
+		Iterator<String> iterator = new ScopeIterator(e, false);
 		String item = null;
 		boolean added = false;
 
@@ -164,6 +164,7 @@ public class ScopeSet extends AbstractSet<String> {
 		private final Set<String> used = new HashSet<String>();
 		private final Matcher parser;
 		private final Matcher lexer;
+		private final boolean update;
 
 		private String scope = null;
 		private String cursor = null;
@@ -171,7 +172,7 @@ public class ScopeSet extends AbstractSet<String> {
 		private int start = -1;
 		private int end = -1;
 
-		public ScopeIterator(String scope) {
+		public ScopeIterator(String scope, boolean update) {
 			if (scope == null) {
 				scope = "";
 			}
@@ -179,6 +180,7 @@ public class ScopeSet extends AbstractSet<String> {
 			this.lexer = SCOPES_REGEX.matcher(scope);
 			this.parser = NQCHAR_REGEX.matcher(scope);
 			this.scope = scope;
+			this.update = update;
 		}
 
 		@Override
@@ -204,8 +206,10 @@ public class ScopeSet extends AbstractSet<String> {
 								/* scope has already been seen */
 								group = null;
 
-								/* remove it */
-								remove();
+								if (update) {
+									/* remove it */
+									remove();
+								}
 							} else {
 								this.cursor = group;
 							}

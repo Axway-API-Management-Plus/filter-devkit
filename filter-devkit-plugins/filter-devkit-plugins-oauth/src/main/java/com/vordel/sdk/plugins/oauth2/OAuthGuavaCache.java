@@ -75,13 +75,15 @@ public class OAuthGuavaCache {
 		ApplicationDetails details = getAppDetailsFromClientId(m, client_id);
 		List<OAuthAppScope> scopes = null;
 
-		try {
-			scopes = details == null ? null : getScopesListFromApp(details.getApplicationID());
-		} finally {
-			if (scopes == null) {
-				m.remove(SCOPES_PROPERTY);
-			} else {
-				m.put(SCOPES_PROPERTY, scopes);
+		if (details != null) {
+			try {
+				scopes = details == null ? null : getScopesListFromApp(details.getApplicationID());
+			} finally {
+				if (scopes == null) {
+					m.remove(SCOPES_PROPERTY);
+				} else {
+					m.put(SCOPES_PROPERTY, scopes);
+				}
 			}
 		}
 
@@ -91,35 +93,37 @@ public class OAuthGuavaCache {
 	public static ApplicationDetails getAppDetailsFromClientId(final Message m, final String client_id) {
 		ApplicationDetails details = null;
 
-		try {
-			details = DETAILS_CACHE.get(client_id, new Callable<CacheValueHolder<ApplicationDetails>>() {
-				@Override
-				public CacheValueHolder<ApplicationDetails> call() throws Exception {
-					ApplicationDetails details = (ApplicationDetails) m.get(DETAILS_PROPERTY);
+		if (client_id != null) {
+			try {
+				details = DETAILS_CACHE.get(client_id, new Callable<CacheValueHolder<ApplicationDetails>>() {
+					@Override
+					public CacheValueHolder<ApplicationDetails> call() throws Exception {
+						ApplicationDetails details = (ApplicationDetails) m.get(DETAILS_PROPERTY);
 
-					if (details != null) {
-						if (!client_id.equals(details.getClientID())) {
-							/* existing details in message do not match provided client_id */
-							details = null;
-						} else {
-							Boolean enabled = details.isEnabled();
-
-							if ((enabled == null) || (!enabled.booleanValue())) {
-								/* existing details in message are not enabled */
+						if (details != null) {
+							if (!client_id.equals(details.getClientID())) {
+								/* existing details in message do not match provided client_id */
 								details = null;
+							} else {
+								Boolean enabled = details.isEnabled();
+
+								if ((enabled == null) || (!enabled.booleanValue())) {
+									/* existing details in message are not enabled */
+									details = null;
+								}
 							}
 						}
-					}
 
-					if (details == null) {
-						details = OAuth2Utils.getAppDetailsFromClientId(m, client_id);
-					}
+						if (details == null) {
+							details = OAuth2Utils.getAppDetailsFromClientId(m, client_id);
+						}
 
-					return new CacheValueHolder<ApplicationDetails>(details);
-				}
-			}).call();
-		} catch (ExecutionException e) {
-			processExecutionException(e);
+						return new CacheValueHolder<ApplicationDetails>(details);
+					}
+				}).call();
+			} catch (ExecutionException e) {
+				processExecutionException(e);
+			}
 		}
 
 		return details;

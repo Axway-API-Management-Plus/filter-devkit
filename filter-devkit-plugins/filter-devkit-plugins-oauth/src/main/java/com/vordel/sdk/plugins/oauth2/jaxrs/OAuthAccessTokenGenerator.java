@@ -193,6 +193,10 @@ public abstract class OAuthAccessTokenGenerator {
 	}
 
 	public Set<String> applyOwnerConsent(Message msg, String subject, ApplicationDetails details, Set<String> scopes, boolean skipUserConsent) throws CircuitAbortException {
+		if (OAuthGuavaCache.getAppDetailsFromClientId(msg, subject) != null) {
+			subject = null;
+		}
+		
 		if (subject != null) {
 			OAuthConsentManager manager = new OAuthConsentManager(getTokenStore(), skipUserConsent);
 
@@ -340,6 +344,12 @@ public abstract class OAuthAccessTokenGenerator {
 		}
 
 		AuthorizationRequest request = new AuthorizationRequest(parsed.toQueryString(new QueryStringHeaderSet()));
+		
+		if (subject == null) {
+			/* XXX if subject is null, token can't be deserialized */
+			subject = request.getClientId();
+		}
+		
 		OAuth2Authentication authentication = new OAuth2Authentication(request, subject);
 		TokenStore tokenStore = getTokenStore();
 
@@ -531,10 +541,7 @@ public abstract class OAuthAccessTokenGenerator {
 		token.setScope(new HashSet<String>(authz.getScope()));
 		token.setAdditionalInformation(refresh_token.getAdditionalInformation());
 		token.setIdToken(token.getAdditionalInformation().get(param_id_token));
-		
-		if (!authn.isClientOnly()) {
-			token.setAuthenticationSubject(authn.getUserAuthentication());
-		}
+		token.setAuthenticationSubject(authn.getUserAuthentication());
 
 		token.setOAuth2RefreshToken(refresh_token);
 

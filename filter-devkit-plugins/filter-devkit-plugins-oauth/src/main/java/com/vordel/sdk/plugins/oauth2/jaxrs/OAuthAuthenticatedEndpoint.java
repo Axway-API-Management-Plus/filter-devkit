@@ -75,29 +75,35 @@ public abstract class OAuthAuthenticatedEndpoint extends OAuthServiceEndpoint {
 				String encoded = (matcher = AUTHORIZATION_BASIC_MATCHER.matcher(authorization)).matches() ? matcher.group(1) : null;
 
 				if ((encoded != null) && (encoded.length() > 0)) {
-					String decoded = new String(Base64.getDecoder().decode(encoded), UTF8);
+					try {
+						String decoded = new String(Base64.getDecoder().decode(encoded), UTF8);
 
-					if ((decoded != null) && (matcher = CREDENTIAL_MATCHER.matcher(decoded)).matches()) {
-						String login = matcher.group(1);
+						if ((decoded != null) && (matcher = CREDENTIAL_MATCHER.matcher(decoded)).matches()) {
+							String login = matcher.group(1);
 
-						if ((login != null) && (login.length() == 0)) {
-							login = null;
-						}
+							if ((login != null) && (login.length() == 0)) {
+								login = null;
+							}
 
-						if (login != null) {
-							String password = matcher.group(2);
+							if (login != null) {
+								String password = matcher.group(2);
 
-							if ((password != null) && (password.length() > 0)) {
-								MultivaluedMap<String, String> result = new Form().asMap();
+								if ((password != null) && (password.length() > 0)) {
+									MultivaluedMap<String, String> result = new Form().asMap();
 
-								result.add(param_client_id, login);
-								result.add(param_client_secret, password);
+									result.add(param_client_id, login);
+									result.add(param_client_secret, password);
 
-								return result;
-							} else {
-								throw new OAuthException(Response.Status.UNAUTHORIZED, err_invalid_request, null, "When using Basic authorization, both client_id and client_secret must be used");
+									return result;
+								} else {
+									throw new OAuthException(Response.Status.UNAUTHORIZED, err_invalid_request, null, "When using Basic authorization, both client_id and client_secret must be used");
+								}
 							}
 						}
+					} catch (OAuthException e) {
+						throw e;
+					} catch (Exception e) {
+						throw new OAuthException(Response.Status.UNAUTHORIZED, err_invalid_request, null, "Bad authorization syntax", e);
 					}
 				}
 
@@ -182,26 +188,21 @@ public abstract class OAuthAuthenticatedEndpoint extends OAuthServiceEndpoint {
 				throw new OAuthException(err_invalid_request, null, "form based authentication is not allowed");
 			}
 		}
-		
+
 		String authorization_id = getSingleValueParameter(param_client_id, (String) null, authorization);
 		String client_id = parsed.parse(param_client_id, body, merged, null).asText(null);
 
 		if (client_id == null) {
 			client_id = authorization_id;
-			
+
 			parsed.getObjectNode().put(param_client_id, client_id);
 		} else if ((authorization_id != null) && (!client_id.equals(authorization_id))) {
 			throw new OAuthException(err_invalid_request, null, "client_id parameter conflicts with authorization header");
 		}
-
+		
+		String client_assertion_type = parsed.parse(param_client_assertion_type, body, merged, null).asText(null);
 		String client_assertion = parsed.parse(param_client_assertion, body, merged, (key, value) -> {
-			if ((value != null) && (!value.isEmpty())) {
-				String assertion_type = parsed.parse(param_client_assertion_type, body, merged, null).asText(null);
-
-				if ((assertion_type == null) || assertion_type.isEmpty()) {
-					throw new OAuthException(err_invalid_request, null, "client_assertion parameter requires client_assertion_type");
-				}
-			} else {
+			if ((value == null) || value.isEmpty()) {
 				value = null;
 			}
 
@@ -214,6 +215,10 @@ public abstract class OAuthAuthenticatedEndpoint extends OAuthServiceEndpoint {
 				throw new OAuthException(err_invalid_request, null, "client_assertion parameter conflicts with authorization header");
 			} else if (parsed.containsKey(param_client_secret)) {
 				throw new OAuthException(err_invalid_request, null, "client_assertion parameter conflicts with client_secret parameter");
+			}
+			
+			if ((client_assertion_type == null) || client_assertion_type.isEmpty()) {
+				throw new OAuthException(err_invalid_request, null, "client_assertion parameter requires client_assertion_type");
 			}
 
 			/*
@@ -244,7 +249,7 @@ public abstract class OAuthAuthenticatedEndpoint extends OAuthServiceEndpoint {
 				throw new OAuthException(err_invalid_request, null, "client_assertion subject mismatch with client_id (RFC7521 section 4.2)");
 			}
 
-			parsed.put(param_client_id, subject);
+			parsed.getObjectNode().put(param_client_id, client_id = subject);
 		}
 
 		if (client_id == null) {
