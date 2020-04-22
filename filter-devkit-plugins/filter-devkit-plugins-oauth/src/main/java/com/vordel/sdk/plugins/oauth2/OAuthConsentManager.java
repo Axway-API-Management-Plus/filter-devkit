@@ -10,7 +10,6 @@ import org.apache.commons.collections.CollectionUtils;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
-import com.vordel.circuit.oauth.common.Authorization;
 import com.vordel.circuit.oauth.common.AuthorizationStore;
 import com.vordel.circuit.oauth.common.KPSAuthorizationStoreImpl;
 import com.vordel.circuit.oauth.common.exception.AuthorizationStorageException;
@@ -64,7 +63,7 @@ public class OAuthConsentManager {
 		return new KPSAuthorizationStoreImpl(KPS.getInstance().getStore("OAuthAuthorizations"), tokenStores);
 	}
 
-	public void persistNewlyApprovedScopes(String authSubject, ApplicationDetails app, Authorization authorization, Set<String> preAuthorisedScopes, Set<String> nonPersistentScopes) throws CircuitAbortException {
+	public void persistNewlyApprovedScopes(String authSubject, ApplicationDetails app, OAuthAuthorization authorization, Set<String> preAuthorisedScopes, Set<String> nonPersistentScopes) throws CircuitAbortException {
 		try {
 			Set<String> authorizedScopes = new HashSet<String>();
 
@@ -78,11 +77,11 @@ public class OAuthConsentManager {
 			if (authorization != null) {
 				authorization.setScopes(authorizedScopes);
 				
-				authzStore.update(authorization);
+				authorization.update(authzStore);
 			} else {
-				authorization = new Authorization(app.getApplicationID(), authSubject, authorizedScopes, new Date(System.currentTimeMillis()), (String) null);
+				authorization = new OAuthAuthorization(app.getApplicationID(), authSubject, authorizedScopes, new Date(System.currentTimeMillis()), (String) null);
 				
-				authzStore.store(authorization);
+				authorization.store(authzStore);
 			}
 		} catch (AuthorizationStorageException e) {
 			Trace.error(e);
@@ -96,7 +95,7 @@ public class OAuthConsentManager {
 	}
 
 	public boolean scopesNeedOwnerAuthorization(Message msg, String authSubject, ApplicationDetails app, Set<String> requestedScopes, Set<String> approvedScopes, Set<String> nonPersistentScopes) throws CircuitAbortException {
-		Authorization authorization = authzStore.retrieveAuthorizationByAppAndSubject(app.getApplicationID(), authSubject);
+		OAuthAuthorization authorization = OAuthAuthorization.retrieveAuthorizationByAppAndSubject(authzStore, app.getApplicationID(), authSubject);
 		Set<String> authzExceptionsScopes = appsAuthzStore.retrieveApplicationAuthorizedScopes(app.getApplicationID());
 
 		Set<String> scopesPreAuthorisedByOwner = new HashSet<String>();

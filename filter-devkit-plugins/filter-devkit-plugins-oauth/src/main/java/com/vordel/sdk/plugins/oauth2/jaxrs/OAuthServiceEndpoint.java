@@ -155,15 +155,17 @@ public abstract class OAuthServiceEndpoint {
 		if (tags != null) {
 			Set<String> allowed_methods = splitCommaSeparatedValues(tags.get("rfc7591_auth_methods"));
 
-			if (auth_methods.isEmpty()) {
-				allowed |= allowed_methods.contains(auth_none);
-			} else {
-				Iterator<String> iterator = auth_methods.iterator();
-				
-				while((!allowed) && iterator.hasNext()) {
-					String used_method = iterator.next();
+			if (allowed_methods != null) {
+				if (auth_methods.isEmpty()) {
+					allowed |= allowed_methods.contains(auth_none);
+				} else {
+					Iterator<String> iterator = auth_methods.iterator();
 
-					allowed |= allowed_methods.contains(used_method);
+					while((!allowed) && iterator.hasNext()) {
+						String used_method = iterator.next();
+
+						allowed |= allowed_methods.contains(used_method);
+					}
 				}
 			}
 		}
