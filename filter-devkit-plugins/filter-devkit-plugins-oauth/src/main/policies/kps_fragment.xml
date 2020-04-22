@@ -1,0 +1,1219 @@
+<entityStoreData xmlns="http://www.vordel.com/2005/06/24/entityStore">
+<metaInfo flags="138">
+	<exportRoots>
+		<key type='KPSRoot'>
+			<id field='name' value='Key Property Stores'/>
+			<key type='KPSPackage'>
+				<id field='name' value='OAuth'/>
+			</key>
+		</key>
+		<key type='ESConfiguration'>
+			<id field='name' value='Entity Store Configuration'/>
+		</key>
+	</exportRoots>
+	<typeVersions>
+		<type name="ESConfiguration" version="30"/>
+		<type name="Entity" version="0"/>
+		<type name="KPSCassandraDataSource" version="2"/>
+		<type name="KPSDataSource" version="0"/>
+		<type name="KPSDataSourceGroup" version="0"/>
+		<type name="KPSPackage" version="3"/>
+		<type name="KPSReadWriteStore" version="0"/>
+		<type name="KPSRoot" version="0"/>
+		<type name="KPSStore" version="3"/>
+		<type name="KPSStoreGroup" version="0"/>
+		<type name="KPSType" version="0"/>
+		<type name="KPSTypeGroup" version="0"/>
+		<type name="KPSTypeProperty" version="0"/>
+		<type name="LoadableModule" version="2"/>
+		<type name="RootChild" version="0"/>
+	</typeVersions>
+	<realizedTypes><![CDATA[
+<entityStoreData>
+<entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" abstract="true" extends="Entity" name="RootChild"/>
+<entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" abstract="true" extends="RootChild" name="LoadableModule">
+        <constant name="_version" type="integer" value="2"/>
+        <constant name="loadorder" type="integer" value="1000000"/>
+        <field cardinality="?" name="classloader" type="^ClassLoader"/>
+
+        </entityType>
+<entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" extends="LoadableModule" name="KPSRoot">
+        <constant name="_version" type="integer" value="0"/>
+        <constant name="class" type="string" value="com.vordel.kps.impl.KPS"/>
+        
+        <!-- 
+            The load order is less than the load order of the following clients that use this service:
+                OAuth2StoresGroup
+            and greater than the load order of the following services, which KPS uses:
+                DbConnectionGroup
+                Certificates
+        -->
+        <constant name="loadorder" type="integer" value="300"/>
+        
+        <componentType cardinality="*" name="KPSPackage"/>
+        
+        <field cardinality="1" isKey="true" name="name" type="string"/>
+    </entityType>
+<entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" extends="RootChild" name="ESConfiguration">
+        <constant name="_version" type="integer" value="30"/>
+        <!--
+            Give this singleton a key.
+        -->
+        <field isKey="true" name="name" type="string"/>
+        <!-- 
+            We use this field to verify that the passphrase for the 
+            encryped data is synchronized between the server and client, and
+            between multiple invocations of the client
+        -->
+        <field name="passphraseTest" type="encrypted"/>
+        <field name="version" type="string"/>
+        <!-- The product key should never change for the lifetime of the product -->
+        <field name="productKey" type="string"/>
+        <field cardinality="?" name="gitrev" type="string"/>
+    </entityType>
+<entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" extends="Entity" name="KPSTypeGroup">
+        <constant name="_version" type="integer" value="0"/>
+        <componentType cardinality="*" name="KPSType"/>
+        <field cardinality="1" isKey="true" name="name" type="string"/>
+    </entityType>
+<entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" extends="Entity" name="KPSDataSource">
+        <constant name="_version" type="integer" value="0"/>
+        <!-- Generic properties, for development -->
+        <componentType cardinality="*" name="KPSProperty"/>
+        <field cardinality="1" isKey="true" name="name" type="string"/>
+        <field cardinality="1" name="description" type="string"/>
+        <field cardinality="1" name="impl" type="string"/>
+    </entityType>
+<entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" extends="KPSDataSource" name="KPSCassandraDataSource">
+        <constant name="_version" type="integer" value="2"/>
+        <field cardinality="1" default="ONE" name="readConsistencyLevel" type="string"/>
+        <field cardinality="1" default="ONE" name="writeConsistencyLevel" type="string"/>
+    </entityType>
+<entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" extends="Entity" name="KPSStoreGroup">
+        <constant name="_version" type="integer" value="0"/>
+        <componentType cardinality="*" name="KPSStore"/>
+        <field cardinality="1" isKey="true" name="name" type="string"/>
+    </entityType>
+<entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" extends="Entity" name="KPSType">
+        <constant name="_version" type="integer" value="0"/>
+        <componentType cardinality="*" name="KPSTypeProperty"/>
+        <field cardinality="1" isKey="true" name="name" type="string"/>
+        <field cardinality="1" name="description" type="string"/>
+    </entityType>
+<entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" extends="Entity" name="KPSDataSourceGroup">
+        <constant name="_version" type="integer" value="0"/>
+        <componentType cardinality="*" name="KPSDataSource"/>
+        <field cardinality="1" isKey="true" name="name" type="string"/>
+    </entityType>
+<entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" extends="Entity" name="KPSStore">
+        <constant name="_version" type="integer" value="3"/>
+    
+        <!-- JSON based properties - for store/object processor/etc development -->
+        <componentType cardinality="*" name="KPSProperty"/>
+
+        <!-- General properties -->
+        <field cardinality="1" isKey="true" name="name" type="string"/>
+        <field cardinality="1" name="description" type="string"/>
+
+        <!-- Store impl, type and data source references -->
+        <field cardinality="1" name="impl" type="string"/>
+        <field cardinality="1" default="-1" name="type" type="^KPSType"/>
+        <field cardinality="1" default="-1" name="dataSource" type="^KPSDataSource"/>
+    
+        <!-- Store aliases -->
+        <field cardinality="*" name="aliases" type="string"/>
+
+        <!-- Optional cache -->
+        <field cardinality="1" default="-1" name="cacheToUse" type="^Cache"/>
+    </entityType>
+<entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" extends="KPSStore" name="KPSReadWriteStore">
+        <constant name="_version" type="integer" value="0"/>
+
+        <!-- Store keys and indexes -->
+        <field cardinality="1" name="key" type="string"/>
+        <field cardinality="*" name="readKey" type="string"/>
+        <field cardinality="*" name="indexes" type="string"/>
+
+        <!-- Properties to auto generate, encrypt, etc -->
+        <field cardinality="*" name="autoGenerated" type="string"/>
+        <field cardinality="*" name="encrypted" type="string"/>
+    </entityType>
+<entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" extends="Entity" name="KPSPackage">
+        <constant name="_version" type="integer" value="3"/>
+        <componentType cardinality="*" name="KPSTypeGroup"/>
+        <componentType cardinality="*" name="KPSStoreGroup"/> 
+        <componentType cardinality="*" name="KPSDataSourceGroup"/>
+        <field cardinality="1" isKey="true" name="name" type="string"/>
+        <field cardinality="1" name="description" type="string"/>
+        <field cardinality="1" name="alias" type="string"/>
+        <field cardinality="1" default="-1" name="dataSource" type="^KPSDataSource"/>
+        <field cardinality="1" default="0" name="internal" type="boolean"/>
+        <field cardinality="1" name="cache" type="^Cache"/>
+    </entityType>
+<entityType xmlns="http://www.vordel.com/2005/06/24/entityStore" extends="Entity" name="KPSTypeProperty">
+        <constant name="_version" type="integer" value="0"/>
+        <field cardinality="1" isKey="true" name="name" type="string"/>
+        <field cardinality="1" name="type" type="string"/>
+        <field cardinality="1" name="key" type="string"/>
+        <field cardinality="1" name="value" type="string"/>
+    </entityType>
+</entityStoreData>
+	]]></realizedTypes>
+</metaInfo>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSPackage">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+	</key>
+	<fval name="alias"><value>OAuth</value></fval>
+	<fval name="dataSource"><value contentType="reference">
+<key type='KPSRoot'><id field='name' value='Key Property Stores'/><key type='KPSPackage'><id field='name' value='OAuth'/><key type='KPSDataSourceGroup'><id field='name' value='DataSources'/><key type='KPSCassandraDataSource'><id field='name' value='Cassandra Storage'/></key></key></key></key>	</value></fval>
+	<fval name="description"><value>oauth tables</value></fval>
+	<fval name="internal"><value>1</value></fval>
+	<fval name="name"><value>OAuth</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSStoreGroup">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+		</key>
+	</key>
+	<fval name="name"><value>Store Group</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSReadWriteStore">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSStoreGroup'>
+				<id field='name' value='Store Group'/>
+			</key>
+		</key>
+	</key>
+	<fval name="aliases"><value>AccessTokens</value></fval>
+	<fval name="dataSource"><value contentType="reference">-1</value></fval>
+	<fval name="description"><value>AccessTokens</value></fval>
+	<fval name="encrypted">
+		<value>authRequest</value>
+		<value>oauth2AccessToken</value>
+	</fval>
+	<fval name="indexes">
+		<value>applicationId</value>
+		<value>authzCode</value>
+		<value>clientId</value>
+		<value>refreshToken</value>
+		<value>userName</value>
+	</fval>
+	<fval name="key"><value>accessToken</value></fval>
+	<fval name="name"><value>AccessTokens</value></fval>
+	<fval name="readKey"><value></value></fval>
+	<fval name="type"><value contentType="reference">
+<key type='KPSRoot'><id field='name' value='Key Property Stores'/><key type='KPSPackage'><id field='name' value='OAuth'/><key type='KPSTypeGroup'><id field='name' value='Type Group'/><key type='KPSType'><id field='name' value='AccessTokens'/></key></key></key></key>	</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSReadWriteStore">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSStoreGroup'>
+				<id field='name' value='Store Group'/>
+			</key>
+		</key>
+	</key>
+	<fval name="aliases"><value>Authorizations</value></fval>
+	<fval name="dataSource"><value contentType="reference">-1</value></fval>
+	<fval name="description"><value>OAuth Authorizations</value></fval>
+	<fval name="indexes">
+		<value>applicationID</value>
+		<value>subject</value>
+	</fval>
+	<fval name="key"><value>id</value></fval>
+	<fval name="name"><value>Authorizations</value></fval>
+	<fval name="readKey"><value></value></fval>
+	<fval name="type"><value contentType="reference">
+<key type='KPSRoot'><id field='name' value='Key Property Stores'/><key type='KPSPackage'><id field='name' value='OAuth'/><key type='KPSTypeGroup'><id field='name' value='Type Group'/><key type='KPSType'><id field='name' value='Authorizations'/></key></key></key></key>	</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSReadWriteStore">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSStoreGroup'>
+				<id field='name' value='Store Group'/>
+			</key>
+		</key>
+	</key>
+	<fval name="aliases"><value>ClientAccessTokens</value></fval>
+	<fval name="autoGenerated"><value>id</value></fval>
+	<fval name="dataSource"><value contentType="reference">-1</value></fval>
+	<fval name="description"><value>OAuth Tokens for Clients of 3rd party OAuth Providers</value></fval>
+	<fval name="encrypted">
+		<value>accessToken</value>
+		<value>refreshToken</value>
+	</fval>
+	<fval name="indexes">
+		<value>authentication</value>
+		<value>clientId</value>
+	</fval>
+	<fval name="key"><value>id</value></fval>
+	<fval name="name"><value>ClientAccessTokens</value></fval>
+	<fval name="readKey"><value></value></fval>
+	<fval name="type"><value contentType="reference">
+<key type='KPSRoot'><id field='name' value='Key Property Stores'/><key type='KPSPackage'><id field='name' value='OAuth'/><key type='KPSTypeGroup'><id field='name' value='Type Group'/><key type='KPSType'><id field='name' value='ClientAccessTokens'/></key></key></key></key>	</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSReadWriteStore">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSStoreGroup'>
+				<id field='name' value='Store Group'/>
+			</key>
+		</key>
+	</key>
+	<fval name="aliases"><value>ClientRefreshTokens</value></fval>
+	<fval name="autoGenerated"><value>id</value></fval>
+	<fval name="dataSource"><value contentType="reference">-1</value></fval>
+	<fval name="description"><value>OAuth Refresh Tokens for Clients of 3rd party OAuth Providers</value></fval>
+	<fval name="encrypted"><value>refreshToken</value></fval>
+	<fval name="indexes">
+		<value>authentication</value>
+		<value>clientId</value>
+	</fval>
+	<fval name="key"><value>id</value></fval>
+	<fval name="name"><value>ClientRefreshTokens</value></fval>
+	<fval name="readKey"><value></value></fval>
+	<fval name="type"><value contentType="reference">
+<key type='KPSRoot'><id field='name' value='Key Property Stores'/><key type='KPSPackage'><id field='name' value='OAuth'/><key type='KPSTypeGroup'><id field='name' value='Type Group'/><key type='KPSType'><id field='name' value='ClientRefreshTokens'/></key></key></key></key>	</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSReadWriteStore">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSStoreGroup'>
+				<id field='name' value='Store Group'/>
+			</key>
+		</key>
+	</key>
+	<fval name="aliases"><value>AuthZCodes</value></fval>
+	<fval name="dataSource"><value contentType="reference">-1</value></fval>
+	<fval name="description"><value>AuthZCodes</value></fval>
+	<fval name="encrypted"><value>auth</value></fval>
+	<fval name="key"><value>code</value></fval>
+	<fval name="name"><value>AuthZCodes</value></fval>
+	<fval name="readKey"><value></value></fval>
+	<fval name="type"><value contentType="reference">
+<key type='KPSRoot'><id field='name' value='Key Property Stores'/><key type='KPSPackage'><id field='name' value='OAuth'/><key type='KPSTypeGroup'><id field='name' value='Type Group'/><key type='KPSType'><id field='name' value='AuthZCodes'/></key></key></key></key>	</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSReadWriteStore">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSStoreGroup'>
+				<id field='name' value='Store Group'/>
+			</key>
+		</key>
+	</key>
+	<fval name="aliases"><value>RefreshTokens</value></fval>
+	<fval name="dataSource"><value contentType="reference">-1</value></fval>
+	<fval name="description"><value>RefreshTokens</value></fval>
+	<fval name="encrypted">
+		<value>authRequest</value>
+		<value>oauth2RefreshToken</value>
+	</fval>
+	<fval name="indexes">
+		<value>applicationId</value>
+		<value>userName</value>
+	</fval>
+	<fval name="key"><value>tokenId</value></fval>
+	<fval name="name"><value>RefreshTokens</value></fval>
+	<fval name="readKey"><value></value></fval>
+	<fval name="type"><value contentType="reference">
+<key type='KPSRoot'><id field='name' value='Key Property Stores'/><key type='KPSPackage'><id field='name' value='OAuth'/><key type='KPSTypeGroup'><id field='name' value='Type Group'/><key type='KPSType'><id field='name' value='RefreshTokens'/></key></key></key></key>	</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSReadWriteStore">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSStoreGroup'>
+				<id field='name' value='Store Group'/>
+			</key>
+		</key>
+	</key>
+	<fval name="aliases"><value>AuthorizationExceptions</value></fval>
+	<fval name="dataSource"><value contentType="reference">-1</value></fval>
+	<fval name="description"><value>Authorization Exceptions for applications</value></fval>
+	<fval name="key"><value>applicationID</value></fval>
+	<fval name="name"><value>AuthorizationExceptions</value></fval>
+	<fval name="readKey"><value></value></fval>
+	<fval name="type"><value contentType="reference">
+<key type='KPSRoot'><id field='name' value='Key Property Stores'/><key type='KPSPackage'><id field='name' value='OAuth'/><key type='KPSTypeGroup'><id field='name' value='Type Group'/><key type='KPSType'><id field='name' value='AuthorizationExceptions'/></key></key></key></key>	</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeGroup">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+		</key>
+	</key>
+	<fval name="name"><value>Type Group</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSType">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+			</key>
+		</key>
+	</key>
+	<fval name="name"><value>AccessTokens</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='AccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>oauth2AccessToken</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='AccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>applicationId</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='AccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>accessToken</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='AccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>id</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='AccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>userName</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='AccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>authRequest</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='AccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>refreshToken</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='AccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>userAuthentication</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='AccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>clientId</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='AccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>authzCode</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSType">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+			</key>
+		</key>
+	</key>
+	<fval name="name"><value>ClientAccessTokens</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientAccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>created</value></fval>
+	<fval name="type"><value>java.lang.Long</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientAccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>refreshToken</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientAccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>tokenType</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientAccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value>java.lang.String</value></fval>
+	<fval name="name"><value>params</value></fval>
+	<fval name="type"><value>java.util.Map</value></fval>
+	<fval name="value"><value>java.lang.String</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientAccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>id</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientAccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>accessToken</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientAccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>expiresIn</value></fval>
+	<fval name="type"><value>java.lang.Integer</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientAccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>idToken</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientAccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>clientId</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientAccessTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>authentication</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSType">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+			</key>
+		</key>
+	</key>
+	<fval name="name"><value>ClientRefreshTokens</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientRefreshTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>authentication</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientRefreshTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>created</value></fval>
+	<fval name="type"><value>java.lang.Long</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientRefreshTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>refreshToken</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientRefreshTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>clientId</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientRefreshTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>id</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='ClientRefreshTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>expiresIn</value></fval>
+	<fval name="type"><value>java.lang.Long</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSType">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+			</key>
+		</key>
+	</key>
+	<fval name="name"><value>Authorizations</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='Authorizations'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>scopes</value></fval>
+	<fval name="type"><value>java.util.List</value></fval>
+	<fval name="value"><value>java.lang.String</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='Authorizations'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>created</value></fval>
+	<fval name="type"><value>java.lang.Long</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='Authorizations'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>applicationID</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='Authorizations'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>subject</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='Authorizations'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>id</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSType">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+			</key>
+		</key>
+	</key>
+	<fval name="name"><value>RefreshTokens</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='RefreshTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>applicationId</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='RefreshTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>oauth2RefreshToken</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='RefreshTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>clientId</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='RefreshTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>tokenId</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='RefreshTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>userName</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='RefreshTokens'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>authRequest</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSType">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+			</key>
+		</key>
+	</key>
+	<fval name="name"><value>AuthZCodes</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='AuthZCodes'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>code</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='AuthZCodes'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>auth</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSType">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+			</key>
+		</key>
+	</key>
+	<fval name="name"><value>AuthorizationExceptions</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='AuthorizationExceptions'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>applicationID</value></fval>
+	<fval name="type"><value>java.lang.String</value></fval>
+	<fval name="value"><value></value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSTypeProperty">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSTypeGroup'>
+				<id field='name' value='Type Group'/>
+				<key type='KPSType'>
+					<id field='name' value='AuthorizationExceptions'/>
+				</key>
+			</key>
+		</key>
+	</key>
+	<fval name="key"><value></value></fval>
+	<fval name="name"><value>scopes</value></fval>
+	<fval name="type"><value>java.util.List</value></fval>
+	<fval name="value"><value>java.lang.String</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSDataSourceGroup">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+		</key>
+	</key>
+	<fval name="name"><value>DataSources</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSCassandraDataSource">
+	<key type='KPSRoot'>
+		<id field='name' value='Key Property Stores'/>
+		<key type='KPSPackage'>
+			<id field='name' value='OAuth'/>
+			<key type='KPSDataSourceGroup'>
+				<id field='name' value='DataSources'/>
+			</key>
+		</key>
+	</key>
+	<fval name="description"><value>Uses Cassandra for storage</value></fval>
+	<fval name="name"><value>Cassandra Storage</value></fval>
+	<fval name="readConsistencyLevel"><value>ONE</value></fval>
+	<fval name="writeConsistencyLevel"><value>ONE</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="KPSRoot">
+	<fval name="name"><value>Key Property Stores</value></fval>
+</entity>
+<entity xmlns="http://www.vordel.com/2005/06/24/entityStore"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" type="ESConfiguration">
+	<fval name="name"><value>Entity Store Configuration</value></fval>
+	<fval name="passphraseTest"><value>aHR0cDsvL3d3dy52b3JkZWwuY29t</value></fval>
+	<fval name="productKey"><value>VordelGateway</value></fval>
+	<fval name="version"><value>7.7.0</value></fval>
+</entity>
+</entityStoreData>
