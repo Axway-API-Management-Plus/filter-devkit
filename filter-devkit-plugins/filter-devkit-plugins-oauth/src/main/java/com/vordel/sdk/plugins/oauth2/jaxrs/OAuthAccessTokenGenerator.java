@@ -193,7 +193,7 @@ public abstract class OAuthAccessTokenGenerator {
 	}
 
 	public Set<String> applyOwnerConsent(Message msg, String subject, ApplicationDetails details, Set<String> scopes, boolean skipUserConsent) throws CircuitAbortException {
-		if (OAuthGuavaCache.getAppDetailsFromClientId(msg, subject) != null) {
+		if (OAuthGuavaCache.getOAuthClient(subject) != null) {
 			subject = null;
 		}
 		

@@ -101,7 +101,9 @@ public class OAuthAuthorization {
 	}
 
 	public static OAuthAuthorization retrieveAuthorizationByAppAndSubject(AuthorizationStore authzStore, String applicationID, String authSubject) {
-		return new OAuthAuthorization(invoke(STORE_RETRIEVEBYAPPANDSUBJECT, authzStore, applicationID, authSubject));
+		Object authorization = invoke(STORE_RETRIEVEBYAPPANDSUBJECT, authzStore, applicationID, authSubject);
+		
+		return authorization == null ? null : new OAuthAuthorization(authorization);
 	}
 
 	public Collection<? extends String> getScopes() {

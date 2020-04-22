@@ -12,15 +12,19 @@ import com.vordel.circuit.Message;
 import com.vordel.circuit.oauth.common.OAuth2Utils;
 import com.vordel.circuit.oauth.kps.ApplicationDetails;
 import com.vordel.common.apiserver.StoreAccessFactory;
+import com.vordel.common.apiserver.controller.BaseOAuthController;
 import com.vordel.common.apiserver.controller.BaseOAuthResourceController;
 import com.vordel.common.apiserver.controller.IStoreAccess;
 import com.vordel.common.apiserver.discovery.model.OAuthAppScope;
+import com.vordel.common.apiserver.model.OAuthClient;
+import com.vordel.kps.ObjectNotFound;
 import com.vordel.trace.Trace;
 
 public class OAuthGuavaCache {
 	public static final PortalConfiguration PORTAL_CONFIG;
 
 	private static final Cache<String, CacheValueHolder<ApplicationDetails>> DETAILS_CACHE;
+	private static final Cache<String, CacheValueHolder<OAuthClient>> CLIENT_CACHE;
 	private static final Cache<String, CacheValueHolder<List<OAuthAppScope>>> APPSCOPES_CACHE;
 
 	private static final String DETAILS_PROPERTY;
@@ -34,6 +38,8 @@ public class OAuthGuavaCache {
 		long CACHE_SIZE = 1000L;
 
 		PORTAL_CONFIG = PortalConfiguration.getInstance();
+
+		CLIENT_CACHE = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterWrite(CACHE_TTL, TimeUnit.MILLISECONDS).build();
 		DETAILS_CACHE = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterWrite(CACHE_TTL, TimeUnit.MILLISECONDS).build();
 		APPSCOPES_CACHE = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterWrite(CACHE_TTL, TimeUnit.MILLISECONDS).build();
 	}
@@ -88,6 +94,35 @@ public class OAuthGuavaCache {
 		}
 
 		return scopes;
+	}
+
+	public static OAuthClient getOAuthClient(String client_id) {
+		OAuthClient client = null;
+
+		if (client_id != null) {
+			try {
+				client = CLIENT_CACHE.get(client_id, new Callable<CacheValueHolder<OAuthClient>>() {
+					@Override
+					public CacheValueHolder<OAuthClient> call() throws Exception {
+						IStoreAccess storeAccess = StoreAccessFactory.getInstance("admin");
+						BaseOAuthController controller = storeAccess.getOAuthController();
+						OAuthClient client = null;
+
+						try {
+							client = controller.internalGetOAuthClient(client_id);
+						} catch(ObjectNotFound e) {
+							/* ignore */
+						}
+
+						return new CacheValueHolder<OAuthClient>(client);
+					}
+				}).call();
+			} catch (ExecutionException e) {
+				processExecutionException(e);
+			}
+		}
+
+		return client;
 	}
 
 	public static ApplicationDetails getAppDetailsFromClientId(final Message m, final String client_id) {
