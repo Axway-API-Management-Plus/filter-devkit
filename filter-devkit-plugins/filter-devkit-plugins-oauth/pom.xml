@@ -6,17 +6,4 @@
     <version>0</version>
   </parent>
   <artifactId>filter-devkit-plugins-oauth</artifactId>
-  
-  <dependencies>
-  	<dependency>
-  		<groupId>com.axway.apigw</groupId>
-  		<artifactId>filter-devkit-plugins-httpsig</artifactId>
-  		<version>[1.0,2.0)</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.axway.apigw</groupId>
-  		<artifactId>filter-devkit-plugins-jose</artifactId>
-  		<version>[1.0,2.0)</version>
-  	</dependency>
-  </dependencies>
 </project>
