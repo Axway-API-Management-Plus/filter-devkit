@@ -647,7 +647,7 @@ public class GenerateJWS extends QuickJavaFilterDefinition {
 				if (signer == null) {
 					throw new CircuitAbortException("bad certificate (no private key provided)");
 				}
-			} else if (signer instanceof PrivateKey) {
+			} else if (signer instanceof PublicKey) {
 				algorithm = getSignatureAlgorithm(m, signer);
 			} else if ((signer instanceof byte[]) || (signer instanceof String)) {
 				if (signer instanceof String) {
