@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.vordel.kps.Model;
+import com.vordel.persistence.kps.KPSInstanceProvider;
 import com.vordel.kps.ObjectExists;
 import com.vordel.kps.ObjectNotFound;
 import com.vordel.kps.Store;
@@ -14,9 +15,9 @@ import com.vordel.kps.query.KeyQuery;
 
 public abstract class KPSResource implements ContextResource, ViewableResource {
 	public static Model getModel() {
-		KPS kps = KPS.getInstance();
+		//KPS kps = KPS.getInstance();
 
-		return kps.getModel();
+		return KPSInstanceProvider.get().getModel();
 	}
 
 	public abstract Store getStore();
