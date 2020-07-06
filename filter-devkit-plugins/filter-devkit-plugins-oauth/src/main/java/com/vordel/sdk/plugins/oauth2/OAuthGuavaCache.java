@@ -11,7 +11,7 @@ import com.vordel.apiportal.config.PortalConfiguration;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.oauth.common.OAuth2Utils;
 import com.vordel.circuit.oauth.kps.ApplicationDetails;
-import com.vordel.common.apiserver.StoreAccessFactory;
+import com.vordel.common.apiserver.controller.StoreAccess;
 import com.vordel.common.apiserver.controller.BaseOAuthController;
 import com.vordel.common.apiserver.controller.BaseOAuthResourceController;
 import com.vordel.common.apiserver.controller.IStoreAccess;
@@ -63,7 +63,7 @@ public class OAuthGuavaCache {
 			scopes = APPSCOPES_CACHE.get(applicationId, new Callable<CacheValueHolder<List<OAuthAppScope>>>() {
 				@Override
 				public CacheValueHolder<List<OAuthAppScope>> call() {
-					IStoreAccess storeAccess = StoreAccessFactory.getInstance("admin");
+					IStoreAccess storeAccess = StoreAccess.internalWithRole("admin");
 					BaseOAuthResourceController controller = storeAccess.getOAuthResourceController();
 					List<OAuthAppScope> scopes = controller.getScopes(applicationId);
 
@@ -104,7 +104,7 @@ public class OAuthGuavaCache {
 				client = CLIENT_CACHE.get(client_id, new Callable<CacheValueHolder<OAuthClient>>() {
 					@Override
 					public CacheValueHolder<OAuthClient> call() throws Exception {
-						IStoreAccess storeAccess = StoreAccessFactory.getInstance("admin");
+						IStoreAccess storeAccess = StoreAccess.internalWithRole("admin");
 						BaseOAuthController controller = storeAccess.getOAuthController();
 						OAuthClient client = null;
 

@@ -15,13 +15,13 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>filter-deps-runtime</artifactId>
-      <version>[7.7,)</version>
+      <version>[7.7.0,)</version>
       <type>pom</type>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>filter-devkit-runtime</artifactId>
-      <version>[1.0,)</version>
+      <version>0</version>
       <exclusions>
         <exclusion>
           <groupId>${project.groupId}</groupId>
@@ -31,9 +31,9 @@
     </dependency>
   </dependencies>
   <modules>
-  	<module>filter-devkit-plugins-lambda</module>
+  	<!--module>filter-devkit-plugins-lambda</module>
   	<module>filter-devkit-plugins-httpsig</module>
-  	<module>filter-devkit-plugins-jose</module>
+  	<module>filter-devkit-plugins-jose</module-->
   	<module>filter-devkit-plugins-oauth</module>
   </modules>
 </project>
