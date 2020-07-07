@@ -177,6 +177,8 @@ public interface OAuthConstants {
 	public static final String param_issued_token_type = "issued_token_type";
 	public static final String param_nfv_token = "nfv_token";
 
+	public static final String param_response_mode = "response_mode";
+
 	public static final String type_access_token = "access_token";
 	public static final String type_refresh_token = "refresh_token";
 	public static final String type_pct = "pct";
@@ -285,4 +287,7 @@ public interface OAuthConstants {
 	public static final String meta_code_challenge_methods_supported = "code_challenge_methods_supported";
 	public static final String meta_signed_metadata = "signed_metadata";
 
+	public static final String response_mode_query = "query";
+	public static final String response_mode_fragment = "fragment";
+	public static final String response_mode_form_post = "form_post";
 }

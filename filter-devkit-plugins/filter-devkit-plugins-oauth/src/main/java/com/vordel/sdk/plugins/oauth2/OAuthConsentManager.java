@@ -63,7 +63,7 @@ public class OAuthConsentManager {
 		return new KPSAuthorizationStoreImpl(KPS.getInstance().getStore("OAuthAuthorizations"), tokenStores);
 	}
 
-	public void persistNewlyApprovedScopes(String authSubject, ApplicationDetails app, OAuthAuthorization authorization, Set<String> preAuthorisedScopes, Set<String> nonPersistentScopes) throws CircuitAbortException {
+	public void persistNewlyApprovedScopes(String authSubject, ApplicationDetails app, OAuthAuthorization authorization, Set<String> preAuthorisedScopes, Set<?> nonPersistentScopes) throws CircuitAbortException {
 		try {
 			Set<String> authorizedScopes = new HashSet<String>();
 
@@ -94,7 +94,7 @@ public class OAuthConsentManager {
 		return scopesNeedOwnerAuthorization(msg, authSubject, app, requestedScopes, Collections.emptySet(), Collections.emptySet());
 	}
 
-	public boolean scopesNeedOwnerAuthorization(Message msg, String authSubject, ApplicationDetails app, Set<String> requestedScopes, Set<String> approvedScopes, Set<String> nonPersistentScopes) throws CircuitAbortException {
+	public boolean scopesNeedOwnerAuthorization(Message msg, String authSubject, ApplicationDetails app, Set<String> requestedScopes, Set<?> persistentApprovedScopes, Set<?> transientApprovedScopes) throws CircuitAbortException {
 		OAuthAuthorization authorization = OAuthAuthorization.retrieveAuthorizationByAppAndSubject(authzStore, app.getApplicationID(), authSubject);
 		Set<String> authzExceptionsScopes = appsAuthzStore.retrieveApplicationAuthorizedScopes(app.getApplicationID());
 
@@ -127,12 +127,23 @@ public class OAuthConsentManager {
 		scopesForAuthorisation.addAll(requestedScopes);
 		scopesForAuthorisation.removeAll(preAuthorisedScopes);
 
-		scopesNewlyApprovedByOwner.addAll(approvedScopes);
+		for(Object item : persistentApprovedScopes) {
+			if (item instanceof String) {
+				scopesNewlyApprovedByOwner.add((String) item);
+			}
+		}
+
+		for(Object item : transientApprovedScopes) {
+			if (item instanceof String) {
+				scopesNewlyApprovedByOwner.add((String) item);
+			}
+		}
+
 		scopesNewlyApprovedByOwner.removeAll(preAuthorisedScopes);
 		scopesForAuthorisation.removeAll(scopesNewlyApprovedByOwner);
 
 		if (!scopesNewlyApprovedByOwner.isEmpty()) {
-			persistNewlyApprovedScopes(authSubject, app, authorization, scopesPreAuthorisedByOwner, nonPersistentScopes);
+			persistNewlyApprovedScopes(authSubject, app, authorization, scopesPreAuthorisedByOwner, transientApprovedScopes);
 		}
 
 		boolean result = true;

@@ -2,7 +2,6 @@ package com.vordel.sdk.plugins.oauth2.model;
 
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.err_invalid_request;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_response_type;
-import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_scope;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.response_type_code;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.response_type_id_token;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.response_type_none;
@@ -64,7 +63,7 @@ public class ResponseTypeSet extends AbstractSet<String> {
 		if (types.retainAll(INDEXES)) {
 			throw new OAuthException(err_invalid_request, null, "the response_type parameter contains unsupported values");
 		}
-		
+
 		if (types.contains(response_type_none) && types.size() > 1) {
 			/* if 'none' response_type is requested it must be the only response_type requested */
 			throw new OAuthException(err_invalid_request, null, "the 'none' response_type is exclusive");
@@ -80,15 +79,15 @@ public class ResponseTypeSet extends AbstractSet<String> {
 		String response_type = null;
 
 		if ((iterator != null) && iterator.hasNext()) {
-			StringBuilder builder = new StringBuilder().append(iterator.next());
+			StringBuilder builder = new StringBuilder().append(assertValidResponseType(iterator.next()));
 			Set<String> used = new HashSet<String>();
 
 			while (iterator.hasNext()) {
 				String next = iterator.next();
-				
+
 				if ((next != null) && (!next.isEmpty()) && used.add(next)) {
 					builder.append(' ');
-					builder.append(next);
+					builder.append(assertValidResponseType(next));
 				}
 			}
 
@@ -157,22 +156,30 @@ public class ResponseTypeSet extends AbstractSet<String> {
 			if ((response_type != null) && (!response_type.isEmpty())) {
 				builder.append(response_type);
 				builder.append(' ');
-				
-				if (contains(response_type_none) || (response_type_none.equals(item))) {
+
+				if (response_type_none.equals(item) || contains(response_type_none)) {
 					throw new IllegalArgumentException("the 'none' response_type is exclusive");
 				}
 			}
-			
+
 			response_type = builder.append(item).toString();
 
 			if ((response_type == null) || (response_type.isEmpty())) {
-				parameters.remove(param_scope);
+				parameters.remove(param_response_type);
 			} else {
-				parameters.put(param_scope, response_type);
+				parameters.put(param_response_type, response_type);
 			}
 		}
 
 		return added;
+	}
+
+	public static final String assertValidResponseType(String scope) {
+		if (!INDEXES.contains(scope)) {
+			throw new OAuthException(err_invalid_request, null, String.format("'%s' is not a valid response_type (RFC6749 appendix A.3)", scope));
+		}
+
+		return scope;
 	}
 
 	public static class ResponseTypeIterator implements Iterator<String> {
@@ -220,8 +227,12 @@ public class ResponseTypeSet extends AbstractSet<String> {
 								/* response_type has already been seen */
 								group = null;
 
-								/* remove it */
-								remove();
+								try {
+									/* remove it */
+									remove();
+								} catch(UnsupportedOperationException e) {
+
+								}
 							}
 						}
 					}

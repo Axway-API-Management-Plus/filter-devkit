@@ -347,7 +347,7 @@ public class TokenServiceFilter extends QuickJavaFilterDefinition {
 	 * @param entity
 	 * @return
 	 */
-	private MessageProcessor attachServiceContextProcessor(ConfigContext ctx, Entity entity) {
+	protected static MessageProcessor attachServiceContextProcessor(ConfigContext ctx, Entity entity) {
 		try {
 			EntityStore es = ctx.getStore();
 			DefaultFilter filter = (DefaultFilter) FilterFactory.createFilter(es, es.getTypeForName("ServiceContextFilter"), entity);
@@ -369,7 +369,7 @@ public class TokenServiceFilter extends QuickJavaFilterDefinition {
 		}
 	}
 
-	private Boolean substituteBoolean(Message msg, Selector<Boolean> selector, Boolean defaultValue) {
+	protected static Boolean substituteBoolean(Message msg, Selector<Boolean> selector, Boolean defaultValue) {
 		Boolean value = selector == null ? defaultValue : selector.substitute(msg);
 
 		return value == null ? defaultValue : value;
@@ -632,7 +632,7 @@ public class TokenServiceFilter extends QuickJavaFilterDefinition {
 		}
 	}
 
-	private static void relay(HeaderSet from, Headers to, String name) {
+	protected static void relay(HeaderSet from, Headers to, String name) {
 		Iterator<String> iterator = from.getHeaders(name);
 
 		if (iterator != null){
@@ -650,7 +650,7 @@ public class TokenServiceFilter extends QuickJavaFilterDefinition {
 		}
 	}
 
-	private static Collection<OAuthTokenData> properties(EntityStore es, Collection<ESPK> properties) {
+	protected static Collection<OAuthTokenData> properties(EntityStore es, Collection<ESPK> properties) {
 		List<OAuthTokenData> result = new ArrayList<OAuthTokenData>();
 
 		for (ESPK element : properties) {
