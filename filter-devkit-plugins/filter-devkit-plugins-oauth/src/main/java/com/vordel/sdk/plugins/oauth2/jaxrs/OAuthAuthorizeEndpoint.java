@@ -158,7 +158,10 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 		OAuthParameters parsed = new OAuthParameters(MAPPER.createObjectNode());
 
 		/* start by merging query, body and header parameters */
-		merged = MultivaluedHeaderMap.mergeHeaders(merged, form);
+		if (form != null) {
+			merged = MultivaluedHeaderMap.mergeHeaders(merged, form);
+		}
+
 		merged = MultivaluedHeaderMap.mergeHeaders(merged, query);
 
 		return service(msg, circuit, headers, request, info, parsed, MAPPER.createObjectNode(), cleanupHeaders(merged));
@@ -362,7 +365,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 
 				if (manager.scopesNeedOwnerAuthorization(msg, subject, details, requestedScopes)) {
 					PolicyResource authorization = getAuthorizationPolicy();
-					
+
 					/* 
 					 * Those two sets generic type are strings but since selector API does not support
 					 * generics, use wildcard for now.
@@ -493,6 +496,11 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 						token.getAdditionalInformation().remove("internalstorage.openid.nonce"); /* compatibility with existing filter */
 
 						msg.put("accesstoken", token);
+						msg.put("accesstoken.authn", authn);
+						msg.put("authentication.subject.id", authn.getPrincipal());
+
+						token.setAuthenticationSubject(authn.getUserAuthentication());
+						token.setClientID(authz.getClientId());
 					}
 
 					if (response_types.contains(response_type_id_token)) {
@@ -515,7 +523,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 								if (code != null) {
 									code.setAdditionalInformation(param_id_token, id_token);
 								}
-								
+
 								if (token != null) {
 									/* if we did parse the ID Token set it for the generated token */
 									token.setIdToken(id_token);
@@ -534,7 +542,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 					if ((code != null) || (token != null)) {
 						PolicyResource transformer = tokenGenerator.getAccessTokenTransformer();
 
-						if (isValidPolicy(transformer) && (!invokePolicy(msg, circuit, idGenerator))) {
+						if (isValidPolicy(transformer) && (!invokePolicy(msg, circuit, transformer))) {
 							throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unable to generate token or authorization code");
 						}
 
@@ -545,9 +553,9 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 								throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unable to store authorization code");
 							}
 
-							result.setAll((ObjectNode) MAPPER.readTree(code.getCodeAsJSON()));
+							result.put(param_code, code.getCode());
 						}
-						
+
 						if (id_token != null) {
 							result.put(param_id_token, id_token);
 						}
@@ -572,6 +580,8 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 
 				return asOAuthRedirect(msg, circuit, parsed, Response.ok().type(MediaType.APPLICATION_JSON_TYPE).entity(result).cacheControl(cache).build());
 			} catch (CircuitAbortException e) {
+				Trace.error("Got Exception from circuit", e);
+				
 				throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unexpected error occured", e);
 			} catch (OAuthException e) {
 				throw e;
@@ -693,9 +703,9 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 					if ((state == null) || (!param_state.equals(fieldName))) {
 						JsonNode fieldNode = fieldEntry.getValue();
 
-						if ((fieldNode != null) && (!fieldNode.isMissingNode())) {
+						if ((fieldNode != null) && (!fieldNode.isMissingNode()) && (!fieldNode.isNull())) {
 							try {
-								parameters.addHeader(fieldName, MAPPER.writeValueAsString(fieldNode));
+								parameters.addHeader(fieldName, fieldNode.isTextual() ? fieldNode.asText(null) : MAPPER.writeValueAsString(fieldNode));
 							} catch (JsonProcessingException e) {
 								/* ignore */
 							}

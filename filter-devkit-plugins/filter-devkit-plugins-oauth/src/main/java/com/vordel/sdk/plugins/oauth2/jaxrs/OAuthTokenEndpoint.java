@@ -179,7 +179,10 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 		OAuthParameters parsed = new OAuthParameters(MAPPER.createObjectNode());
 
 		/* start by merging query, body and header parameters */
-		merged = MultivaluedHeaderMap.mergeHeaders(merged, form);
+		if (form != null) {
+			merged = MultivaluedHeaderMap.mergeHeaders(merged, form);
+		}
+		
 		merged = MultivaluedHeaderMap.mergeHeaders(merged, query);
 
 		return service(msg, circuit, headers, request, info, parsed, MAPPER.createObjectNode(), cleanupHeaders(merged));
