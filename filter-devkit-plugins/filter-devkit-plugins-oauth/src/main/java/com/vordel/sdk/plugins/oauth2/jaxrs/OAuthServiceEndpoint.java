@@ -1,10 +1,13 @@
 package com.vordel.sdk.plugins.oauth2.jaxrs;
 
-import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.*;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.auth_none;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.err_invalid_request;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.response_type_code;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.response_type_token;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashSet;
@@ -20,6 +23,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -49,6 +53,19 @@ public abstract class OAuthServiceEndpoint {
 	protected static final Selector<String> AUTHENTICATED_SUBJECT = SelectorResource.fromExpression(MessageProperties.AUTHN_SUBJECT_ID, String.class);
 
 	protected static final ObjectMapper MAPPER = new ObjectMapper();
+	
+	public static URI getServiceURI(UriInfo info) {
+		URI result = info.getRequestUriBuilder().replaceQuery(null).build();
+		String path = result.getPath();
+		
+		if ((path.length() > 1) && path.endsWith("/")) {
+			path = path.substring(0, path.length() - 1);
+			
+			result = UriBuilder.fromUri(result).replacePath(path).build();
+		}
+		
+		return result;
+	}
 
 	public static final boolean isValidPolicy(PolicyResource resource) {
 		return (resource != null) && (resource.getCircuit() != null);

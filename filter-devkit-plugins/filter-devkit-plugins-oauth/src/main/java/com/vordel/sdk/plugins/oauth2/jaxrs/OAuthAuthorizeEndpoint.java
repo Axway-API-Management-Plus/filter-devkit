@@ -52,6 +52,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -77,7 +78,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nimbusds.jose.JOSEObject;
-import com.nimbusds.jwt.SignedJWT;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProperties;
@@ -93,6 +93,7 @@ import com.vordel.circuit.script.context.resources.PolicyResource;
 import com.vordel.circuit.script.context.resources.SelectorResource;
 import com.vordel.config.Circuit;
 import com.vordel.el.Selector;
+import com.vordel.mime.Body;
 import com.vordel.mime.FormURLEncodedBody;
 import com.vordel.mime.QueryStringHeaderSet;
 import com.vordel.sdk.plugins.oauth2.OAuthConsentManager;
@@ -106,6 +107,8 @@ import com.vordel.trace.Trace;
 
 public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 	public static final String OUT_OF_BAND_URL = "urn:ietf:wg:oauth:2.0:oob";
+
+	private static final Selector<String> BODY_SELECTOR = SelectorResource.fromExpression("content.body", String.class);
 
 	protected abstract boolean enableJsonPOST(Message msg);
 
@@ -194,6 +197,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 		msg.put("oauth.request.parsed.headers", msg.get(MessageProperties.HTTP_HEADERS));
 
 		/* set oauth request parsed parameters */
+		msg.put("oauth.request.uri", getServiceURI(info));
 		msg.put("oauth.request.parsed.mapped", parsed);
 		msg.put("oauth.request.parsed.scopes", scopes);
 		msg.put("oauth.request.parsed.prompts", new PromptSet(parsed.getObjectNode()));
@@ -302,7 +306,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 				/* check if 'nonce' parameter is required */
 				if (response_type_code.equals(response_type) || response_type_token.equals(response_type)) {
 					/* regular OAuth request without id token, nothing todo */
-				} else if (scopes.contains("openid") && (nonce == null)) {
+				} else if ((!response_type_none.equals(response_type)) && (nonce == null)) {
 					throw new OAuthException(err_invalid_request, null, "the OAuth request is missing the nonce parameter (OpenID Connect Core sections 3.2.2.10 and 3.3.2.11)");
 				}
 
@@ -469,7 +473,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 						}
 
 						/* generate authorization code and save it in message */
-						msg.put("oauth.authorization.code", code = new AuthorizationCode(authz.getRedirectUri(), authz.getScope(), length, expiration, subject, authz.getState(), authz.getClientId(), additional));
+						msg.put("oauth.response.code", code = new AuthorizationCode(authz.getRedirectUri(), authz.getScope(), length, expiration, subject, authz.getState(), authz.getClientId(), additional));
 					}
 
 					if (response_types.contains(response_type_token)) {
@@ -495,12 +499,22 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 						token.setAdditionalInformation(additional);
 						token.getAdditionalInformation().remove("internalstorage.openid.nonce"); /* compatibility with existing filter */
 
+						msg.put("oauth.response.accesstoken", token);
+
+						/* existing filter compatibility */
 						msg.put("accesstoken", token);
 						msg.put("accesstoken.authn", authn);
-						msg.put("authentication.subject.id", authn.getPrincipal());
 
 						token.setAuthenticationSubject(authn.getUserAuthentication());
 						token.setClientID(authz.getClientId());
+					}
+
+					if ((code != null) || (token != null)) {
+						PolicyResource transformer = tokenGenerator.getAccessTokenTransformer();
+
+						if (isValidPolicy(transformer) && (!invokePolicy(msg, circuit, transformer))) {
+							throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unable to generate token or authorization code");
+						}
 					}
 
 					if (response_types.contains(response_type_id_token)) {
@@ -530,6 +544,8 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 									token.setAdditionalInformation(param_id_token, id_token);
 								}
 							}
+							
+							msg.put("oauth.response.id_token", id_token);
 						} catch (ParseException e) {
 							Trace.error("unable to parse generated id token", e);
 						}
@@ -539,42 +555,34 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 						}
 					}
 
-					if ((code != null) || (token != null)) {
-						PolicyResource transformer = tokenGenerator.getAccessTokenTransformer();
+					if (code != null) {
+						AuthorizationCodeStore codeStore = tokenGenerator.getAuthorizationCodeStore();
 
-						if (isValidPolicy(transformer) && (!invokePolicy(msg, circuit, transformer))) {
-							throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unable to generate token or authorization code");
+						if (!codeStore.add(code)) {
+							throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unable to store authorization code");
 						}
 
-						if (code != null) {
-							AuthorizationCodeStore codeStore = tokenGenerator.getAuthorizationCodeStore();
+						result.put(param_code, code.getCode());
+					}
 
-							if (!codeStore.add(code)) {
-								throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unable to store authorization code");
-							}
+					if (id_token != null) {
+						result.put(param_id_token, id_token);
+					}
 
-							result.put(param_code, code.getCode());
+					if (token != null) {
+						TokenStore tokenStore = tokenGenerator.getTokenStore();
+
+						if (!tokenStore.storeAccessToken(token, authn)) {
+							throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unable to store access token");
 						}
 
-						if (id_token != null) {
-							result.put(param_id_token, id_token);
-						}
+						ObjectNode node = (ObjectNode) MAPPER.readTree(token.getTokenAsJSON());
 
-						if (token != null) {
-							TokenStore tokenStore = tokenGenerator.getTokenStore();
+						/* ensure code and id_token are not set */
+						node.remove(param_code);
+						node.remove(param_id_token);
 
-							if (!tokenStore.storeAccessToken(token, authn)) {
-								throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unable to store access token");
-							}
-
-							ObjectNode node = (ObjectNode) MAPPER.readTree(token.getTokenAsJSON());
-
-							/* ensure code and id_token are not set */
-							node.remove(param_code);
-							node.remove(param_id_token);
-
-							result.setAll(node);
-						}
+						result.setAll(node);
 					}
 				}
 
@@ -854,21 +862,38 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 	private static void applyRequestOverride(OAuthParameters parsed, ObjectNode body, ObjectNode override) {
 		if (override != null) {
 			OAuthParameters request = new OAuthParameters(override, parsed.getDescriptors());
+			ObjectNode extras = MAPPER.createObjectNode();
+			
+			extras.setAll(override);
 
-			/* relay OAuth parameters in the parsed map */
-			Iterator<Entry<String, Object>> iterator = request.entrySet().iterator();
+			Iterator<String> iterator = request.keySet().iterator();
 
+			/* remove all oauth parameters in extras object */
 			while (iterator.hasNext()) {
-				Entry<String, Object> entry = iterator.next();
-				String name = entry.getKey();
-
-				iterator.remove();
-				parsed.put(name, entry.getValue());
-				parsed.getParsedParameters().add(name);
+				String name = iterator.next();
+				
+				extras.remove(name);
+			}
+			
+			iterator = extras.fieldNames();
+			
+			/* remove extra parameters in overrides */
+			while(iterator.hasNext()) {
+				String name = iterator.next();
+				
+				override.remove(name);
 			}
 
-			/* override remaining body parameters */
-			body.setAll(override);
+			/* parse overriden parameters */
+			for(String name : new LinkedHashSet<String>(request.keySet())) {
+				parsed.remove(name);
+				parsed.getParsedParameters().remove(name);
+				
+				parsed.parse(name, override, null, null);
+			}
+
+			/* set extra parameters */
+			body.setAll(extras);
 		}
 	}
 
@@ -893,11 +918,10 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 		}
 	}
 
-	private static final Selector<String> BODY_SELECTOR = SelectorResource.fromExpression("content.body", String.class);
-
 	private ObjectNode parseOpenIDRequest(Message msg, Circuit circuit, OAuthParameters parsed, ObjectNode body, MultivaluedMap<String, String> merged) throws CircuitAbortException {
 		String request_uri = parsed.parse(param_request_uri, body, merged, null).asText(null);
 		String request = parsed.parse(param_request, body, merged, null).asText(null);
+		Body saved = (Body) msg.get(MessageProperties.CONTENT_BODY);
 		ObjectNode override = null;
 
 		if ((request_uri != null) && (request != null)) {
@@ -932,8 +956,8 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 			}
 
 			try {
-				override = (ObjectNode) MAPPER.readTree(SignedJWT.parse(request).getPayload().toString());
-
+				override = (ObjectNode) MAPPER.readTree(BODY_SELECTOR.substitute(msg));
+				
 				if (override.has(param_request) || override.has(param_request_uri)) {
 					throw new OAuthException(err_invalid_request_object, null, "the provided request object cannot contain nested request or request_uri parameters (OpenID Connect Core section 6.1)");
 				}
@@ -951,14 +975,18 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 				}
 
 				claims.remove(param_request);
-			} catch (ParseException e) {
-				throw new OAuthException(err_invalid_request, null, String.format("'%s' is not a valid Json Web Token", request), e);
 			} catch (IOException e) {
 				throw new OAuthException(err_invalid_request_object, null, "the provided request object is invalid", e);
 			} catch (ClassCastException e) {
 				throw new OAuthException(err_invalid_request_object, null, "the provided request object is not a signed json object");
 			}
 		}
+		
+		if (saved != null) {
+			/* restore the body object */
+			msg.put(MessageProperties.CONTENT_BODY, saved);
+		}
+
 
 		return override;
 	}

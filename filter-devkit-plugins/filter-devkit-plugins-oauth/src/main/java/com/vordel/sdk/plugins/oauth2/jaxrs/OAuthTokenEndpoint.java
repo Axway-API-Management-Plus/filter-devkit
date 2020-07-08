@@ -211,6 +211,7 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 		msg.put("oauth.request.parsed.headers", msg.get(MessageProperties.HTTP_HEADERS));
 
 		/* set oauth request parsed parameters */
+		msg.put("oauth.request.uri", getServiceURI(info));
 		msg.put("oauth.request.parsed.mapped", parsed);
 		msg.put("oauth.request.parsed.scopes", new ScopeSet(parsed.getObjectNode()));
 		msg.put("oauth.request.parsed.json", parsed.getObjectNode());

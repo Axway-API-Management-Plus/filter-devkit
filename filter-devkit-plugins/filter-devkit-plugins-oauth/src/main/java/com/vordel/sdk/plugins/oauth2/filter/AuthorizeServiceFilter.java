@@ -77,7 +77,7 @@ public class AuthorizeServiceFilter extends QuickJavaFilterDefinition {
 	private PolicyResource authorizationPolicy;
 	private PolicyResource publicResourceOwnerGenerator;
 
-	@QuickFilterField(name = "serviceName", cardinality = "1", type = "string", defaults = "OAuth 2.0 Token Service")
+	@QuickFilterField(name = "serviceName", cardinality = "1", type = "string", defaults = "OAuth 2.0 Authorization Service")
 	private void setServiceName(ConfigContext ctx, Entity entity, String field) {
 		/* entity configuration for inner service context processor */
 	}

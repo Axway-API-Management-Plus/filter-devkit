@@ -251,7 +251,7 @@ public class OAuthParameters extends AbstractMap<String, Object> {
 
 		/* JWT values */
 		descriptors.put(param_id_token_hint, OAuthParameter.JWT_SINGLE);
-		descriptors.put(param_request, OAuthParameter.INTEGER_SINGLE);
+		descriptors.put(param_request, OAuthParameter.JWT_SINGLE);
 
 		return Collections.unmodifiableMap(descriptors);
 	}

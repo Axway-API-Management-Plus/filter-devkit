@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nimbusds.jose.JOSEObject;
+import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jwt.SignedJWT;
 import com.vordel.mime.Headers;
 import com.vordel.sdk.plugins.oauth2.jaxrs.OAuthException;
@@ -70,17 +72,17 @@ public abstract class OAuthParameter<T> {
 	private static final Pattern VSCHAR_REGEX = Pattern.compile("([\\u0020-\\u007e]+)");
 	private static final Pattern DISPLAY_REGEX = Pattern.compile("(page|popup|touch|wap)?");
 	private static final Pattern RESPONSE_MODE_REGEX = Pattern.compile("(query|fragment|form_post)?");
-	
+
 	public static final  Map<String,String> PKCE_METHODS = pkceMethods();
-	
+
 	private static final Map<String,String> pkceMethods() {
 		Map<String, String> registry = new HashMap<String, String>();
-		
+
 		registry.put("plain", null);
 		registry.put("S256", "SHA-256");
 		registry.put("S384", "SHA-384");
 		registry.put("S512", "SHA-512");
-		
+
 		return Collections.unmodifiableMap(registry);
 	}
 
@@ -234,7 +236,12 @@ public abstract class OAuthParameter<T> {
 
 			if (value != null) {
 				try {
-					SignedJWT.parse(value).getJWTClaimsSet();
+					JOSEObject jose = JOSEObject.parse(value);
+					
+					if (jose instanceof JWSObject) {
+						/* If the object is not encrypted, check if it is a valid JWT */
+						SignedJWT.parse(value).getJWTClaimsSet();
+					}
 
 					root.put(name, value);
 				} catch (ParseException e) {
@@ -264,7 +271,7 @@ public abstract class OAuthParameter<T> {
 
 			return (result != null) && (result instanceof ObjectNode) ? (ObjectNode) result : null;
 		}
-		
+
 		@Override
 		public ObjectNode put(ObjectNode root, String name, Iterable<ObjectNode> values) {
 			throw new OAuthException(err_invalid_request, null, String.format("duplicate parameter '%s'", name));
@@ -302,7 +309,7 @@ public abstract class OAuthParameter<T> {
 				for(String candidate : candidates) {
 					if (candidate != null) {
 						JsonNode node = MAPPER.readTree(candidate);
-						
+
 						if (node instanceof ObjectNode) {
 							objects.add((ObjectNode) node);
 						}
@@ -571,7 +578,7 @@ public abstract class OAuthParameter<T> {
 
 		protected abstract String assertValidValue(String value);
 
-		protected abstract String asStringValue(Iterable<String> value);
+		protected abstract String asStringValue(Iterable<String> values);
 
 		@Override
 		public <T extends Headers> T toQueryString(ObjectNode root, String name, T query) {
@@ -599,8 +606,18 @@ public abstract class OAuthParameter<T> {
 		}
 
 		@Override
-		protected String asStringValue(Iterable<String> value) {
-			return ScopeSet.asString(value == null ? null : value.iterator());
+		protected String asStringValue(Iterable<String> values) {
+			Set<String> set = new LinkedHashSet<String>();
+
+			for(String value : values) {
+				Iterator<String> iterator = ScopeSet.iterator(value);
+
+				while(iterator.hasNext()) {
+					set.add(iterator.next());
+				}
+			}
+
+			return ScopeSet.asString(values == null ? null : set.iterator());
 		}
 	};
 
@@ -611,15 +628,25 @@ public abstract class OAuthParameter<T> {
 		}
 
 		@Override
-		protected String asStringValue(Iterable<String> value) {
-			if (value != null) {
-				/* sort response types if needed */
-				String response_type = ResponseTypeSet.asString(value.iterator());
+		protected String asStringValue(Iterable<String> values) {
+			if (values != null) {
+				Set<String> set = new LinkedHashSet<String>();
 
-				value = ResponseTypeSet.asList(response_type);
+				for(String value : values) {
+					Iterator<String> iterator = ResponseTypeSet.iterator(value);
+
+					while(iterator.hasNext()) {
+						set.add(iterator.next());
+					}
+				}
+
+				/* sort response types if needed */
+				String response_type = ResponseTypeSet.asString(set.iterator());
+
+				values = ResponseTypeSet.asList(response_type);
 			}
 
-			return ResponseTypeSet.asString(value == null ? null : value.iterator());
+			return ResponseTypeSet.asString(values == null ? null : values.iterator());
 		}
 	};
 
@@ -630,14 +657,25 @@ public abstract class OAuthParameter<T> {
 		}
 
 		@Override
-		protected String asStringValue(Iterable<String> value) {
-			if (value != null) {
-				String prompt = PromptSet.asString(value.iterator());
+		protected String asStringValue(Iterable<String> values) {
+			if (values != null) {
+				Set<String> set = new LinkedHashSet<String>();
 
-				value = PromptSet.asSet(prompt);
+				for(String value : values) {
+					Iterator<String> iterator = PromptSet.iterator(value);
+
+					while(iterator.hasNext()) {
+						set.add(iterator.next());
+					}
+				}
+
+				/* sort response types if needed */
+				String prompt = PromptSet.asString(set.iterator());
+
+				values = PromptSet.asSet(prompt);
 			}
 
-			return PromptSet.asString(value == null ? null : value.iterator());
+			return PromptSet.asString(values == null ? null : values.iterator());
 		}
 	};
 
@@ -648,14 +686,25 @@ public abstract class OAuthParameter<T> {
 		}
 
 		@Override
-		protected String asStringValue(Iterable<String> value) {
-			if (value != null) {
-				String ui_locales = LocaleList.asString(value.iterator());
+		protected String asStringValue(Iterable<String> values) {
+			if (values != null) {
+				Set<String> set = new LinkedHashSet<String>();
 
-				value = LocaleList.asList(ui_locales);
+				for(String value : values) {
+					Iterator<String> iterator = LocaleList.listIterator(value, 0);
+
+					while(iterator.hasNext()) {
+						set.add(iterator.next());
+					}
+				}
+
+				/* sort response types if needed */
+				String response_type = LocaleList.asString(set.iterator());
+
+				values = LocaleList.asList(response_type);
 			}
 
-			return LocaleList.asString(value == null ? null : value.iterator());
+			return LocaleList.asString(values == null ? null : values.iterator());
 		}
 	};
 }
