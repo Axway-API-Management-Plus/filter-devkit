@@ -156,6 +156,13 @@ public class OAuthGuavaCache {
 						return new CacheValueHolder<ApplicationDetails>(details);
 					}
 				}).call();
+				
+				if (details != null) {
+					/* update the client details property */
+					m.put(DETAILS_PROPERTY, details);
+				} else {
+					m.remove(DETAILS_PROPERTY);
+				}
 			} catch (ExecutionException e) {
 				processExecutionException(e);
 			}
