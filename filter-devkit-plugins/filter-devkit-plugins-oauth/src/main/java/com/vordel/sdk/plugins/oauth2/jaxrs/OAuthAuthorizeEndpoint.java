@@ -499,10 +499,9 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 						token.setAdditionalInformation(additional);
 						token.getAdditionalInformation().remove("internalstorage.openid.nonce"); /* compatibility with existing filter */
 
-						msg.put("oauth.response.accesstoken", token);
+						tokenGenerator.setTokenOnMessage(msg, token);
 
 						/* existing filter compatibility */
-						msg.put("accesstoken", token);
 						msg.put("accesstoken.authn", authn);
 
 						token.setAuthenticationSubject(authn.getUserAuthentication());

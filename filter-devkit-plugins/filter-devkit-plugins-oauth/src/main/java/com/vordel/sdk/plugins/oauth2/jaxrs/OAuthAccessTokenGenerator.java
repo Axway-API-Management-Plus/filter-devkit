@@ -579,6 +579,8 @@ public abstract class OAuthAccessTokenGenerator {
 
 	protected OAuth2AccessToken setTokenOnMessage(Message m, OAuth2AccessToken token) {
 		if (token != null) {
+			m.put("oauth.response.accesstoken", token);
+			
 			m.put("accesstoken", token);
 		} else {
 			m.remove("accesstoken");

@@ -520,6 +520,8 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 		} catch (WebApplicationException e) {
 			throw e;
 		} catch (CircuitAbortException e) {
+			Trace.error("Unexpected error", e);
+
 			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unexpected error occured", e);
 		} catch (RuntimeException e) {
 			Trace.error("Unexpected error", e);
@@ -627,6 +629,8 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 
 			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "an internal error occured");
 		}
+		
+		msg.put("oauth.response.code", code);
 
 		return code;
 	}
