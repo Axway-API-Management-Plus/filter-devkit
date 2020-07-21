@@ -78,7 +78,7 @@ public class OAuthConsentManager {
 				authorization.setScopes(authorizedScopes);
 				
 				authorization.update(authzStore);
-			} else {
+			} else if (!authorizedScopes.isEmpty()) {
 				authorization = new OAuthAuthorization(app.getApplicationID(), authSubject, authorizedScopes, new Date(System.currentTimeMillis()), (String) null);
 				
 				authorization.store(authzStore);

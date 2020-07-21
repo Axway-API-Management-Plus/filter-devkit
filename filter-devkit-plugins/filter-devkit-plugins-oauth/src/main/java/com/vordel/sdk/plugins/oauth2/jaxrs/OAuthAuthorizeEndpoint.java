@@ -136,9 +136,11 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 
 	protected abstract String getPublicResourceOwner(Message msg);
 
+	protected abstract Set<?> getPersistentAllowedScopes(Message msg);
+
 	protected abstract Set<?> getTransientAllowedScopes(Message msg);
 
-	protected abstract Set<?> getPersistentAllowedScopes(Message msg);
+	protected abstract Set<?> getDiscardedScopes(Message msg);
 
 	protected abstract int getAuthorizationCodeLength(Message msg);
 
@@ -298,6 +300,8 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 
 					throw new OAuthException(Response.Status.FORBIDDEN, err_rfc6749_unauthorized_client, null, "The client is not authorized use this method ");
 				}
+				
+				msg.put("oauth.request.client_id", details.getClientID());
 
 				if (getValidRedirectURI(details, claims.path(param_redirect_uri).asText(null)) == null) {
 					throw new OAuthException(err_invalid_request, null, "invalid redirect_uri parameter");
@@ -325,7 +329,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 
 				OAuthAccessTokenGenerator tokenGenerator = getOAuthAccessTokenGenerator();
 				Set<String> requestedScopes = tokenGenerator.getScopesForToken(msg, circuit, parsed, details);
-
+				
 				/* 
 				 * first step, check for user authentication. the policy have to implement all the needed logic for user authentication:
 				 * - check for incoming authentication (id_token_hint),
@@ -376,16 +380,19 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 					 */
 					Set<?> persistentAllowedScopes = null;
 					Set<?> transientAllowedScopes = null;
+					Set<?> discardedScopes = null;
 
 					if (!isValidPolicy(authorization)) {
 						throw new OAuthException(err_rfc6749_invalid_scope, null, "requested scopes need user consent");
 					}
 
+					msg.put("oauth.scopes.requested", requestedScopes);
 					msg.put("oauth.scopes.missing", manager.getScopesForAuthorisation());
 
 					if (invokePolicy(msg, circuit, authorization)) {
 						persistentAllowedScopes = getPersistentAllowedScopes(msg);
 						transientAllowedScopes = getTransientAllowedScopes(msg);
+						discardedScopes = getDiscardedScopes(msg);
 					} else {
 						/*
 						 * the policy returned false, this means that we have a reliable response to
@@ -401,6 +408,12 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 
 					if (transientAllowedScopes == null) {
 						transientAllowedScopes = Collections.emptySet();
+					}
+
+					if (discardedScopes != null) {
+						requestedScopes.removeAll(discardedScopes);
+						persistentAllowedScopes.removeAll(discardedScopes);
+						transientAllowedScopes.removeAll(discardedScopes);
 					}
 
 					if (manager.scopesNeedOwnerAuthorization(msg, subject, details, requestedScopes, persistentAllowedScopes, transientAllowedScopes)) {

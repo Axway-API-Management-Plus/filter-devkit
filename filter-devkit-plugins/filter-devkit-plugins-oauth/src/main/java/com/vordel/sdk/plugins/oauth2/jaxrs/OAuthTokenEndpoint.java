@@ -157,7 +157,7 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 			throw new OAuthException(err_rfc6749_invalid_scope, null, "scope 'openid' is not valid for token flows");
 		}
 
-		return generator.applyOwnerConsent(msg, subject, details, scopes, subject == null ? true : skipUserConsent(msg));
+		return generator.applyOwnerConsent(circuit, msg, subject, details, scopes, subject == null ? true : skipUserConsent(msg));
 	}
 
 	@GET

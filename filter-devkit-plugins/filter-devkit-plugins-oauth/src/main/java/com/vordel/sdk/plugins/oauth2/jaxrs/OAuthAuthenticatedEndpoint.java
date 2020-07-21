@@ -271,6 +271,8 @@ public abstract class OAuthAuthenticatedEndpoint extends OAuthServiceEndpoint {
 
 			throw new OAuthException(authorization.isEmpty() ? Response.Status.FORBIDDEN : Response.Status.UNAUTHORIZED, err_rfc6749_invalid_client, null, "invalid credentials");
 		}
+		
+		msg.put("oauth.request.client_id", details.getClientID());
 
 		if (enableClientAuthFilter(msg) && (!isAuthMethodAllowed(details, authentication_methods))) {
 			/* trace error, but report invalid credentails */

@@ -98,6 +98,12 @@ public abstract class OAuthAccessTokenGenerator {
 
 	protected abstract PolicyResource getAccessTokenTransformer();
 
+	protected abstract Set<?> getTransientAllowedScopes(Message msg);
+
+	protected abstract Set<?> getDiscardedScopes(Message msg);
+
+	protected abstract PolicyResource getAuthorizationPolicy();
+
 	public static final Set<String> INTERNAL_INFORMATION;
 	public static final Set<String> RESERVED_INFORMATION;
 
@@ -192,20 +198,59 @@ public abstract class OAuthAccessTokenGenerator {
 		return scopes;
 	}
 
-	public Set<String> applyOwnerConsent(Message msg, String subject, ApplicationDetails details, Set<String> scopes, boolean skipUserConsent) throws CircuitAbortException {
+	public Set<String> applyOwnerConsent(Circuit circuit, Message msg, String subject, ApplicationDetails details, Set<String> requestedScopes, boolean skipUserConsent) throws CircuitAbortException {
 		if (OAuthGuavaCache.getOAuthClient(subject) != null) {
 			subject = null;
 		}
-		
+
 		if (subject != null) {
 			OAuthConsentManager manager = new OAuthConsentManager(getTokenStore(), skipUserConsent);
 
-			if (manager.scopesNeedOwnerAuthorization(msg, subject, details, scopes)) {
+			if (manager.scopesNeedOwnerAuthorization(msg, subject, details, requestedScopes)) {
+				PolicyResource authorization = getAuthorizationPolicy();
+
+				if (OAuthServiceEndpoint.isValidPolicy(authorization)) {
+					/*
+					 * Those two sets generic type are strings but since selector API does not
+					 * support generics, use wildcard for now.
+					 */
+					Set<?> transientAllowedScopes = null;
+					Set<?> discardedScopes = null;
+
+					/* set requested and missing scopes in the message for policy */
+					msg.put("oauth.scopes.requested", requestedScopes);
+					msg.put("oauth.scopes.missing", manager.getScopesForAuthorisation());
+
+					if (OAuthServiceEndpoint.invokePolicy(msg, circuit, authorization)) {
+						/*
+						 * retrieve policy output. Only transient and discarded scopes are supported for
+						 * token service
+						 */
+						transientAllowedScopes = getTransientAllowedScopes(msg);
+						discardedScopes = getDiscardedScopes(msg);
+
+						if (transientAllowedScopes == null) {
+							transientAllowedScopes = Collections.emptySet();
+						}
+
+						if (discardedScopes != null) {
+							requestedScopes.removeAll(discardedScopes);
+							transientAllowedScopes.removeAll(discardedScopes);
+						}
+
+						if (!manager.scopesNeedOwnerAuthorization(msg, subject, details, requestedScopes, Collections.emptySet(), transientAllowedScopes)) {
+
+							return requestedScopes;
+						}
+					}
+				}
+
+				/* If we still have scopes to approve, return invalid scope error */
 				throw new OAuthException(err_rfc6749_invalid_scope, null, "requested scopes need user consent");
 			}
 		}
 
-		return scopes;
+		return requestedScopes;
 	}
 
 	public Response createAccessToken(Circuit circuit, Message msg, OAuthParameters parsed, ApplicationDetails details, String subject, Set<String> scopes, OAuth2RefreshToken refresh_token) throws CircuitAbortException {
@@ -233,7 +278,7 @@ public abstract class OAuthAccessTokenGenerator {
 
 			tokenStore.removeRefreshToken(refresh_token.getValue());
 			generateRefreshtoken(msg, circuit, parsed, details, token, true);
-			
+
 			if ("Sliding".equals(preserveChoice)) {
 				/* create a refresh_token with the same identifier */
 				token.getOAuth2RefreshToken().setValue(saved_refresh_token);
@@ -249,14 +294,13 @@ public abstract class OAuthAccessTokenGenerator {
 		return returnToken(token, null, saved_refresh_token, (String) parsed.get(param_grant_type));
 	}
 
-
 	public Response createAccessToken(Circuit circuit, Message msg, OAuthParameters parsed, ApplicationDetails details, AuthorizationCode code) throws CircuitAbortException {
 		String subject = code.getUserIdentity();
 		Set<String> scopes = code.getScopes();
-		
+
 		/* save the current authorization code in the message */
 		msg.put("oauth.request.code", code);
-		
+
 		OAuth2AccessToken token = generateToken(msg, circuit, parsed, details, scopes, code.getAdditionalInformation(), false);
 
 		if (!storeToken(circuit, msg, parsed, setTokenOnMessage(msg, token), subject, false)) {
@@ -296,7 +340,7 @@ public abstract class OAuthAccessTokenGenerator {
 			if ((issued_token_type == null) || issued_token_type.isEmpty() || uri_token_type_access_token.equals(issued_token_type)) {
 				/* result is a regular access token */
 				issued_token_type = uri_token_type_access_token;
-				
+
 				if (state != null) {
 					/* add state claim if available */
 					node.put(param_state, state);
@@ -318,14 +362,14 @@ public abstract class OAuthAccessTokenGenerator {
 					node.remove(param_expires_in);
 				}
 			}
-			
+
 			if ((previous_refresh != null) && previous_refresh.equals(node.path(param_refresh_token).asText(null))) {
 				/* remove the refresh token if it has not been generated here */
 				node.remove(param_refresh_token);
 			}
 
 			node.remove(INTERNAL_INFORMATION);
-			
+
 			if ((issued_token_type != null) && GRANTTYPE_TOKEN.equals(grant_type)) {
 				node.put(param_issued_token_type, issued_token_type);
 			}
@@ -344,12 +388,12 @@ public abstract class OAuthAccessTokenGenerator {
 		}
 
 		AuthorizationRequest request = new AuthorizationRequest(parsed.toQueryString(new QueryStringHeaderSet()));
-		
+
 		if (subject == null) {
 			/* XXX if subject is null, token can't be deserialized */
 			subject = request.getClientId();
 		}
-		
+
 		OAuth2Authentication authentication = new OAuth2Authentication(request, subject);
 		TokenStore tokenStore = getTokenStore();
 
@@ -360,9 +404,9 @@ public abstract class OAuthAccessTokenGenerator {
 
 		token.setAuthenticationSubject(authentication.getUserAuthentication());
 		token.setClientID(request.getClientId());
-		
+
 		String id_token = token.getAdditionalInformation().get(param_id_token);
-		
+
 		if (id_token != null) {
 			token.setIdToken(id_token);
 		}
@@ -389,10 +433,10 @@ public abstract class OAuthAccessTokenGenerator {
 			if (forceTransform && (!requested_token_type.equals(issued_token_type))) {
 				throw new OAuthException(err_invalid_request, null, "the requested token type is not supported");
 			}
-			
+
 			if (preserveRefresh && (saved_refresh_token != null) && (!saved_refresh_token.equals(token.getRefreshToken()))) {
 				tokenStore.removeRefreshToken(saved_refresh_token);
-				
+
 				preserveRefresh = false;
 			}
 		} else if (forceTransform) {
@@ -440,7 +484,8 @@ public abstract class OAuthAccessTokenGenerator {
 			}
 		}
 
-		//addAdditionalInfo(token, param_grant_type, (String) parsed.get(param_grant_type));
+		// addAdditionalInfo(token, param_grant_type, (String)
+		// parsed.get(param_grant_type));
 		addAdditionalInfo(token, param_code_challenge, (String) parsed.get(param_code_challenge));
 		addAdditionalInfo(token, param_code_challenge_method, (String) parsed.get(param_code_challenge_method));
 
@@ -464,7 +509,7 @@ public abstract class OAuthAccessTokenGenerator {
 		if (data != null) {
 			token.setAdditionalInformation(data);
 		}
-		
+
 		token.setClientID(details.getClientID());
 		token.setApplicationID(details.getApplicationID());
 		token.setScope(new HashSet<String>(scopes));
@@ -580,7 +625,7 @@ public abstract class OAuthAccessTokenGenerator {
 	protected OAuth2AccessToken setTokenOnMessage(Message m, OAuth2AccessToken token) {
 		if (token != null) {
 			m.put("oauth.response.accesstoken", token);
-			
+
 			m.put("accesstoken", token);
 		} else {
 			m.remove("accesstoken");
