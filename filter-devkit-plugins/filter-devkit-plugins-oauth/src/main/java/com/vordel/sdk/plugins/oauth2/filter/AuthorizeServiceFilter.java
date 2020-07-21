@@ -63,6 +63,8 @@ public class AuthorizeServiceFilter extends QuickJavaFilterDefinition {
 	private Selector<Set> persistentAllowedScopes;
 	@SuppressWarnings("rawtypes")
 	private Selector<Set> transientAllowedScopes;
+	@SuppressWarnings("rawtypes")
+	private Selector<Set> discardedScopes;
 
 	private Collection<OAuthTokenData> additionalData;
 
@@ -150,6 +152,11 @@ public class AuthorizeServiceFilter extends QuickJavaFilterDefinition {
 	@QuickFilterField(name = "transientAllowedScopes", cardinality = "?", type = "string", defaults = "${scopes.allowed.transient}")
 	private void setTransientAllowedScopes(ConfigContext ctx, Entity entity, String field) {
 		transientAllowedScopes = SelectorResource.fromLiteral(entity.getStringValue(field), Set.class, false);
+	}
+
+	@QuickFilterField(name = "discardedScopes", cardinality = "?", type = "string", defaults = "${scopes.discarded}")
+	private void setDiscardedScopes(ConfigContext ctx, Entity entity, String field) {
+		discardedScopes = SelectorResource.fromLiteral(entity.getStringValue(field), Set.class, false);
 	}
 
 	@QuickFilterComponent(name = "Property")
@@ -328,6 +335,26 @@ public class AuthorizeServiceFilter extends QuickJavaFilterDefinition {
 			protected AuthorizationCodeStore getAuthorizationCodeStore() {
 				return authzCodeCache;
 			}
+
+			@Override
+			protected Set<?> getTransientAllowedScopes(Message msg) {
+				Set<?> scopes = transientAllowedScopes == null ? null : transientAllowedScopes.substitute(msg);
+
+				return scopes == null ? Collections.emptySet() : scopes;
+			}
+
+			@Override
+			protected Set<?> getDiscardedScopes(Message msg) {
+				Set<?> scopes = discardedScopes == null ? null : discardedScopes.substitute(msg);
+
+				return scopes == null ? Collections.emptySet() : scopes;
+			}
+
+			@Override
+			protected PolicyResource getAuthorizationPolicy() {
+				return authorizationPolicy;
+			}
+
 		};
 	}
 
@@ -398,6 +425,13 @@ public class AuthorizeServiceFilter extends QuickJavaFilterDefinition {
 			@Override
 			protected Set<?> getPersistentAllowedScopes(Message msg) {
 				Set<?> scopes = persistentAllowedScopes == null ? null : persistentAllowedScopes.substitute(msg);
+
+				return scopes == null ? Collections.emptySet() : scopes;
+			}
+
+			@Override
+			protected Set<?> getDiscardedScopes(Message msg) {
+				Set<?> scopes = discardedScopes == null ? null : discardedScopes.substitute(msg);
 
 				return scopes == null ? Collections.emptySet() : scopes;
 			}

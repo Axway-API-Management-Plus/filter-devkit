@@ -246,8 +246,8 @@ public class OAuthParameters extends AbstractMap<String, Object> {
 		descriptors.put(param_claims_locales, OAuthParameter.UI_LOCALES);
 
 		/* JSON objects */
-		descriptors.put(param_claims, OAuthParameter.JSON_SINGLE);
-		descriptors.put(param_registration, OAuthParameter.JSON_SINGLE);
+		descriptors.put(param_claims, OAuthParameter.JSONOBJECT_SINGLE);
+		descriptors.put(param_registration, OAuthParameter.JSONOBJECT_SINGLE);
 
 		/* JWT values */
 		descriptors.put(param_id_token_hint, OAuthParameter.JWT_SINGLE);

@@ -237,7 +237,7 @@ public abstract class OAuthParameter<T> {
 			if (value != null) {
 				try {
 					JOSEObject jose = JOSEObject.parse(value);
-					
+
 					if (jose instanceof JWSObject) {
 						/* If the object is not encrypted, check if it is a valid JWT */
 						SignedJWT.parse(value).getJWTClaimsSet();
@@ -253,7 +253,7 @@ public abstract class OAuthParameter<T> {
 		}
 	};
 
-	public static final OAuthParameter<ObjectNode> JSON_SINGLE = new OAuthParameter<ObjectNode>() {
+	public static final OAuthParameter<ObjectNode> JSONOBJECT_SINGLE = new OAuthParameter<ObjectNode>() {
 		@Override
 		public ObjectNode get(ObjectNode root, String name) {
 			JsonNode node = root.path(name);
@@ -288,6 +288,53 @@ public abstract class OAuthParameter<T> {
 			}
 
 			return query;
+		}
+
+		@Override
+		public JsonNode parse(ObjectNode root, String name, JsonNode value, Iterable<String> values, BiFunction<String, String, String> validator) {
+			Set<ObjectNode> objects = new LinkedHashSet<ObjectNode>();
+
+			root.remove(name);
+
+			if (value != null) {
+				if (!(value instanceof ObjectNode)) {
+					throw new OAuthException(err_invalid_request, null, String.format("provided json for parameter '%s' is not an object", name));
+				}
+
+				objects.add((ObjectNode) value);
+			}
+
+			if (values != null) {
+				try {
+					for(String candidate : values) {
+						if ((candidate != null) && (!candidate.isEmpty())) {
+							JsonNode node = MAPPER.readTree(candidate);
+
+							if (!(node instanceof ObjectNode)) {
+								throw new OAuthException(err_invalid_request, null, String.format("provided json for parameter '%s' is not an object", name));
+							}
+
+							objects.add((ObjectNode) node);
+						}
+					}
+				} catch (IOException e) {
+					throw new OAuthException(err_invalid_request, null, String.format("can't parse json for parameter '%s'", name), e);
+				}
+			}
+
+			Iterator<ObjectNode> iterator = objects.iterator();
+
+			if (iterator.hasNext()) {
+				ObjectNode single = iterator.next();
+
+				if (iterator.hasNext()) {
+					put(root, name, objects);
+				} else {
+					put(root, name, single);
+				}
+			}
+
+			return root.path(name);
 		}
 
 		@Override
@@ -346,6 +393,15 @@ public abstract class OAuthParameter<T> {
 			JsonNode node = root.path(name);
 
 			return node.isNumber() ? node.asInt() : null;
+		}
+
+		@Override
+		public JsonNode parse(ObjectNode root, String name, JsonNode node, Iterable<String> values, BiFunction<String, String, String> validator) {
+			try {
+				return parse(root, name, node == null ? null : MAPPER.writeValueAsString(node), values, validator);
+			} catch (IOException e) {
+				throw new OAuthException(err_invalid_request, null, String.format("unable to process json for parameter '%s'", name), e);
+			}
 		}
 
 		@Override

@@ -95,6 +95,12 @@ public class TokenServiceFilter extends QuickJavaFilterDefinition {
 	private PolicyResource grantDecoderCircuit;
 
 	private PolicyResource accessTokenTransformer;
+	
+	private PolicyResource authorizationPolicy;
+	@SuppressWarnings("rawtypes")
+	private Selector<Set> transientAllowedScopes;
+	@SuppressWarnings("rawtypes")
+	private Selector<Set> discardedScopes;
 
 	@QuickFilterField(name = "serviceName", cardinality = "1", type = "string", defaults = "OAuth 2.0 Token Service")
 	private void setServiceName(ConfigContext ctx, Entity entity, String field) {
@@ -287,6 +293,21 @@ public class TokenServiceFilter extends QuickJavaFilterDefinition {
 	@QuickFilterField(name = "accessTokenTransformer", cardinality = "?", type = "^FilterCircuit")
 	private void setAccessTokenTransformer(ConfigContext ctx, Entity entity, String field) {
 		accessTokenTransformer = new PolicyResource(ctx, entity, field);
+	}
+
+	@QuickFilterField(name = "authorizationPolicy", cardinality = "?", type = "^FilterCircuit")
+	private void setAuthorizationPolicy(ConfigContext ctx, Entity entity, String field) {
+		authorizationPolicy = new PolicyResource(ctx, entity, field);
+	}
+
+	@QuickFilterField(name = "transientAllowedScopes", cardinality = "?", type = "string", defaults = "${scopes.allowed.transient}")
+	private void setTransientAllowedScopes(ConfigContext ctx, Entity entity, String field) {
+		transientAllowedScopes = SelectorResource.fromLiteral(entity.getStringValue(field), Set.class, false);
+	}
+
+	@QuickFilterField(name = "discardedScopes", cardinality = "?", type = "string", defaults = "${scopes.discarded}")
+	private void setDiscardedScopes(ConfigContext ctx, Entity entity, String field) {
+		discardedScopes = SelectorResource.fromLiteral(entity.getStringValue(field), Set.class, false);
 	}
 
 	public static TokenStore getTokenStore(ESPK delegatedPK) {
@@ -483,6 +504,25 @@ public class TokenServiceFilter extends QuickJavaFilterDefinition {
 			@Override
 			protected AuthorizationCodeStore getAuthorizationCodeStore() {
 				return authzCodeCache;
+			}
+
+			@Override
+			protected Set<?> getTransientAllowedScopes(Message msg) {
+				Set<?> scopes = transientAllowedScopes == null ? null : transientAllowedScopes.substitute(msg);
+
+				return scopes == null ? Collections.emptySet() : scopes;
+			}
+
+			@Override
+			protected Set<?> getDiscardedScopes(Message msg) {
+				Set<?> scopes = discardedScopes == null ? null : discardedScopes.substitute(msg);
+
+				return scopes == null ? Collections.emptySet() : scopes;
+			}
+
+			@Override
+			protected PolicyResource getAuthorizationPolicy() {
+				return authorizationPolicy;
 			}
 		};
 	}
