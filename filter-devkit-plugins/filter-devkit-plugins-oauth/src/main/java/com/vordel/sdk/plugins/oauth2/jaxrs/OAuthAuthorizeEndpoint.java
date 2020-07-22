@@ -300,7 +300,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 
 					throw new OAuthException(Response.Status.FORBIDDEN, err_rfc6749_unauthorized_client, null, "The client is not authorized use this method ");
 				}
-				
+
 				msg.put("oauth.request.client_id", details.getClientID());
 
 				if (getValidRedirectURI(details, claims.path(param_redirect_uri).asText(null)) == null) {
@@ -329,7 +329,11 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 
 				OAuthAccessTokenGenerator tokenGenerator = getOAuthAccessTokenGenerator();
 				Set<String> requestedScopes = tokenGenerator.getScopesForToken(msg, circuit, parsed, details);
-				
+				Set<String> additionalScopes = new LinkedHashSet<String>();
+
+				msg.put("oauth.scopes.requested", requestedScopes);
+				msg.put("oauth.scopes.additional", additionalScopes); /* scope which needs consent without storage in access token */
+
 				/* 
 				 * first step, check for user authentication. the policy have to implement all the needed logic for user authentication:
 				 * - check for incoming authentication (id_token_hint),
@@ -370,8 +374,12 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 				 * second step, process user optional consent
 				 */
 				OAuthConsentManager manager = new OAuthConsentManager(tokenGenerator.getTokenStore(), skipUserConsent(msg));
+				Set<String> fullRequestedScopes = new LinkedHashSet<String>();
 
-				if (manager.scopesNeedOwnerAuthorization(msg, subject, details, requestedScopes)) {
+				fullRequestedScopes.addAll(requestedScopes);
+				fullRequestedScopes.addAll(additionalScopes);
+
+				if (manager.scopesNeedOwnerAuthorization(msg, subject, details, fullRequestedScopes)) {
 					PolicyResource authorization = getAuthorizationPolicy();
 
 					/* 
@@ -386,7 +394,6 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 						throw new OAuthException(err_rfc6749_invalid_scope, null, "requested scopes need user consent");
 					}
 
-					msg.put("oauth.scopes.requested", requestedScopes);
 					msg.put("oauth.scopes.missing", manager.getScopesForAuthorisation());
 
 					if (invokePolicy(msg, circuit, authorization)) {
@@ -412,11 +419,16 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 
 					if (discardedScopes != null) {
 						requestedScopes.removeAll(discardedScopes);
+						additionalScopes.removeAll(discardedScopes);
 						persistentAllowedScopes.removeAll(discardedScopes);
 						transientAllowedScopes.removeAll(discardedScopes);
 					}
 
-					if (manager.scopesNeedOwnerAuthorization(msg, subject, details, requestedScopes, persistentAllowedScopes, transientAllowedScopes)) {
+					fullRequestedScopes.clear();
+					fullRequestedScopes.addAll(requestedScopes);
+					fullRequestedScopes.addAll(additionalScopes);
+
+					if (manager.scopesNeedOwnerAuthorization(msg, subject, details, fullRequestedScopes, persistentAllowedScopes, transientAllowedScopes)) {
 						/* If we still have scopes to approve, return invalid scope error */
 						throw new OAuthException(err_rfc6749_invalid_scope, null, "requested scopes need user consent");
 					}
@@ -434,7 +446,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 
 					PolicyResource idGenerator = getPublicResourceOwnerGenerator();
 					Map<String, String> additional = new HashMap<String, String>();
-
+					
 					msg.put("oauth.authorization.request", authz); /* compatibility with existing filter */
 
 					for (OAuthTokenData entry : tokenGenerator.getAdditionalData()) {
@@ -452,6 +464,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 					}
 
 					additional.keySet().removeAll(OAuthAccessTokenGenerator.RESERVED_INFORMATION);
+					additional.put("oauth.scopes.additional", MAPPER.writeValueAsString(OAuthAccessTokenGenerator.toJsonArray(additionalScopes)));
 
 					if (nonce != null) {
 						additional.put("internalstorage.openid.nonce", nonce);
@@ -556,7 +569,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 									token.setAdditionalInformation(param_id_token, id_token);
 								}
 							}
-							
+
 							msg.put("oauth.response.id_token", id_token);
 						} catch (ParseException e) {
 							Trace.error("unable to parse generated id token", e);
@@ -594,14 +607,14 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 						node.remove(param_code);
 						node.remove(param_id_token);
 
-						result.setAll(node);
+						result.setAll(OAuthAccessTokenGenerator.filterTokenAdditionalInformation(node, msg));
 					}
 				}
 
 				return asOAuthRedirect(msg, circuit, parsed, Response.ok().type(MediaType.APPLICATION_JSON_TYPE).entity(result).cacheControl(cache).build());
 			} catch (CircuitAbortException e) {
 				Trace.error("Got Exception from circuit", e);
-				
+
 				throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unexpected error occured", e);
 			} catch (OAuthException e) {
 				throw e;
@@ -875,7 +888,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 		if (override != null) {
 			OAuthParameters request = new OAuthParameters(override, parsed.getDescriptors());
 			ObjectNode extras = MAPPER.createObjectNode();
-			
+
 			extras.setAll(override);
 
 			Iterator<String> iterator = request.keySet().iterator();
@@ -883,16 +896,16 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 			/* remove all oauth parameters in extras object */
 			while (iterator.hasNext()) {
 				String name = iterator.next();
-				
+
 				extras.remove(name);
 			}
-			
+
 			iterator = extras.fieldNames();
-			
+
 			/* remove extra parameters in overrides */
 			while(iterator.hasNext()) {
 				String name = iterator.next();
-				
+
 				override.remove(name);
 			}
 
@@ -900,7 +913,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 			for(String name : new LinkedHashSet<String>(request.keySet())) {
 				parsed.remove(name);
 				parsed.getParsedParameters().remove(name);
-				
+
 				parsed.parse(name, override, null, null);
 			}
 
@@ -969,7 +982,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 
 			try {
 				override = (ObjectNode) MAPPER.readTree(BODY_SELECTOR.substitute(msg));
-				
+
 				if (override.has(param_request) || override.has(param_request_uri)) {
 					throw new OAuthException(err_invalid_request_object, null, "the provided request object cannot contain nested request or request_uri parameters (OpenID Connect Core section 6.1)");
 				}
@@ -993,7 +1006,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 				throw new OAuthException(err_invalid_request_object, null, "the provided request object is not a signed json object");
 			}
 		}
-		
+
 		if (saved != null) {
 			/* restore the body object */
 			msg.put(MessageProperties.CONTENT_BODY, saved);

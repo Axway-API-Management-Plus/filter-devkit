@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -150,14 +151,16 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 		}
 	}
 
-	private Set<String> getScopesForToken(Message msg, Circuit circuit, OAuthParameters parsed, ApplicationDetails details, OAuthAccessTokenGenerator generator, String subject) throws CircuitAbortException {
-		Set<String> scopes = generator.getScopesForToken(msg, circuit, parsed, details);
+	private Set<String> getScopesForToken(Message msg, Circuit circuit, OAuthParameters parsed, ApplicationDetails details, OAuthAccessTokenGenerator generator, String subject, Set<String> additionalScopes) throws CircuitAbortException {
+		Set<String> requestedScopes = generator.getScopesForToken(msg, circuit, parsed, details);
+		
+		msg.put("oauth.scopes.requested", requestedScopes);
 
-		if ((!allowOpenIDScope(msg)) && scopes.contains("openid")) {
+		if ((!allowOpenIDScope(msg)) && requestedScopes.contains("openid")) {
 			throw new OAuthException(err_rfc6749_invalid_scope, null, "scope 'openid' is not valid for token flows");
 		}
 
-		return generator.applyOwnerConsent(circuit, msg, subject, details, scopes, subject == null ? true : skipUserConsent(msg));
+		return generator.applyOwnerConsent(circuit, msg, subject, details, requestedScopes, additionalScopes, subject == null ? true : skipUserConsent(msg));
 	}
 
 	@GET
@@ -280,6 +283,9 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 			}
 
 			OAuthAccessTokenGenerator generator = getOAuthAccessTokenGenerator();
+			Set<String> additionalScopes = new LinkedHashSet<String>();
+
+			msg.put("oauth.scopes.additional", additionalScopes); /* scope which needs consent without storage in access token */
 
 			/*
 			 * All parameters should now be parsed and categorized, apply flow specific
@@ -288,15 +294,15 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 			if (GRANTTYPE_CODE.equals(grant_type)) {
 				AuthorizationCode code = checkAuthorizationCode(msg, generator, parsed, details);
 
-				return generator.createAccessToken(circuit, msg, parsed, details, code);
+				return generator.createAccessToken(circuit, msg, parsed, details, code, additionalScopes);
 			} else if (GRANTTYPE_CLIENT.equals(grant_type)) {
 				if ((!allowPublicClientCredentials(msg)) && (!"confidential".equalsIgnoreCase(details.getClientType()))) {
 					throw new OAuthException(err_rfc6749_invalid_grant, null, "only confidential clients can use client_credentials grant (RFC6749 section 4.4)");
 				}
 
-				Set<String> scopes = getScopesForToken(msg, circuit, parsed, details, generator, null);
+				Set<String> scopes = getScopesForToken(msg, circuit, parsed, details, generator, null, additionalScopes);
 
-				return generator.createAccessToken(circuit, msg, parsed, details, null, scopes, false);
+				return generator.createAccessToken(circuit, msg, parsed, details, null, scopes, additionalScopes, false);
 			} else if (GRANTTYPE_JWT.equals(grant_type) || GRANTTYPE_SAML2.equals(grant_type) || GRANTTYPE_PASSWORD.equals(grant_type)) {
 				PolicyResource authenticator = getGrantAuthenticatorCircuit();
 
@@ -324,9 +330,9 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 					throw new OAuthException(err_rfc6749_invalid_grant, null, "provided grant is not valid");
 				}
 
-				Set<String> scopes = getScopesForToken(msg, circuit, parsed, details, generator, subject);
+				Set<String> scopes = getScopesForToken(msg, circuit, parsed, details, generator, subject, additionalScopes);
 
-				return generator.createAccessToken(circuit, msg, parsed, details, subject, scopes, false);
+				return generator.createAccessToken(circuit, msg, parsed, details, subject, scopes, additionalScopes, false);
 			} else if (GRANTTYPE_TOKEN.equals(grant_type)) {
 				String subject_token = (String) parsed.get(param_subject_token);
 
@@ -413,9 +419,9 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 				}
 
 				String requested_token_type = (String) parsed.get(param_requested_token_type);
-				Set<String> scopes = getScopesForToken(msg, circuit, parsed, details, generator, subjectName);
+				Set<String> scopes = getScopesForToken(msg, circuit, parsed, details, generator, subjectName, additionalScopes);
 
-				return generator.createAccessToken(circuit, msg, parsed, details, subjectName, scopes, uri_token_type_refresh_token.equals(requested_token_type));
+				return generator.createAccessToken(circuit, msg, parsed, details, subjectName, scopes, additionalScopes, uri_token_type_refresh_token.equals(requested_token_type));
 			} else if (GRANTTYPE_REFRESH.equals(grant_type)) {
 				String refresh_token = (String) parsed.get(param_refresh_token);
 
@@ -470,9 +476,8 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 				}
 
 				msg.put(MessageProperties.AUTHN_SUBJECT_ID, subjectName = authn.getUserAuthentication());
-				scopes = getScopesForToken(msg, circuit, parsed, details, generator, subjectName);
 
-				return generator.createAccessToken(circuit, msg, parsed, details, subjectName, scopes, token);
+				return generator.createAccessToken(circuit, msg, parsed, details, subjectName, scopes, additionalScopes, token);
 			} else {
 				PolicyResource decoder = getGrantDecoderCircuit();
 
@@ -513,9 +518,9 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 					throw new OAuthException(err_rfc6749_invalid_grant, null, "provided grant is not valid");
 				}
 
-				Set<String> scopes = getScopesForToken(msg, circuit, parsed, details, generator, subject);
+				Set<String> scopes = getScopesForToken(msg, circuit, parsed, details, generator, subject, additionalScopes);
 
-				return generator.createAccessToken(circuit, msg, parsed, details, subject, scopes, false);
+				return generator.createAccessToken(circuit, msg, parsed, details, subject, scopes, additionalScopes, false);
 			}
 		} catch (WebApplicationException e) {
 			throw e;

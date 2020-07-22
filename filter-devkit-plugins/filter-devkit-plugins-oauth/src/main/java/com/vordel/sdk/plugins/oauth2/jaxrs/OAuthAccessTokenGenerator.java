@@ -7,18 +7,26 @@ import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.err_rfc6749_inv
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.err_rfc6749_server_error;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_access_token;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_audience;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_code;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_code_challenge;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_code_challenge_method;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_error;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_error_description;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_error_uri;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_expires_in;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_grant_type;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_id_token;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_issued_token_type;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_nfv_token;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_pct;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_refresh_token;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_requested_token_type;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_resource;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_scope;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_session_state;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_state;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_token_type;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_upgraded;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.uri_token_type_access_token;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.uri_token_type_refresh_token;
 
@@ -26,6 +34,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,7 +43,10 @@ import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
@@ -106,13 +119,36 @@ public abstract class OAuthAccessTokenGenerator {
 
 	public static final Set<String> INTERNAL_INFORMATION;
 	public static final Set<String> RESERVED_INFORMATION;
+	public static final Set<String> PUBLIC_INFORMATION;
 
 	static {
 		Set<String> internal = new HashSet<String>();
 		Set<String> reserved = new HashSet<String>();
+		Set<String> publicClaims = new HashSet<String>();
 
+		/* public claims for token reponse from IANA */
+		publicClaims.add(param_scope);
+		publicClaims.add(param_state);
+		publicClaims.add(param_code);
+		publicClaims.add(param_error);
+		publicClaims.add(param_error_description);
+		publicClaims.add(param_error_uri);
+		publicClaims.add(param_access_token);
+		publicClaims.add(param_token_type);
+		publicClaims.add(param_expires_in);
+		publicClaims.add(param_refresh_token);
+		publicClaims.add(param_id_token);
+		publicClaims.add(param_session_state);
+		publicClaims.add(param_pct);
+		publicClaims.add(param_upgraded);
+		publicClaims.add(param_issued_token_type);
+		publicClaims.add(param_nfv_token);
+		
 		/* data generated from existing filters */
 		internal.add("internalstorage.openid.nonce");
+		
+		/* additional user scope consent (saved as json array) */
+		internal.add("oauth.scopes.additional");
 
 		/* persist PKCE related parameters */
 		internal.add(param_code_challenge);
@@ -132,6 +168,7 @@ public abstract class OAuthAccessTokenGenerator {
 
 		INTERNAL_INFORMATION = Collections.unmodifiableSet(internal);
 		RESERVED_INFORMATION = Collections.unmodifiableSet(reserved);
+		PUBLIC_INFORMATION = Collections.unmodifiableSet(publicClaims);
 	}
 
 	public Set<String> getScopesForToken(Message msg, Circuit circuit, OAuthParameters parsed, ApplicationDetails details) throws CircuitAbortException {
@@ -160,12 +197,20 @@ public abstract class OAuthAccessTokenGenerator {
 	}
 
 	protected Set<String> getScopesForToken(Message msg, Circuit circuit, OAuthParameters parsed, ApplicationDetails details, PolicyResource scopeCircuit, ScopesMustMatchSelection matchSelection) throws CircuitAbortException {
-		/* create a scope set with parsed parameters as backend */
-		Set<String> scopes = new ScopeSet(parsed.getObjectNode());
+		/* create a scope set from parsed parameters */
+		Set<String> scopes = new LinkedHashSet<String>();
 
+		msg.put("oauth.scopes.requested", scopes);
+		
+		scopes.addAll(new ScopeSet(parsed.getObjectNode()));
+		
 		if (matchSelection != null) {
 			if (scopes.isEmpty()) {
-				parsed.parse(param_scope, ScopeSet.asString(details.getDefaultScopes().iterator(), (scope) -> scope.getScope()), null);
+				Iterator<String> iterator = ScopeSet.iterator(ScopeSet.asString(details.getDefaultScopes().iterator(), (scope) -> scope.getScope()));
+				
+				while(iterator.hasNext()) {
+					scopes.add(iterator.next());
+				}
 			} else {
 				Set<String> applicationScopes = new HashSet<String>();
 
@@ -191,22 +236,30 @@ public abstract class OAuthAccessTokenGenerator {
 			if ((circuitScopes == null) || circuitScopes.isEmpty()) {
 				scopes.clear();
 			} else {
-				parsed.parse(param_scope, ScopeSet.asString(circuitScopes.iterator(), (scope) -> scope instanceof String ? null : (String) scope), null);
+				Iterator<String> iterator = ScopeSet.iterator(ScopeSet.asString(circuitScopes.iterator(), (scope) -> scope instanceof String ? null : (String) scope));
+				
+				while(iterator.hasNext()) {
+					scopes.add(iterator.next());
+				}
 			}
 		}
 
 		return scopes;
 	}
 
-	public Set<String> applyOwnerConsent(Circuit circuit, Message msg, String subject, ApplicationDetails details, Set<String> requestedScopes, boolean skipUserConsent) throws CircuitAbortException {
+	public Set<String> applyOwnerConsent(Circuit circuit, Message msg, String subject, ApplicationDetails details, Set<String> requestedScopes, Set<String> additionalScopes, boolean skipUserConsent) throws CircuitAbortException {
 		if (OAuthGuavaCache.getOAuthClient(subject) != null) {
 			subject = null;
 		}
 
 		if (subject != null) {
 			OAuthConsentManager manager = new OAuthConsentManager(getTokenStore(), skipUserConsent);
+			Set<String> fullRequestedScopes = new LinkedHashSet<String>();
 
-			if (manager.scopesNeedOwnerAuthorization(msg, subject, details, requestedScopes)) {
+			fullRequestedScopes.addAll(requestedScopes);
+			fullRequestedScopes.addAll(additionalScopes);
+
+			if (manager.scopesNeedOwnerAuthorization(msg, subject, details, fullRequestedScopes)) {
 				PolicyResource authorization = getAuthorizationPolicy();
 
 				if (OAuthServiceEndpoint.isValidPolicy(authorization)) {
@@ -235,11 +288,15 @@ public abstract class OAuthAccessTokenGenerator {
 
 						if (discardedScopes != null) {
 							requestedScopes.removeAll(discardedScopes);
+							additionalScopes.removeAll(discardedScopes);
 							transientAllowedScopes.removeAll(discardedScopes);
 						}
 
-						if (!manager.scopesNeedOwnerAuthorization(msg, subject, details, requestedScopes, Collections.emptySet(), transientAllowedScopes)) {
+						fullRequestedScopes.clear();
+						fullRequestedScopes.addAll(requestedScopes);
+						fullRequestedScopes.addAll(additionalScopes);
 
+						if (!manager.scopesNeedOwnerAuthorization(msg, subject, details, fullRequestedScopes, Collections.emptySet(), transientAllowedScopes)) {
 							return requestedScopes;
 						}
 					}
@@ -253,9 +310,12 @@ public abstract class OAuthAccessTokenGenerator {
 		return requestedScopes;
 	}
 
-	public Response createAccessToken(Circuit circuit, Message msg, OAuthParameters parsed, ApplicationDetails details, String subject, Set<String> scopes, OAuth2RefreshToken refresh_token) throws CircuitAbortException {
+	public Response createAccessToken(Circuit circuit, Message msg, OAuthParameters parsed, ApplicationDetails details, String subject, Set<String> scopes, Set<String> additionalScopes, OAuth2RefreshToken refresh_token) throws CircuitAbortException {
 		PolicyResource validator = getGrantValidatorCircuit();
 
+		/* save the current refresh token in the message */
+		msg.put("oauth.request.refresh_token", refresh_token);
+		
 		if (OAuthServiceEndpoint.isValidPolicy(validator) && (!OAuthServiceEndpoint.invokePolicy(msg, circuit, validator))) {
 			/* trace error, but report invalid credentials */
 			Trace.error("Grant Validator returned false");
@@ -267,8 +327,11 @@ public abstract class OAuthAccessTokenGenerator {
 		OAuth2AccessToken token = generateToken(msg, refresh_token);
 		String preserveChoice = getPreserveChoice(msg);
 		boolean preserveRefresh = false;
+		
+		/* for refresh token flow, set the requested scopes from generated token */
+		msg.put("oauth.scopes.requested", scopes);
 
-		updateAdditionalInfo(msg, parsed, token);
+		updateAdditionalInfo(msg, parsed, token, additionalScopes);
 
 		if ("Preserve".equals(preserveChoice)) {
 			/* keep existing refresh token */
@@ -291,29 +354,20 @@ public abstract class OAuthAccessTokenGenerator {
 			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, null);
 		}
 
-		return returnToken(token, null, saved_refresh_token, (String) parsed.get(param_grant_type));
+		return returnToken(msg, token, null, saved_refresh_token, (String) parsed.get(param_grant_type));
 	}
 
-	public Response createAccessToken(Circuit circuit, Message msg, OAuthParameters parsed, ApplicationDetails details, AuthorizationCode code) throws CircuitAbortException {
+	public Response createAccessToken(Circuit circuit, Message msg, OAuthParameters parsed, ApplicationDetails details, AuthorizationCode code, Set<String> additionalScopes) throws CircuitAbortException {
 		String subject = code.getUserIdentity();
 		Set<String> scopes = code.getScopes();
 
 		/* save the current authorization code in the message */
 		msg.put("oauth.request.code", code);
+		
+		/* set requested scopes from authorization code */
+		msg.put("oauth.scopes.requested", scopes);
 
-		OAuth2AccessToken token = generateToken(msg, circuit, parsed, details, scopes, code.getAdditionalInformation(), false);
-
-		if (!storeToken(circuit, msg, parsed, setTokenOnMessage(msg, token), subject, false)) {
-			Trace.error("unable to store Access Token to persistent store");
-
-			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, null);
-		}
-
-		return returnToken(token, (String) parsed.get(param_state), null, (String) parsed.get(param_grant_type));
-	}
-
-	public Response createAccessToken(Circuit circuit, Message msg, OAuthParameters parsed, ApplicationDetails details, String subject, Set<String> scopes, boolean forceRefresh) throws CircuitAbortException {
-		OAuth2AccessToken token = generateToken(msg, circuit, parsed, details, scopes, null, forceRefresh);
+		OAuth2AccessToken token = generateToken(msg, circuit, parsed, details, scopes, additionalScopes, code.getAdditionalInformation(), false);
 
 		if (!storeToken(circuit, msg, parsed, setTokenOnMessage(msg, token), subject, false)) {
 			Trace.error("unable to store Access Token to persistent store");
@@ -321,10 +375,49 @@ public abstract class OAuthAccessTokenGenerator {
 			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, null);
 		}
 
-		return returnToken(token, (String) parsed.get(param_state), null, (String) parsed.get(param_grant_type));
+		return returnToken(msg, token, (String) parsed.get(param_state), null, (String) parsed.get(param_grant_type));
 	}
 
-	private Response returnToken(OAuth2AccessToken token, String state, String previous_refresh, String grant_type) {
+	public Response createAccessToken(Circuit circuit, Message msg, OAuthParameters parsed, ApplicationDetails details, String subject, Set<String> scopes, Set<String> additionalScopes, boolean forceRefresh) throws CircuitAbortException {
+		OAuth2AccessToken token = generateToken(msg, circuit, parsed, details, scopes, additionalScopes, null, forceRefresh);
+
+		if (!storeToken(circuit, msg, parsed, setTokenOnMessage(msg, token), subject, false)) {
+			Trace.error("unable to store Access Token to persistent store");
+
+			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, null);
+		}
+
+		return returnToken(msg, token, (String) parsed.get(param_state), null, (String) parsed.get(param_grant_type));
+	}
+	
+	public static ObjectNode filterTokenAdditionalInformation(ObjectNode node, Message msg) {
+		Set<?> privateClaims = (Set<?>) msg.get("oauth.response.claims.private");
+		Set<?> publicClaims = (Set<?>) msg.get("oauth.response.claims.public");
+		
+		if (privateClaims != null) {
+			/* ensure declared claims remain private */
+			for(Object claim : privateClaims) {
+				if (claim instanceof String) {
+					node.remove((String) claim);
+				}
+			}
+		}
+		
+		if (publicClaims != null) {
+			Iterator<String> iterator = node.fieldNames();
+			
+			while(iterator.hasNext()) {
+				String claim = iterator.next();
+				
+				if ((!PUBLIC_INFORMATION.contains(claim)) && (!publicClaims.contains(claim))) {
+					iterator.remove();
+				}
+			}
+		}
+		return node;
+	}
+
+	private Response returnToken(Message msg, OAuth2AccessToken token, String state, String previous_refresh, String grant_type) {
 		CacheControl cache = CacheControl.valueOf("no-store");
 		ObjectNode node = null;
 
@@ -379,7 +472,7 @@ public abstract class OAuthAccessTokenGenerator {
 			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, null, e);
 		}
 
-		return Response.ok(node, MediaType.APPLICATION_JSON_TYPE).cacheControl(cache).header("Pragma", "no-cache").build();
+		return Response.ok(filterTokenAdditionalInformation(node, msg), MediaType.APPLICATION_JSON_TYPE).cacheControl(cache).header("Pragma", "no-cache").build();
 	}
 
 	protected boolean storeToken(Circuit circuit, Message msg, OAuthParameters parsed, OAuth2AccessToken token, String subject, boolean preserveRefresh) throws CircuitAbortException {
@@ -405,11 +498,14 @@ public abstract class OAuthAccessTokenGenerator {
 		token.setAuthenticationSubject(authentication.getUserAuthentication());
 		token.setClientID(request.getClientId());
 
-		String id_token = token.getAdditionalInformation().get(param_id_token);
+		Map<String, String> info = token.getAdditionalInformation();
+		String id_token = info.get(param_id_token);
 
 		if (id_token != null) {
 			token.setIdToken(id_token);
 		}
+		
+		info.remove("internalstorage.openid.nonce");
 
 		PolicyResource transformer = getAccessTokenTransformer();
 		String requested_token_type = (String) parsed.get(param_requested_token_type);
@@ -475,7 +571,7 @@ public abstract class OAuthAccessTokenGenerator {
 		return true;
 	}
 
-	protected void updateAdditionalInfo(Message msg, OAuthParameters parsed, OAuth2AccessToken token) {
+	protected void updateAdditionalInfo(Message msg, OAuthParameters parsed, OAuth2AccessToken token, Set<String> additionalScopes) {
 		for (OAuthTokenData entry : getAdditionalData()) {
 			String key = entry.getKey(msg);
 
@@ -484,16 +580,41 @@ public abstract class OAuthAccessTokenGenerator {
 			}
 		}
 
-		// addAdditionalInfo(token, param_grant_type, (String)
-		// parsed.get(param_grant_type));
+		Map<String, String> info = token.getAdditionalInformation();
+
+		if (info.containsKey("oauth.scopes.additional")) {
+			try {
+				ArrayNode additional = (ArrayNode) MAPPER.readTree(info.get("oauth.scopes.additional"));
+				Iterator<JsonNode> iterator = additional.iterator();
+				
+				while(iterator.hasNext()) {
+					String scope = iterator.next().asText(null);
+					
+					if (scope != null) {
+						additionalScopes.add(scope);
+					}
+				}
+			} catch (ClassCastException e) {
+				throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "an internal error occured", e);
+			} catch (IOException e) {
+				throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "an internal error occured", e);
+			}
+		}
+		
 		addAdditionalInfo(token, param_code_challenge, (String) parsed.get(param_code_challenge));
 		addAdditionalInfo(token, param_code_challenge_method, (String) parsed.get(param_code_challenge_method));
 
 		addAdditionalInfo(token, param_resource, (String) parsed.get(param_resource));
 		addAdditionalInfo(token, param_audience, (String) parsed.get(param_audience));
+		
+		try {
+			addAdditionalInfo(token, "oauth.scopes.additional", MAPPER.writeValueAsString(OAuthAccessTokenGenerator.toJsonArray(additionalScopes)));
+		} catch (JsonProcessingException e) {
+			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "an internal error occured", e);
+		}
 	}
-
-	protected OAuth2AccessToken generateToken(Message msg, Circuit circuit, OAuthParameters parsed, ApplicationDetails details, Set<String> scopes, Map<String, String> data, boolean forceRefresh) throws CircuitAbortException {
+	
+	protected OAuth2AccessToken generateToken(Message msg, Circuit circuit, OAuthParameters parsed, ApplicationDetails details, Set<String> scopes, Set<String> additionalScopes, Map<String, String> data, boolean forceRefresh) throws CircuitAbortException {
 		PolicyResource validator = getGrantValidatorCircuit();
 
 		if (OAuthServiceEndpoint.isValidPolicy(validator) && (!OAuthServiceEndpoint.invokePolicy(msg, circuit, validator))) {
@@ -514,7 +635,7 @@ public abstract class OAuthAccessTokenGenerator {
 		token.setApplicationID(details.getApplicationID());
 		token.setScope(new HashSet<String>(scopes));
 
-		updateAdditionalInfo(msg, parsed, token);
+		updateAdditionalInfo(msg, parsed, token, additionalScopes);
 		generateRefreshtoken(msg, circuit, parsed, details, token, forceRefresh);
 
 		return token;
@@ -634,6 +755,16 @@ public abstract class OAuthAccessTokenGenerator {
 		}
 
 		return token;
+	}
+
+	protected static ArrayNode toJsonArray(Set<String> set) {
+		ArrayNode array = MAPPER.createArrayNode();
+	
+		for(String scope : set) {
+			array.add(scope);
+		}
+	
+		return array;
 	}
 
 	private static void addAdditionalInfo(OAuth2AccessToken token, String key, String value) {
