@@ -437,6 +437,10 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 				CacheControl cache = CacheControl.valueOf("no-store");
 				ObjectNode result = MAPPER.createObjectNode();
 
+				/* modify incoming request to reflect real requested scopes */
+				scopes.retainAll(requestedScopes);
+				scopes.addAll(requestedScopes);
+				
 				if (!response_type_none.equals(response_type)) {
 					AuthorizationRequest authz = new AuthorizationRequest(parsed.toQueryString(new QueryStringHeaderSet()));
 					OAuth2Authentication authn = new OAuth2Authentication(authz, subject);
@@ -503,28 +507,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 					}
 
 					if (response_types.contains(response_type_token)) {
-						int length = tokenGenerator.getAccessTokenLength(msg);
-						long expiration = tokenGenerator.getAccessTokenExpiration(msg);
-						String tokenType = tokenGenerator.getAccessTokenType(msg);
-
-						if (length <= 0) {
-							Trace.error("access token length is too small");
-
-							throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, null);
-						}
-
-						if (expiration <= 0L) {
-							Trace.error("access token expiry is zero or negative");
-
-							throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, null);
-						}
-
-						token = OAuth2AccessToken.generate(length, expiration);
-
-						token.setTokenType(tokenType);;
-						token.setAdditionalInformation(additional);
-						token.getAdditionalInformation().remove("internalstorage.openid.nonce"); /* compatibility with existing filter */
-
+						token = tokenGenerator.generateToken(msg, circuit, parsed, details, authz.getScope(), additionalScopes, additional, false);
 						tokenGenerator.setTokenOnMessage(msg, token);
 
 						/* existing filter compatibility */
@@ -596,6 +579,11 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 
 					if (token != null) {
 						TokenStore tokenStore = tokenGenerator.getTokenStore();
+						
+						if (token.hasRefresh()) {
+							/* discard refresh token if any */
+							token.setOAuth2RefreshToken(null);
+						}
 
 						if (!tokenStore.storeAccessToken(token, authn)) {
 							throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unable to store access token");

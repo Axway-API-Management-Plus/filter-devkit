@@ -340,7 +340,7 @@ public abstract class OAuthAccessTokenGenerator {
 			TokenStore tokenStore = getTokenStore();
 
 			tokenStore.removeRefreshToken(refresh_token.getValue());
-			generateRefreshtoken(msg, circuit, parsed, details, token, true);
+			generateRefreshtoken(msg, details, token, true);
 
 			if ("Sliding".equals(preserveChoice)) {
 				/* create a refresh_token with the same identifier */
@@ -476,6 +476,13 @@ public abstract class OAuthAccessTokenGenerator {
 	}
 
 	protected boolean storeToken(Circuit circuit, Message msg, OAuthParameters parsed, OAuth2AccessToken token, String subject, boolean preserveRefresh) throws CircuitAbortException {
+		Set<String> scopes = new ScopeSet(parsed.getObjectNode());
+		Set<String> requestedScopes = token.getScope();
+
+		/* modify incoming request to reflect real requested scopes */
+		scopes.retainAll(requestedScopes);
+		scopes.addAll(requestedScopes);
+
 		if (Trace.isDebugEnabled()) {
 			Trace.debug("Storing the OAuth Access token to persistent store");
 		}
@@ -636,12 +643,12 @@ public abstract class OAuthAccessTokenGenerator {
 		token.setScope(new HashSet<String>(scopes));
 
 		updateAdditionalInfo(msg, parsed, token, additionalScopes);
-		generateRefreshtoken(msg, circuit, parsed, details, token, forceRefresh);
+		generateRefreshtoken(msg, details, token, forceRefresh);
 
 		return token;
 	}
 
-	protected void generateRefreshtoken(Message msg, Circuit circuit, OAuthParameters parsed, ApplicationDetails details, OAuth2AccessToken token, boolean forceRefresh) {
+	protected void generateRefreshtoken(Message msg, ApplicationDetails details, OAuth2AccessToken token, boolean forceRefresh) {
 		boolean generateRefresh = forceRefresh || (allowRefreshToken(msg, details) && "NewRefresh".equals(getRefreshTokenChoice(msg)));
 
 		if (!forceRefresh) {
