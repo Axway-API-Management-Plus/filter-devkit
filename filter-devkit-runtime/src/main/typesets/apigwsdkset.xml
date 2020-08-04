@@ -1,6 +1,8 @@
 <typeSet>
 	<!-- Assertion Filter Typedoc -->
 	<typedoc file="assertionfilterdesc.xml" />
+	<!-- Groovy Script Filter Typedoc -->
+	<typedoc file="groovyscriptfilterdesc.xml" />
 	<!-- Initializer Shortcut Filter Typedoc -->
 	<typedoc file="initializershortcutdesc.xml" />
 	<!-- MessageContextModule Typedoc -->
