@@ -4,11 +4,13 @@ import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.auth_client_sec
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.auth_client_secret_post;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.err_invalid_request;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.err_rfc6749_invalid_client;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.err_rfc6749_server_error;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_client_assertion;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_client_assertion_type;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_client_id;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_client_secret;
 
+import java.io.IOException;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
@@ -117,9 +119,14 @@ public abstract class OAuthAuthenticatedEndpoint extends OAuthServiceEndpoint {
 
 				if (!invokePolicy(msg, circuit, signatureValidator)) {
 					/* trace error, but report invalid credentails */
-					Trace.error("Provided http authorization is invalid");
+					Trace.error("Provided http authorization is invalid, return unmodified message");
 
-					throw new OAuthException(Response.Status.UNAUTHORIZED, err_rfc6749_invalid_client, null, "invalid credentials");
+					try {
+						/* return current message without modification */
+						throw new OAuthException(toResponse(msg));
+					} catch (IOException e) {
+						throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unexpected error occured", e);
+					}
 				}
 
 				String login = AUTHENTICATED_SUBJECT.substitute(msg);
@@ -199,7 +206,7 @@ public abstract class OAuthAuthenticatedEndpoint extends OAuthServiceEndpoint {
 		} else if ((authorization_id != null) && (!client_id.equals(authorization_id))) {
 			throw new OAuthException(err_invalid_request, null, "client_id parameter conflicts with authorization header");
 		}
-		
+
 		String client_assertion_type = parsed.parse(param_client_assertion_type, body, merged, null).asText(null);
 		String client_assertion = parsed.parse(param_client_assertion, body, merged, (key, value) -> {
 			if ((value == null) || value.isEmpty()) {
@@ -216,7 +223,7 @@ public abstract class OAuthAuthenticatedEndpoint extends OAuthServiceEndpoint {
 			} else if (parsed.containsKey(param_client_secret)) {
 				throw new OAuthException(err_invalid_request, null, "client_assertion parameter conflicts with client_secret parameter");
 			}
-			
+
 			if ((client_assertion_type == null) || client_assertion_type.isEmpty()) {
 				throw new OAuthException(err_invalid_request, null, "client_assertion parameter requires client_assertion_type");
 			}
@@ -264,6 +271,8 @@ public abstract class OAuthAuthenticatedEndpoint extends OAuthServiceEndpoint {
 
 			throw new OAuthException(authorization.isEmpty() ? Response.Status.FORBIDDEN : Response.Status.UNAUTHORIZED, err_rfc6749_invalid_client, null, "invalid credentials");
 		}
+		
+		msg.put("oauth.request.client_id", details.getClientID());
 
 		if (enableClientAuthFilter(msg) && (!isAuthMethodAllowed(details, authentication_methods))) {
 			/* trace error, but report invalid credentails */

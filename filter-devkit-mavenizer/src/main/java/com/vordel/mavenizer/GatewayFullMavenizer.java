@@ -146,20 +146,20 @@ public class GatewayFullMavenizer {
 
 						repo.artifact("com.axway.apigw", "filter-devkit-studio-runtime", "jar", version, vordelLib);
 					}
-					
+
 					scanned.addAll(files);
-					
-					
+
+
 					rcpFiles.put(version, files);
 				}
 			}
-			
+
 			/* finish jar registration */
 			repo.register(scanned);
 
 			/* search maven central artifacts */
 			repo.search(sys, "http://search.maven.org/solrsearch/");
-			
+
 			repo.match("org.eclipse.swt", "org.eclipse.swt.gtk.linux.x86_64", scanned);
 			repo.match("org.eclipse.core", "org.eclipse.core.commands", scanned);
 			repo.match("org.eclipse.jface", "org.eclipse.jface", scanned);
@@ -178,29 +178,29 @@ public class GatewayFullMavenizer {
 			repo.collect(matches, system, session);
 
 			repo.resolve(system, session);
-			
+
 			File gatewayDependencies = File.createTempFile("filter-deps-runtime", ".pom");
 
 			gatewayDependencies.deleteOnExit();
-			
+
 			/* ensure all artifacts collected (even generated ones) */ 
 			repo.collect(matches, system, session);
 
 			Model gatewayDependenciesModel = writeServerDependenciesPOM(sys, session, repo, gatewayVersion, gatewayFiles);
-			
+
 			writePOM(gatewayDependencies, gatewayDependenciesModel);
 			repo.install(system, session, gatewayDependenciesModel.getGroupId(), gatewayDependenciesModel.getArtifactId(), "pom", gatewayDependenciesModel.getVersion(), gatewayDependencies);
-			
+
 			for(Map.Entry<String, Set<File>> entry : rcpFiles.entrySet()) {
 				File studioDependencies = File.createTempFile("filter-deps-studio", ".pom");
 				Model studioDependenciesModel = writeStudioDependenciesPOM(sys, session, repo, entry.getKey(), entry.getValue());
 
 				studioDependencies.deleteOnExit();
-				
+
 				writePOM(studioDependencies, studioDependenciesModel);
 				repo.install(system, session, studioDependenciesModel.getGroupId(), studioDependenciesModel.getArtifactId(), "pom", studioDependenciesModel.getVersion(), studioDependencies);
 			}
-			
+
 			Set<File> uniques = new HashSet<File>();
 
 			repo.remaining(uniques);
@@ -218,7 +218,7 @@ public class GatewayFullMavenizer {
 
 		target.setVersion(version);
 		repo.setDependencies(sys.getSystem(), session, target, scanned, true);
-		
+
 		return target;
 	}
 
@@ -228,7 +228,7 @@ public class GatewayFullMavenizer {
 
 		target.setVersion(version);
 		repo.setDependencies(sys.getSystem(), session, target, scanned, true);
-		
+
 		return target;
 	}
 
@@ -334,28 +334,46 @@ public class GatewayFullMavenizer {
 	}
 
 	private static void addRuntimeArchive(JarOutputStream out, File file, Set<File> scanned) throws IOException {
-		scanned.remove(file);
-
 		if (file.exists() && file.isFile()) {
 			System.out.println(String.format("adding file '%s' to server runtime", file.getName()));
 
+			Map<String, String> thumbprints = new HashMap<String, String>();
 			JarFile jar = new JarFile(file);
 
 			try {
+				boolean fromMaven = false;
+
+				/* check if we have maven meta data in the archive */
 				for (Enumeration<? extends JarEntry> iterator = jar.entries(); iterator.hasMoreElements();) {
 					JarEntry item = iterator.nextElement();
 					String name = item.getName();
-					boolean write = true;
 
-					write &= !name.endsWith("/");
-					write &= !"META-INF/MANIFEST.MF".equalsIgnoreCase(name);
+					fromMaven |= name.startsWith("META-INF/maven");
+				}
 
-					if (write) {
-						byte[] data = MavenMetaMap.extractFile(jar, item);
+				if (!fromMaven) {
+					scanned.remove(file);
 
-						out.putNextEntry(item);
-						out.write(data);
-						out.closeEntry();
+					for (Enumeration<? extends JarEntry> iterator = jar.entries(); iterator.hasMoreElements();) {
+						JarEntry item = iterator.nextElement();
+						String name = item.getName();
+						boolean write = true;
+
+						write &= !name.endsWith("/");
+						write &= !"META-INF/MANIFEST.MF".equalsIgnoreCase(name);
+
+						if (write) {
+							byte[] data = MavenMetaMap.extractFile(jar, item);
+							String sha1 = MavenizerRepository.sha1(data);
+
+							write &= !sha1.equals(thumbprints.get(name));
+
+							if (write) {
+								out.putNextEntry(item);
+								out.write(data);
+								out.closeEntry();
+							}
+						}
 					}
 				}
 			} finally {

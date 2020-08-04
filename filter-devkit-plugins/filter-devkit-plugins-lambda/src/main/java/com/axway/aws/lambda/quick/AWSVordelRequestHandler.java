@@ -63,7 +63,7 @@ public class AWSVordelRequestHandler extends RequestHandler2 {
 
 	private static final StringField uri = getVariantField(HTTPType.instance(), "uri", StringField.class);
 	private static final IntegerField status = getVariantField(HTTPType.instance(), "status", IntegerField.class);
-	private static final StringField statustext = getVariantField(HTTPType.instance(), "statustext", StringField.class);
+	private static final StringField statustext = getVariantField(HTTPType.instance(), "statusText", StringField.class);
 	private static final StringField method = getVariantField(HTTPType.instance(), "method", StringField.class);
 	private static final StringField vhost = getVariantField(HTTPType.instance(), "vhost", StringField.class);
 

@@ -47,6 +47,20 @@
 									title="OAUTH_APPAUTH_HTTPCIRCUIT_TITLE" />
 							</panel>
 						</group>
+						<panel>
+						<ButtonAttribute field="skipUserConsent" label="OAUTH_ACCESS_TOKEN_SKIPCONSENT"/>
+                        <panel label="OAUTH_CONSENT_PANEL" columns="2" fill="false" span="2">
+                            <ReferenceSelector
+                                field="authorizationPolicy"
+                                selectableTypes="FilterCircuit"
+                                searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+                                label="OAUTH_AUTHORIZATION_LABEL"
+                                title="OAUTH_AUTHORIZATION_TITLE" />
+                            <TextAttribute field="transientAllowedScopes" label="OAUTH_TRANSIENT_CONSENT"/>
+                            <TextAttribute field="discardedScopes" label="OAUTH_DISCARDED_SCOPES"/>
+                        </panel>
+                        <binding driver="OAUTH_ACCESS_TOKEN_SKIPCONSENT" driven="OAUTH_CONSENT_PANEL"  uncheckOverride="enabled" class="com.vordel.client.ui.declarative.Enabler" />
+                        </panel>
 				    </panel>
 				</tab>
 
@@ -162,7 +176,6 @@
 						</panel>
 						<ButtonAttribute field="allowOpenIDScope" label="OAUTH_ACCESS_TOKEN_OPENID"/>
 						<ButtonAttribute field="refreshRequireOfflineAccess" label="OAUTH_REFRESH_TOKEN_REQUIRESCOPE"/>
-						<ButtonAttribute field="skipUserConsent" label="OAUTH_ACCESS_TOKEN_SKIPCONSENT"/>
 						<ButtonAttribute field="allowPublicClientCredentials" label="OAUTH_APPAUTH_ALLOWPUBLIC_CLIENTCREDENTIALS"/>
 					</panel>
 				</tab>

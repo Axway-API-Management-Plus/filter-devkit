@@ -31,11 +31,19 @@ public class OAuthException extends WebApplicationException {
 	}
 
 	public OAuthException(Response.Status status, String error, String error_uri, String error_description) {
-		super(asResponse(status, error, error_uri, error_description));
+		this(asResponse(status, error, error_uri, error_description));
 	}
 
 	public OAuthException(Response.Status status, String error, String error_uri, String error_description, Throwable cause) {
-		super(cause, asResponse(status, error, error_uri, error_description));
+		this(cause, asResponse(status, error, error_uri, error_description));
+	}
+
+	public OAuthException(Throwable cause, Response response) {
+		super(cause, response);
+	}
+
+	public OAuthException(Response response) {
+		super(response);
 	}
 
 	private ObjectNode getEntity() {
@@ -62,7 +70,7 @@ public class OAuthException extends WebApplicationException {
 		return entity.path(param_error_description).asText(null);
 	}
 
-	private static Response asResponse(Response.Status status, String error, String error_uri, String error_description) {
+	public static Response asResponse(Response.Status status, String error, String error_uri, String error_description) {
 		ResponseBuilder builder = Response.status(status);
 		ObjectNode entity = MAPPER.createObjectNode();
 		
