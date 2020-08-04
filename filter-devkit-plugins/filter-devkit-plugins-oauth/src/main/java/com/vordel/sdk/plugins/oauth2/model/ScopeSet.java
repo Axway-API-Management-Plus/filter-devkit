@@ -39,7 +39,7 @@ public class ScopeSet extends AbstractSet<String> {
 		String scope = null;
 
 		if ((iterator != null) && iterator.hasNext()) {
-			StringBuilder builder = new StringBuilder().append(iterator.next());
+			StringBuilder builder = new StringBuilder().append(assertValidScope(iterator.next()));
 			Set<String> used = new HashSet<String>();
 
 			while (iterator.hasNext()) {
@@ -61,7 +61,7 @@ public class ScopeSet extends AbstractSet<String> {
 		String scope = null;
 
 		if ((iterator != null) && iterator.hasNext()) {
-			StringBuilder builder = new StringBuilder().append(converter.apply(iterator.next()));
+			StringBuilder builder = new StringBuilder().append(assertValidScope(converter.apply(iterator.next())));
 			Set<String> used = new HashSet<String>();
 
 			while (iterator.hasNext()) {

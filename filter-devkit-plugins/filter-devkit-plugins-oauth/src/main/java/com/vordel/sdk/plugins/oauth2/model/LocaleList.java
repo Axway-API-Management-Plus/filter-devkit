@@ -56,6 +56,17 @@ public class LocaleList extends AbstractSequentialList<String> {
 		return builder;
 	}
 
+	public static Iterable<String> asList(String ui_locales) {
+		Iterator<String> iterator = ResponseTypeSet.iterator(ui_locales);
+		List<String> locales = new ArrayList<String>();
+
+		while (iterator.hasNext()) {
+			locales.add(iterator.next());
+		}
+
+		return locales;
+	}
+
 	public static String asString(Iterator<String> iterator) {
 		String locales = null;
 
@@ -101,6 +112,14 @@ public class LocaleList extends AbstractSequentialList<String> {
 		}
 
 		return size;
+	}
+	
+	public static final String assertValidLocale(String locale) {
+		if (normalizeLanguageTag(locale) == null) {
+			throw new OAuthException(err_invalid_request, null, String.format("'%s' is not a valid language tag (RFC 5646)", locale));
+		}
+		
+		return locale;
 	}
 
 	public static class LocaleIterator implements ListIterator<String> {

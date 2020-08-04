@@ -4,20 +4,37 @@ import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_actor_tok
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_actor_token_type;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_assertion;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_audience;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_claims;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_claims_locales;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_client_assertion;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_client_assertion_type;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_client_id;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_client_secret;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_code;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_code_challenge;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_code_challenge_method;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_code_verifier;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_display;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_grant_type;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_id_token_hint;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_login_hint;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_max_age;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_nonce;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_password;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_prompt;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_redirect_uri;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_registration;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_request;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_request_uri;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_requested_token_type;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_resource;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_response_mode;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_response_type;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_scope;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_state;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_subject_token;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_subject_token_type;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_ui_locales;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_username;
 
 import java.util.AbstractMap;
@@ -93,7 +110,7 @@ public class OAuthParameters extends AbstractMap<String, Object> {
 	public Map<String, OAuthParameter<?>> getDescriptors() {
 		return descriptors;
 	}
-	
+
 	public Set<String> getParsedParameters() {
 		return parsed;
 	}
@@ -101,14 +118,14 @@ public class OAuthParameters extends AbstractMap<String, Object> {
 	public ObjectNode getObjectNode() {
 		return root;
 	}
-	
+
 	public <H extends Headers> H toQueryString(H query) {
 		DescriptorIterator iterator = new DescriptorIterator(descriptors, getObjectNode());
-		
-		while(iterator.hasNext()) {
+
+		while (iterator.hasNext()) {
 			query = iterator.toQueryString(query);
 		}
-		
+
 		return query;
 	}
 
@@ -138,7 +155,7 @@ public class OAuthParameters extends AbstractMap<String, Object> {
 
 		if (descriptor != null) {
 			result = descriptor.parse(getObjectNode(), key, value, null, validator);
-			
+
 			parsed.add(key);
 		}
 
@@ -151,7 +168,7 @@ public class OAuthParameters extends AbstractMap<String, Object> {
 
 		if (descriptor != null) {
 			result = descriptor.parse(getObjectNode(), key, body, merged, validator);
-			
+
 			parsed.add(key);
 		}
 
@@ -171,7 +188,7 @@ public class OAuthParameters extends AbstractMap<String, Object> {
 	public static void register(OAuthParameters parsed, String parameter) {
 		if (parsed != null) {
 			OAuthParameter<?> descriptor = DESCRIPTORS_MAP.get(parameter);
-	
+
 			if (descriptor != null) {
 				parsed.getDescriptors().put(parameter, descriptor);
 			}
@@ -188,32 +205,54 @@ public class OAuthParameters extends AbstractMap<String, Object> {
 
 	private static Map<String, OAuthParameter<?>> descriptors() {
 		Map<String, OAuthParameter<?>> descriptors = new HashMap<String, OAuthParameter<?>>();
-	
+
 		descriptors.put(param_client_id, OAuthParameter.CLIENT_ID);
-		descriptors.put(param_client_secret, OAuthParameter.GENERIC_SINGLE);
-		descriptors.put(param_client_assertion, OAuthParameter.GENERIC_SINGLE);
-		descriptors.put(param_client_assertion_type, OAuthParameter.GENERIC_SINGLE);
-	
-		descriptors.put(param_grant_type, OAuthParameter.GENERIC_SINGLE);
+		descriptors.put(param_client_secret, OAuthParameter.CLIENT_SECRET);
+		descriptors.put(param_client_assertion, OAuthParameter.STRING_SINGLE);
+		descriptors.put(param_client_assertion_type, OAuthParameter.STRING_SINGLE);
+
+		descriptors.put(param_grant_type, OAuthParameter.STRING_SINGLE);
 		descriptors.put(param_scope, OAuthParameter.SCOPES);
-	
-		descriptors.put(param_code, OAuthParameter.GENERIC_SINGLE);
-		descriptors.put(param_redirect_uri, OAuthParameter.GENERIC_SINGLE);
-		descriptors.put(param_code_verifier, OAuthParameter.GENERIC_SINGLE);
-	
-		descriptors.put(param_username, OAuthParameter.GENERIC_SINGLE);
-		descriptors.put(param_password, OAuthParameter.GENERIC_SINGLE);
-	
-		descriptors.put(param_assertion, OAuthParameter.GENERIC_SINGLE);
-	
-		descriptors.put(param_resource, OAuthParameter.GENERIC_SINGLE);
-		descriptors.put(param_audience, OAuthParameter.GENERIC_SINGLE);
-		descriptors.put(param_requested_token_type, OAuthParameter.GENERIC_SINGLE);
-		descriptors.put(param_subject_token, OAuthParameter.GENERIC_SINGLE);
-		descriptors.put(param_subject_token_type, OAuthParameter.GENERIC_SINGLE);
-		descriptors.put(param_actor_token, OAuthParameter.GENERIC_SINGLE);
-		descriptors.put(param_actor_token_type, OAuthParameter.GENERIC_SINGLE);
-	
+
+		descriptors.put(param_code, OAuthParameter.STRING_SINGLE);
+		descriptors.put(param_redirect_uri, OAuthParameter.STRING_SINGLE); /* XXX should include an RFC 3986 verifier */
+		descriptors.put(param_code_verifier, OAuthParameter.STRING_SINGLE);
+
+		descriptors.put(param_username, OAuthParameter.STRING_SINGLE);
+		descriptors.put(param_password, OAuthParameter.STRING_SINGLE);
+
+		descriptors.put(param_assertion, OAuthParameter.STRING_SINGLE);
+
+		descriptors.put(param_resource, OAuthParameter.STRING_SINGLE);
+		descriptors.put(param_audience, OAuthParameter.STRING_SINGLE);
+		descriptors.put(param_requested_token_type, OAuthParameter.STRING_SINGLE);
+		descriptors.put(param_subject_token, OAuthParameter.STRING_SINGLE);
+		descriptors.put(param_subject_token_type, OAuthParameter.STRING_SINGLE);
+		descriptors.put(param_actor_token, OAuthParameter.STRING_SINGLE);
+		descriptors.put(param_actor_token_type, OAuthParameter.STRING_SINGLE);
+
+		descriptors.put(param_state, OAuthParameter.STATE);
+		descriptors.put(param_display, OAuthParameter.DISPLAY);
+		descriptors.put(param_response_type, OAuthParameter.RESPONSE_TYPE);
+		descriptors.put(param_response_mode, OAuthParameter.RESPONSE_MODE);
+		descriptors.put(param_nonce, OAuthParameter.STRING_SINGLE);
+		descriptors.put(param_prompt, OAuthParameter.PROMPT);
+		descriptors.put(param_max_age, OAuthParameter.INTEGER_SINGLE);
+		descriptors.put(param_request_uri, OAuthParameter.STRING_SINGLE); /* XXX should include an RFC 3986 verifier */
+		descriptors.put(param_login_hint, OAuthParameter.STRING_SINGLE);
+		descriptors.put(param_code_challenge, OAuthParameter.STRING_SINGLE);
+		descriptors.put(param_code_challenge_method, OAuthParameter.CODE_CHALLENGE_METHOD);
+		descriptors.put(param_ui_locales, OAuthParameter.UI_LOCALES);
+		descriptors.put(param_claims_locales, OAuthParameter.UI_LOCALES);
+
+		/* JSON objects */
+		descriptors.put(param_claims, OAuthParameter.JSONOBJECT_SINGLE);
+		descriptors.put(param_registration, OAuthParameter.JSONOBJECT_SINGLE);
+
+		/* JWT values */
+		descriptors.put(param_id_token_hint, OAuthParameter.JWT_SINGLE);
+		descriptors.put(param_request, OAuthParameter.JWT_SINGLE);
+
 		return Collections.unmodifiableMap(descriptors);
 	}
 
@@ -393,7 +432,6 @@ public class OAuthParameters extends AbstractMap<String, Object> {
 				String key = name;
 
 				return new Entry<String, Object>() {
-
 					@Override
 					public String getKey() {
 						return key;
@@ -406,13 +444,8 @@ public class OAuthParameters extends AbstractMap<String, Object> {
 
 					@Override
 					public Object setValue(Object value) {
-						if (!(value instanceof String)) {
-							throw new IllegalArgumentException();
-						}
-
-						return descriptor.put(root, name, (String) value);
+						return DescriptorIterator.setValue(descriptor, root, name, value);
 					}
-
 				};
 			} finally {
 				next = null;
@@ -420,14 +453,23 @@ public class OAuthParameters extends AbstractMap<String, Object> {
 				remove = true;
 			}
 		}
-		
+
+		private static <T> T setValue(OAuthParameter<T> descriptor, ObjectNode root, String name, Object value) {
+			try {
+				T casted = descriptor.getJsonType().cast(value);
+
+				return descriptor.put(root, name, casted);
+			} catch (ClassCastException e) {
+				throw new IllegalArgumentException(e);
+			}
+		}
+
 		public <H extends Headers> H toQueryString(H query) {
 			try {
 				if (!hasNext()) {
 					throw new NoSuchElementException();
 				}
 
-				
 				OAuthParameter<?> descriptor = next;
 				String key = name;
 

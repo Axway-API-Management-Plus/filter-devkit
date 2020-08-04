@@ -1,0 +1,170 @@
+<ui>
+<validator class="com.vordel.client.manager.filter.oauth2.provider.ScopeGenerationValidator" />
+    <panel columns="2">
+        <panel columns="2" fill="false">
+            <NameAttribute />
+        </panel>
+
+        <panel columns="2" span="2">
+            <tabFolder span="2">
+                <tab label="OAUTH_APPLICATION_VALIDATION">
+                    <panel columns="2" fill="false" span="2">
+                        <panel columns="1" fill="false" span="2">
+                            <ButtonAttribute field="enableJsonPOST" label="OAUTH_AUTHORIZE_ALLOWJSONPOST"/>
+                            <ButtonAttribute field="enableResponseTypeFilter" label="OAUTH_AUTHORIZE_RESPONSETYPE_FILTER"/>
+                            <ButtonAttribute field="forcePKCE" label="OAUTH_AUTHORIZE_FORCEPKCE"/>
+                        </panel>
+                        <group label="RESOURCE_OWNER_AUTHORIZATION" fill="false">
+                            <panel columns="2" fill="false" span="2">
+                                <ReferenceSelector
+                                    field="authenticationPolicy"
+                                    selectableTypes="FilterCircuit"
+                                    searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+                                    label="OAUTH_AUTHENTICATION_LABEL"
+                                    title="OAUTH_AUTHENTICATION_TITLE" />
+                                <panel columns="1" fill="false" span="2">
+                                    <ButtonAttribute field="skipUserConsent" label="OAUTH_AUTHORIZE_SKIPCONSENT"/>
+                                </panel>
+                                <panel label="OAUTH_CONSENT_PANEL" columns="2" fill="false" span="2">
+                                    <ReferenceSelector
+                                        field="authorizationPolicy"
+                                        selectableTypes="FilterCircuit"
+                                        searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+                                        label="OAUTH_AUTHORIZATION_LABEL"
+                                        title="OAUTH_AUTHORIZATION_TITLE" />
+                                    <TextAttribute field="persistentAllowedScopes" label="OAUTH_PERSISTENT_CONSENT"/>
+                                    <TextAttribute field="transientAllowedScopes" label="OAUTH_TRANSIENT_CONSENT"/>
+                                    <TextAttribute field="discardedScopes" label="OAUTH_DISCARDED_SCOPES"/>
+                                </panel>
+                                <binding driver="OAUTH_AUTHORIZE_SKIPCONSENT" driven="OAUTH_CONSENT_PANEL"  uncheckOverride="enabled" class="com.vordel.client.ui.declarative.Enabler" />
+                            </panel>
+                        </group>
+                        <panel columns="2" fill="false" span="2">
+                            <group label="ISSUE_TOKEN_GROUP" fill="false">
+                                <RadioGroupAttribute field="scopeChoice" columns="4">
+                                    <choice value="Application" label="USING_APPLICATION" />
+                                    <panel indent="30" columns="3" span="4" margin="1">
+                                        <ComboAttribute field="scopesMustMatch" label="SCOPES_MATCH"
+                                            contentSource="com.vordel.client.manager.filter.oauth2.provider.ScopesMatch.VALUES"
+                                            includeBlank="false" required="true" readOnly="true" />
+                                        <label label="SCOPES_REGISTERED" />
+                                    </panel>
+                                    <panel indent="30" columns="3" span="4" margin="1">
+                                        <label label="NO_SCOPES_REGISTERED" />
+                                    </panel>
+                                    <choice value="Circuit" label="USING_POLICY" />
+                                    <panel indent="30" columns="2" fill="false" span="2" margin="1">
+                                        <ReferenceSelector field="scopeCircuitPK"
+                                            selectableTypes="FilterCircuit"
+                                            searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+                                            title="GET_SCOPES_USING_CIRCUIT" />
+                                    </panel>
+                                    <panel indent="30" columns="2" span="2" fill="true" margin="1">
+                                        <TextAttribute field="scopesForToken" label="STORE_SCOPES_IN"
+                                            readOnly="false" />
+                                    </panel> 
+                                </RadioGroupAttribute>
+                            </group>
+                        </panel>
+                    </panel>
+                </tab>
+                <tab label="OAUTH_TOKEN_GENERATION">
+                    <scrollpanel>
+                        <panel>
+                            <panel columns="2" fill="false">
+                                <ReferenceSelector field="authzCodeCache"
+                                    selectableTypes="AuthzCodePersist" searches="OAuth2StoresGroup,AuthzCodeStoreGroup"
+                                    label="OAUTH_CACHE_AUTHORIZATION_CODE" title="OAUTH_CACHE_AUTHORIZATION_CODE"
+                                    required="true" />
+                                <ReferenceSelector field="tokenStore"
+                                    selectableTypes="AccessTokenPersist" searches="OAuth2StoresGroup,AccessTokenStoreGroup"
+                                    label="OAUTH_CACHE_ACCESS_TOKEN" title="OAUTH_CACHE_ACCESS_TOKEN"
+                                    required="true" />
+                            </panel>
+                            <group label="AUTHORIZATION_CODE_DETAILS" fill="false">
+                                <panel columns="6" margin="0,0,0,10" horizontalSpacing="12">
+                                    <TextAttribute field="authorizationCodeExpiresInSecs" label="OAUTH_AUTHORIZATION_CODE_EXPIRES_IN"
+                                        required="true" />
+                                    <TextAttribute field="authorizationCodelength" label="OAUTH_AUTHORIZATION_CODE_LENGTH"
+                                        required="true" />
+                                </panel>
+                            </group>
+                            <group label="ACCESS_TOKEN_DETAILS" fill="false">
+                                <panel columns="6" margin="0,0,0,10" horizontalSpacing="12">
+                                    <TextAttribute field="accessTokenExpiresInSecs" label="OAUTH_ACCESS_TOKEN_EXPIRES_IN"
+                                        required="true" />
+                                    <TextAttribute field="accessTokenlength" label="OAUTH_ACCESS_TOKEN_LENGTH"
+                                        required="true" />
+                                    <TextAttribute field="accessTokenType" label="ACCESS_TOKEN_TYPE"
+                                        required="true" />
+                                </panel>
+                            </group>
+                            <group label="ID_TOKEN_DETAILS" fill="false">
+                                <panel columns="2" fill="false">
+                                    <ReferenceSelector
+                                        field="publicResourceOwnerGenerator"
+                                        selectableTypes="FilterCircuit"
+                                        searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+                                        label="OAUTH_IDTOKEN_GENERATOR_LABEL"
+                                        title="OAUTH_IDTOKEN_GENERATOR_TITLE" />
+                                    <TextAttribute field="publicIDToken" label="OAUTH_IDTOKEN_PUBLIC_LABEL"/>
+                                </panel>
+                            </group>
+                        </panel>
+                    </scrollpanel>
+                </tab>
+
+                <tab label="OAUTH_AUTHORIZE_ADVANCED">
+                    <panel>
+                        <group label="OAUTH_ADDITIONAL_FIELDS" columns="2" span="2" fill="false">
+                            <panel columns="1" fill="false" span="2">
+                                <TablePage type="Property" tableHeight="150"
+                                    dialogClass="com.vordel.client.manager.filter.oauth2.dlg.OAuth2TokenFieldsDialog"
+                                    columnProperties="name,value" columnResources="OAUTHMETA_NAME,OAUTHMETA_VALUE"
+                                    columnWidths="300,200" deleteText="OAUTHMETA_DELETE"
+                                    dialog.setFlavor="oauth2tokenfields.xml" />
+                            </panel>
+                            <ReferenceSelector
+                                field="requestRetriever"
+                                selectableTypes="FilterCircuit"
+                                searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+                                label="OAUTH_REQUESTURI_RETRIEVER_LABEL"
+                                title="OAUTH_REQUESTURI_RETRIEVER_TITLE" />
+                            <ReferenceSelector
+                                field="requestValidator"
+                                selectableTypes="FilterCircuit"
+                                searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+                                label="OAUTH_REQUEST_VALIDATOR_LABEL"
+                                title="OAUTH_REQUEST_VALIDATOR_TITLE" />
+                            <ReferenceSelector
+                                field="redirectGenerator"
+                                selectableTypes="FilterCircuit"
+                                searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+                                label="OAUTH_REDIRECT_GENERATOR_LABEL"
+                                title="OAUTH_REDIRECT_GENERATOR_TITLE" />
+                            <ReferenceSelector
+                                field="accessTokenTransformer"
+                                selectableTypes="FilterCircuit"
+                                searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"
+                                label="OAUTH_REQUEST_TOKENTRANSFORMER_LABEL"
+                                title="OAUTH_REQUEST_TOKENTRANSFORMER_TITLE" />
+                        </group>
+                    </panel>
+                </tab>
+
+                <tab label="OAUTH_MONITORING_SETTINGS">
+                    <panel>
+                        <group label="OAUTH_SERVICE_MONITOR_PANEL" columns="2" fill="false">
+                            <BitMaskAttribute field="metricsMask">
+                                <choice value="1" label="OAUTH_SERVICE_MONITOR_WEBSERVICE_USAGE" />
+                            </BitMaskAttribute>
+                            
+                            <TextAttribute field="clientAttributeName" label="OAUTH_SERVICE_MONITOR_CLIENT_ATTRIBUTE_NAME"/>
+                            <ButtonAttribute field="compositeContext" label="OAUTH_SERVICE_MONITOR_COMPOSITE_CONTEXT" />
+                        </group>
+                    </panel>
+                </tab>
+            </tabFolder>
+        </panel>
+    </panel>
+</ui>

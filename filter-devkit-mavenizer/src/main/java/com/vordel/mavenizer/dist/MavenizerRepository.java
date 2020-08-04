@@ -596,11 +596,14 @@ public class MavenizerRepository {
 	}
 
 	public static String sha1(File file) throws IOException {
+		return sha1(readFile(file));
+	}
+
+	public static String sha1(byte[] data) throws IOException {
 		try {
 			MessageDigest digest = MessageDigest.getInstance("SHA-1");
-			byte[] data = digest.digest(readFile(file));
 
-			return toHexString(data);
+			return toHexString(digest.digest(data));
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException(e);
 		}

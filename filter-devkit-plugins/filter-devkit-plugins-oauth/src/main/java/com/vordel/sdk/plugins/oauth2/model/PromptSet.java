@@ -6,6 +6,7 @@ import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_prompt;
 import java.util.AbstractSet;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -32,6 +33,39 @@ public class PromptSet extends AbstractSet<String> {
 
 	public static Iterator<String> iterator(String prompt) {
 		return new PromptIterator(prompt);
+	}
+
+	public static Set<String> asSet(String prompt) {
+		Iterator<String> iterator = PromptSet.iterator(prompt);
+		Set<String> types = new LinkedHashSet<String>();
+
+		while (iterator.hasNext()) {
+			types.add(iterator.next());
+		}
+
+		return types;
+	}
+
+	public static String asString(Iterator<String> iterator) {
+		String prompt = null;
+
+		if ((iterator != null) && iterator.hasNext()) {
+			StringBuilder builder = new StringBuilder().append(assertValidPrompt(iterator.next()));
+			Set<String> used = new HashSet<String>();
+
+			while (iterator.hasNext()) {
+				String next = iterator.next();
+				
+				if ((next != null) && (!next.isEmpty()) && used.add(next)) {
+					builder.append(' ');
+					builder.append(assertValidPrompt(next));
+				}
+			}
+
+			prompt = builder.toString();
+		}
+
+		return prompt;
 	}
 
 	@Override
@@ -111,6 +145,14 @@ public class PromptSet extends AbstractSet<String> {
 		return added;
 	}
 
+	public static String assertValidPrompt(String value) {
+		if ((value == null) || (!PARSER_REGEX.matcher(value).matches())) {
+			throw new OAuthException(err_invalid_request, null, String.format("'%s' is not a valid prompt (OpenID Connect Core section 3.1.2.1)", value));
+		}
+		
+		return value;
+	}
+
 	public static class PromptIterator implements Iterator<String> {
 		private final Set<String> used = new HashSet<String>();
 		private final Matcher parser;
@@ -156,8 +198,12 @@ public class PromptSet extends AbstractSet<String> {
 								/* prompt has already been seen */
 								group = null;
 
-								/* remove it */
-								remove();
+								try {
+									/* remove it */
+									remove();
+								} catch(UnsupportedOperationException e) {
+
+								}
 							}
 						}
 					}
