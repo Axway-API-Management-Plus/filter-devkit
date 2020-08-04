@@ -635,7 +635,7 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "an internal error occured");
 		}
 		
-		msg.put("oauth.response.code", code);
+		msg.put("authzcode", code);
 
 		return code;
 	}

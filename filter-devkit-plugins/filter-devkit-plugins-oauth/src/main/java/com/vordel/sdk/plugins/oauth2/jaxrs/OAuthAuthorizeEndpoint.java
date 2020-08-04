@@ -503,7 +503,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 						}
 
 						/* generate authorization code and save it in message */
-						msg.put("oauth.response.code", code = new AuthorizationCode(authz.getRedirectUri(), authz.getScope(), length, expiration, subject, authz.getState(), authz.getClientId(), additional));
+						msg.put("authzcode", code = new AuthorizationCode(authz.getRedirectUri(), authz.getScope(), length, expiration, subject, authz.getState(), authz.getClientId(), additional));
 					}
 
 					if (response_types.contains(response_type_token)) {
