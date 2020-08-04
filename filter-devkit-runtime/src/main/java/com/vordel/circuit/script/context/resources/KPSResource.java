@@ -14,9 +14,7 @@ import com.vordel.kps.query.KeyQuery;
 
 public abstract class KPSResource implements ContextResource, ViewableResource {
 	public static Model getModel() {
-		KPS kps = KPS.getInstance();
-
-		return kps.getModel();
+		return KPS.getInstance().getModel();
 	}
 
 	public abstract Store getStore();
