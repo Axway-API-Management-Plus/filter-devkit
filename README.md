@@ -16,20 +16,11 @@ Produced libraries should be useable on API Gateway and Policy Studio from versi
  - [Quick Filters integration for scripts](docs/QuickScriptFilter.md) (Javascript, Jython, Groovy)
  - [Quick Filters integration for Java](docs/QuickJavaFilter.md) using annotations
  - [Pluggable module support for Java](docs/ClassPathScanning.md)
- - Exportable methods for Groovy scripts
- - JAX-RS support for Groovy scripts
+ - [Extended Groovy script filter](docs/GroovyScriptFilter.md)
  - Assertion Filter (trigger error handling on condition)
  - Initializer Shortcut Filter
  - KPS Read/Write Framework
  - Deployment time compilation support for developers
-
-## Advanced Features
-
- - Bind Resource Filter (access to API Gateway references from scripts)
- - Cache Support for resources
- - 'KPS as Cache' extension
- - OAuth Stores reference support
- - Call Exported Java or groovy methods using dedicated filter
 
 ## Developer Feature
 
@@ -63,14 +54,11 @@ The build command will compile all module, produce an export archive and deploy 
 
 Stop you API Gateway instance, copy the following jars from the 'filter-devkit-delivery/target/developer' directory in the ext/lib directory of instance and start it back
  - ecj-*.jar (eclipse compiler plugin)
- - filter-devkit-advanced-runtime-*.jar (advanced scripting filters)
  - filter-devkit-dynamic-*.jar (dynamic compilation support for instance)
  - filter-devkit-runtime-*.jar (basic runtime)
  - filter-devkit-samples-*.jar (sample implementations)
 
 In the policy studio, import the following jars as runtime dependencies and restart the policy studio with the '-clean' option:
- - filter-devkit-advanced-runtime-*.jar
- - filter-devkit-advanced-studio-*.jar
  - filter-devkit-runtime-*.jar
  - filter-devkit-studio-*.jar
 
@@ -82,7 +70,7 @@ _Warning_ : If you're in a Team Dev configuration, import sets in the project wi
 
 Once all those actions are done, you have an API Gateway instance and configuration ready for Quick Filter and advanced scripting.
 
-### Base Install (for production or deployment pipeline)
+### Production Install (for production or deployment pipeline)
 
 Stop you API Gateway instance, copy the following jars from the 'filter-devkit-delivery/target/production-base' directory in the ext/lib directory of instance and start it back
  - filter-devkit-runtime-*.jar (basic runtime)
@@ -93,23 +81,5 @@ In the policy studio, import the following jars as runtime dependencies and rest
 
 In the policy studio, import the following typesets into a open configuration:
  - filter-devkit-delivery/target/production-base/typesets/apigwsdkset.xml
-
-_Warning_ : If you're in a Team Dev configuration, import sets in the project with Server Settings.
-
-### Advanced Install (for production or deployment pipeline)
-
-Stop you API Gateway instance, copy the following jars from the 'filter-devkit-delivery/target/production-full' directory in the ext/lib directory of instance and start it back
- - filter-devkit-advanced-runtime-*.jar (advanced scripting filters)
- - filter-devkit-runtime-*.jar (basic runtime)
-
-In the policy studio, import the following jars as runtime dependencies and restart the policy studio with the '-clean' option:
- - filter-devkit-advanced-runtime-*.jar
- - filter-devkit-advanced-studio-*.jar
- - filter-devkit-runtime-*.jar
- - filter-devkit-studio-*.jar
-
-In the policy studio, import the following typesets into a open configuration:
- - filter-devkit-delivery/target/production-full/typesets/apigwsdkset.xml
- - filter-devkit-delivery/target/production-full/typesets/apigwsdk-advancedset.xml
 
 _Warning_ : If you're in a Team Dev configuration, import sets in the project with Server Settings.
