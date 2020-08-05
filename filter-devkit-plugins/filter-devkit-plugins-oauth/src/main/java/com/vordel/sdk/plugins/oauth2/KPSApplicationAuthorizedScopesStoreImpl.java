@@ -5,9 +5,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.vordel.circuit.script.context.resources.KPSStoreResource;
 import com.vordel.kps.ObjectNotFound;
 import com.vordel.kps.Store;
-import com.vordel.kps.impl.KPS;
 
 public class KPSApplicationAuthorizedScopesStoreImpl implements ApplicationAuthorizedScopesStore {
 	private static final ApplicationAuthorizedScopesStore INSTANCE = getDefaultApplicationAuthorizedScopesStore();
@@ -19,7 +19,7 @@ public class KPSApplicationAuthorizedScopesStoreImpl implements ApplicationAutho
 	private final Store store;
 
 	private static ApplicationAuthorizedScopesStore getDefaultApplicationAuthorizedScopesStore() {
-		Store store = KPS.getInstance().getStore("OAuthAuthorizationExceptions");
+		Store store = KPSStoreResource.getStoreByAlias("OAuthAuthorizationExceptions");
 		
 		return new KPSApplicationAuthorizedScopesStoreImpl(store);
 	}
