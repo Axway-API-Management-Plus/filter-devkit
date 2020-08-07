@@ -43,6 +43,11 @@ public class JerseyLoggingListener implements RequestEventListener, ApplicationE
 			ExtendedUriInfo uriInfo = null;
 
 			switch (event.getType()) {
+			case RESOURCE_METHOD_START:
+				uriInfo = event.getUriInfo();
+
+				Trace.debug(String.format("invoke '%s'", uriInfo.getMatchedResourceMethod().getInvocable().getDefinitionMethod()));
+				break;
 			case EXCEPTION_MAPPER_FOUND:
 			case EXCEPTION_MAPPING_FINISHED:
 			case FINISHED:
@@ -57,11 +62,6 @@ public class JerseyLoggingListener implements RequestEventListener, ApplicationE
 			case START:
 			case SUBRESOURCE_LOCATED:
 			default:
-				break;
-			case RESOURCE_METHOD_START:
-				uriInfo = event.getUriInfo();
-
-				Trace.debug(String.format("invoke '%s'", uriInfo.getMatchedResourceMethod().getInvocable().getDefinitionMethod()));
 				break;
 			}
 		}

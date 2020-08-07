@@ -39,6 +39,7 @@ public class JerseyExecutorFeature implements Feature {
 
 		@Override
 		public void dispose(ExecutorService executorService) {
+			/* nothing to dispose */
 		}
 
 		@Override

@@ -124,7 +124,7 @@ public abstract class AbstractHeadersValues extends AbstractCollection<List<Stri
 
 		@Override
 		public boolean isEmpty() {
-			return list == null ? true : list.isEmpty();
+			return (list == null) || list.isEmpty();
 		}
 
 		@Override

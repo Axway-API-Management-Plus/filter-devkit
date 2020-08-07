@@ -127,7 +127,7 @@ public abstract class AbstractContainer<T extends AbstractWebComponent> implemen
 		private final String subjectName;
 
 		protected MessagePrincipal(String subjectName) {
-			this.subjectName = subjectName == null ? subjectName : subjectName;
+			this.subjectName = subjectName;
 		}
 
 		public String getName() {

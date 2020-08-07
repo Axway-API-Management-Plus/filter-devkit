@@ -198,6 +198,11 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 		/* save http client headers */
 		msg.put("oauth.request.parsed.headers", msg.get(MessageProperties.HTTP_HEADERS));
 
+		/* just in case some inner scripts needs this */
+		msg.put("oauth.jaxrs.headers", headers);
+		msg.put("oauth.jaxrs.request", request);
+		msg.put("oauth.jaxrs.uri_info", info);
+		
 		/* set oauth request parsed parameters */
 		msg.put("oauth.request.uri", getServiceURI(info));
 		msg.put("oauth.request.parsed.mapped", parsed);

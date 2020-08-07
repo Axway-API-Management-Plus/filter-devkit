@@ -61,7 +61,7 @@ public class EHCacheResource extends CacheResource {
 	public boolean isKeyInCache(Object key) throws CircuitAbortException {
 		Cache cache = getCache(cacheName);
 
-		return cache == null ? false : cache.isKeyInCache(key);
+		return (cache != null) && cache.isKeyInCache(key);
 	}
 
 	@Override
@@ -69,7 +69,7 @@ public class EHCacheResource extends CacheResource {
 		try {
 			Cache cache = getCache(cacheName);
 
-			return cache == null ? false : cache.isValueInCache(asSerializable(value));
+			return (cache != null) && cache.isValueInCache(asSerializable(value));
 		} catch (IOException e) {
 			throw new CircuitAbortException("Unexpected I/O Exception", e);
 		}
@@ -255,7 +255,7 @@ public class EHCacheResource extends CacheResource {
 	private boolean isCacheWriteable() throws CircuitAbortException {
 		Cache cache = getCache(cacheName);
 
-		return cache == null ? false : isCacheWriteable(cache);
+		return (cache != null) && isCacheWriteable(cache);
 	}
 
 	@SuppressWarnings("deprecation")
