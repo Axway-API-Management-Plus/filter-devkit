@@ -187,8 +187,6 @@ public class JOSEUtils {
 						m.put(MessageProperties.CONTENT_BODY, saved);
 					}
 				}
-			} catch (JsonProcessingException e) {
-				throw new CircuitAbortException("Unable to transform header", e);
 			} catch (IOException e) {
 				throw new CircuitAbortException("Unable to transform header", e);
 			}

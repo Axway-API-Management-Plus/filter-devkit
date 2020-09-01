@@ -27,6 +27,7 @@
   </dependencyManagement>
 
   <modules>
+    <module>filter-devkit-base</module>
     <module>filter-devkit-runtime</module>
     <module>filter-devkit-studio</module>
     <module>filter-devkit-advanced-runtime</module>
@@ -36,6 +37,8 @@
     <module>filter-devkit-delivery</module>
     <module>filter-devkit-mavenizer</module>
     <module>filter-devkit-export</module>
+    <module>filter-devkit-jersey222</module>
+    <module>filter-devkit-jersey231</module>
   </modules>
 
   <build>
@@ -48,6 +51,10 @@
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>3.1.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>3.2.4</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
