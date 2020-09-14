@@ -18,7 +18,6 @@ import java.util.zip.DeflaterOutputStream;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
@@ -187,8 +186,6 @@ public class JOSEUtils {
 						m.put(MessageProperties.CONTENT_BODY, saved);
 					}
 				}
-			} catch (JsonProcessingException e) {
-				throw new CircuitAbortException("Unable to transform header", e);
 			} catch (IOException e) {
 				throw new CircuitAbortException("Unable to transform header", e);
 			}

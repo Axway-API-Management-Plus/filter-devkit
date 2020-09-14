@@ -15,7 +15,7 @@ import com.vordel.circuit.oauth.common.KPSAuthorizationStoreImpl;
 import com.vordel.circuit.oauth.common.exception.AuthorizationStorageException;
 import com.vordel.circuit.oauth.kps.ApplicationDetails;
 import com.vordel.circuit.oauth.store.TokenStore;
-import com.vordel.kps.impl.KPS;
+import com.vordel.circuit.script.context.resources.KPSStoreResource;
 import com.vordel.trace.Trace;
 
 public class OAuthConsentManager {
@@ -60,7 +60,7 @@ public class OAuthConsentManager {
 			tokenStores = Collections.emptyList();
 		}
 
-		return new KPSAuthorizationStoreImpl(KPS.getInstance().getStore("OAuthAuthorizations"), tokenStores);
+		return new KPSAuthorizationStoreImpl(KPSStoreResource.getStoreByAlias("OAuthAuthorizations"), tokenStores);
 	}
 
 	public void persistNewlyApprovedScopes(String authSubject, ApplicationDetails app, OAuthAuthorization authorization, Set<String> preAuthorisedScopes, Set<?> nonPersistentScopes) throws CircuitAbortException {

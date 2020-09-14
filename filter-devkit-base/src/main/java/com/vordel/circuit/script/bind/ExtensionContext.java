@@ -239,7 +239,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 						result = ((Boolean) value).booleanValue();
 
 						if (Trace.isDebugEnabled()) {
-							Trace.debug(String.format("method returned '%s'", value.toString()));
+							Trace.debug(String.format("method '%s' returned '%s'", method.getName(), value.toString()));
 						}
 					} else {
 						throw new CircuitAbortException("script did not return a boolean");
@@ -298,13 +298,13 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 
 					if (Trace.isDebugEnabled()) {
 						if (value instanceof String) {
-							Trace.debug(String.format("method returned \"%s\"", ScriptHelper.encodeLiteral((String) value)));
+							Trace.debug(String.format("method '%s' returned \"%s\"", method.getName(), ScriptHelper.encodeLiteral((String) value)));
 						} else if ((value instanceof Boolean) || (value instanceof Number)) {
-							Trace.debug(String.format("method returned '%s'", value.toString()));
+							Trace.debug(String.format("method '%s' returned '%s'", method.getName(), value.toString()));
 						} else if (value != null) {
-							Trace.debug(String.format("method returned a value of type '%s'", value.getClass().getName()));
+							Trace.debug(String.format("method '%s' returned a value of type '%s'", method.getName(), value.getClass().getName()));
 						} else {
-							Trace.debug("method returned null");
+							Trace.debug(String.format("method '%s' returned null", method.getName()));
 						}
 					}
 

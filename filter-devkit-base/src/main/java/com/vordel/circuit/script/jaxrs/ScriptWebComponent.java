@@ -6,7 +6,6 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.core.Application;
 
-import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.jersey.internal.inject.ReferencingFactory;
 import org.glassfish.jersey.internal.util.collection.Ref;
 import org.glassfish.jersey.server.ApplicationHandler;
@@ -19,19 +18,10 @@ import org.glassfish.jersey.server.spi.RequestScopedInitializer;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.jaxrs.AbstractWebComponent;
-import com.vordel.circuit.jaxrs.WebResourceContext;
 
 public class ScriptWebComponent extends AbstractWebComponent {
-	protected static final RequestScopedInitializer getRequestScopedInitializer(final Message message) {
-		return new RequestScopedInitializer() {
-			@Override
-			public void initialize(final ServiceLocator locator) {
-				locator.<Ref<Message>>getService(MESSAGE_TYPE).set(message);
-
-				/* create web resource context */
-				locator.createAndInitialize(WebResourceContext.class);
-			}
-		};
+	protected static final RequestScopedInitializer getRequestScopedInitializer(Message message) {
+		return CONTAINER.getRequestScopedInitializer(message);
 	}
 
 	protected static class MessageReferencingFactory extends ReferencingFactory<Message> {
@@ -102,9 +92,7 @@ public class ScriptWebComponent extends AbstractWebComponent {
 
 	@Override
 	protected ApplicationHandler createApplicationHandler(ResourceConfig configuration) {
-		WebComponentBinder binder = new WebComponentBinder(MessageReferencingFactory.class);
-
-		return new ApplicationHandler(configuration, binder);
+		return CONTAINER.createApplicationHandler(configuration);
 	}
 
 	public static final <T> ScriptWebComponent createWebComponent(T script) {

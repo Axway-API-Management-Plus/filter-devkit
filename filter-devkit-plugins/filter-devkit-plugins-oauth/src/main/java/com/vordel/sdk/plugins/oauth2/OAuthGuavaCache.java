@@ -1,5 +1,7 @@
 package com.vordel.sdk.plugins.oauth2;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -11,8 +13,6 @@ import com.vordel.apiportal.config.PortalConfiguration;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.oauth.common.OAuth2Utils;
 import com.vordel.circuit.oauth.kps.ApplicationDetails;
-import com.vordel.common.apiserver.controller.BaseOAuthController;
-import com.vordel.common.apiserver.controller.BaseOAuthResourceController;
 import com.vordel.common.apiserver.controller.IStoreAccess;
 import com.vordel.common.apiserver.controller.StoreAccess;
 import com.vordel.common.apiserver.discovery.model.OAuthAppScope;
@@ -43,6 +43,51 @@ public class OAuthGuavaCache {
 		DETAILS_CACHE = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterWrite(CACHE_TTL, TimeUnit.MILLISECONDS).build();
 		APPSCOPES_CACHE = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterWrite(CACHE_TTL, TimeUnit.MILLISECONDS).build();
 	}
+	
+	private static final Method INTERNALGETOAUTHCLIENT_METHOD = getOAuthClientMethod();
+	private static final Method GETSCOPES_METHOD = getScopesMethod();
+
+	private static Method getOAuthClientMethod() {
+		Class<?> clazz = null;
+
+		try {
+			try {
+				/* check for 7.7 july release class */
+				clazz = Class.forName("com.vordel.common.apiserver.controller.CoreOAuthController");
+			} catch (ClassNotFoundException e) {
+				/* fallback to previous name */
+				clazz = Class.forName("com.vordel.common.apiserver.controller.BaseOAuthController");
+			}
+
+			/* retrieve the method */
+			return clazz.getMethod("internalGetOAuthClient", String.class);
+		} catch(Exception fatal) {
+			Trace.error("can't find core oauth controller method", fatal);
+
+			throw new IllegalStateException("can't find core oauth controller method", fatal);
+		}
+	}
+
+	private static Method getScopesMethod() {
+		Class<?> clazz = null;
+
+		try {
+			try {
+				/* check for 7.7 july release class */
+				clazz = Class.forName("com.vordel.common.apiserver.controller.CoreOAuthResourceController");
+			} catch (ClassNotFoundException e) {
+				/* fallback to previous name */
+				clazz = Class.forName("com.vordel.common.apiserver.controller.BaseOAuthResourceController");
+			}
+
+			/* retrieve the method */
+			return clazz.getMethod("getScopes", String.class);
+		} catch(Exception fatal) {
+			Trace.error("can't find core oauth resource controller method", fatal);
+
+			throw new IllegalStateException("can't find core oauth resource controller method", fatal);
+		}
+	}
 
 	private static void processExecutionException(Exception e) {
 		Throwable cause = e.getCause();
@@ -51,7 +96,7 @@ public class OAuthGuavaCache {
 			throw (RuntimeException) cause;
 		} else if (cause instanceof Error) {
 			throw (Error) cause;
-		} else if (cause != null){
+		} else if (cause != null) {
 			Trace.error("unexpected error", cause);
 		}
 	}
@@ -64,10 +109,26 @@ public class OAuthGuavaCache {
 				@Override
 				public CacheValueHolder<List<OAuthAppScope>> call() {
 					IStoreAccess storeAccess = StoreAccess.internalWithRole("admin");
-					BaseOAuthResourceController controller = storeAccess.getOAuthResourceController();
-					List<OAuthAppScope> scopes = controller.getScopes(applicationId);
+					Object controller = storeAccess.getOAuthResourceController();
+					
+					try {
+						@SuppressWarnings("unchecked")
+						List<OAuthAppScope> scopes = (List<OAuthAppScope>) GETSCOPES_METHOD.invoke(controller, applicationId);
 
-					return new CacheValueHolder<List<OAuthAppScope>>(scopes);
+						return new CacheValueHolder<List<OAuthAppScope>>(scopes);
+					} catch (IllegalAccessException e) {
+						throw new IllegalStateException(e);
+					} catch (InvocationTargetException e) {
+						Throwable cause = e.getCause();
+						
+						if (cause instanceof Error) {
+							throw (Error) cause;
+						} else if (cause instanceof RuntimeException) {
+							throw (RuntimeException) cause;
+						} else {
+							throw new IllegalStateException(cause);
+						}
+					}
 				}
 			}).call();
 		} catch (ExecutionException e) {
@@ -83,7 +144,7 @@ public class OAuthGuavaCache {
 
 		if (details != null) {
 			try {
-				scopes = details == null ? null : getScopesListFromApp(details.getApplicationID());
+				scopes = getScopesListFromApp(details.getApplicationID());
 			} finally {
 				if (scopes == null) {
 					m.remove(SCOPES_PROPERTY);
@@ -105,13 +166,25 @@ public class OAuthGuavaCache {
 					@Override
 					public CacheValueHolder<OAuthClient> call() throws Exception {
 						IStoreAccess storeAccess = StoreAccess.internalWithRole("admin");
-						BaseOAuthController controller = storeAccess.getOAuthController();
+						Object controller = storeAccess.getOAuthController();
 						OAuthClient client = null;
 
 						try {
-							client = controller.internalGetOAuthClient(client_id);
-						} catch(ObjectNotFound e) {
-							/* ignore */
+							client = (OAuthClient) INTERNALGETOAUTHCLIENT_METHOD.invoke(controller, client_id);
+						} catch (IllegalAccessException e) {
+							throw new IllegalStateException(e);
+						} catch (InvocationTargetException e) {
+							Throwable cause = e.getCause();
+							
+							if (cause instanceof Error) {
+								throw (Error) cause;
+							} else if (cause instanceof ObjectNotFound) {
+								/* ignore */
+							} else if (cause instanceof RuntimeException) {
+								throw (RuntimeException) cause;
+							} else {
+								throw new IllegalStateException(cause);
+							}
 						}
 
 						return new CacheValueHolder<OAuthClient>(client);
@@ -156,7 +229,7 @@ public class OAuthGuavaCache {
 						return new CacheValueHolder<ApplicationDetails>(details);
 					}
 				}).call();
-				
+
 				if (details != null) {
 					/* update the client details property */
 					m.put(DETAILS_PROPERTY, details);

@@ -14,7 +14,7 @@ import com.vordel.mime.QueryStringHeaderSet;
 public abstract class AbstractHeadersNameSet extends AbstractSet<String> {
 	protected abstract Headers getHeaders();
 
-	protected final static Iterator<String> iterator(Headers store) {
+	protected static final Iterator<String> iterator(Headers store) {
 		Iterator<String> iterator = null;
 
 		if (store == null) {
@@ -28,7 +28,7 @@ public abstract class AbstractHeadersNameSet extends AbstractSet<String> {
 		return iterator;
 	}
 
-	protected final static int size(Headers store) {
+	protected static final int size(Headers store) {
 		int size = 0;
 
 		if (store instanceof MultivaluedMap) {

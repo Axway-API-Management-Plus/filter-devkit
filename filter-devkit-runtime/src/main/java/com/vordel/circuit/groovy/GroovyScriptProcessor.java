@@ -297,7 +297,7 @@ public class GroovyScriptProcessor extends MessageProcessor {
 					result = ((Boolean) value).booleanValue();
 
 					if (Trace.isDebugEnabled()) {
-						Trace.debug(String.format("method returned '%s'", value.toString()));
+						Trace.debug(String.format("method '%s' returned '%s'", invoke.getName(), value.toString()));
 					}
 				} else {
 					throw new CircuitAbortException("script did not return a boolean");
