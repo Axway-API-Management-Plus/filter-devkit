@@ -486,8 +486,13 @@ public abstract class OAuthAccessTokenGenerator {
 		if (Trace.isDebugEnabled()) {
 			Trace.debug("Storing the OAuth Access token to persistent store");
 		}
+		
+		QueryStringHeaderSet serialized = parsed.toQueryString(new QueryStringHeaderSet());
+		
+		/* copy validated and requested scopes in authorization request */
+		serialized.setHeader("scope", ScopeSet.asString(scopes.iterator()));
 
-		AuthorizationRequest request = new AuthorizationRequest(parsed.toQueryString(new QueryStringHeaderSet()));
+		AuthorizationRequest request = new AuthorizationRequest(serialized);
 
 		if (subject == null) {
 			/* XXX if subject is null, token can't be deserialized */
