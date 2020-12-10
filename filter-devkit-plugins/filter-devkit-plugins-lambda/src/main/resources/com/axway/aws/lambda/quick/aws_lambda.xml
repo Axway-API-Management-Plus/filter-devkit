@@ -15,7 +15,7 @@
 				</panel>
 				<choice value="ASSUME_ROLE_FALSE" label="RADIO_AWS_CREDENTIAL" span="2" />
 				<panel columns="2" span="2" fill="false">
-					<ReferenceSelector field="awsCredential" required="true" selectableTypes="ApiKeyProfile" label="CHOOSE_AWS_CREDENTTIAL_LABEL" title="CHOOSE_AWS_CREDENTTIAL_DIALOG_TITLE" searches="AuthProfilesGroup,ApiKeyGroup,ApiKeyProviderProfile" />
+					<ReferenceSelector field="awsCredential" selectableTypes="ApiKeyProfile" label="CHOOSE_AWS_CREDENTTIAL_LABEL" title="CHOOSE_AWS_CREDENTTIAL_DIALOG_TITLE" searches="AuthProfilesGroup,ApiKeyGroup,ApiKeyProviderProfile" />
 				</panel>
 			</RadioGroupAttribute>
 
