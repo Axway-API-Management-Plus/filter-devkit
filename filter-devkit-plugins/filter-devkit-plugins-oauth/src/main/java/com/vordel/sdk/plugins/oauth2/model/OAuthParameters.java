@@ -35,7 +35,7 @@ import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_state;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_subject_token;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_subject_token_type;
 import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_ui_locales;
-import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.param_username;
+import static com.vordel.sdk.plugins.oauth2.model.OAuthConstants.*;
 
 import java.util.AbstractMap;
 import java.util.AbstractSet;
@@ -220,6 +220,8 @@ public class OAuthParameters extends AbstractMap<String, Object> {
 
 		descriptors.put(param_username, OAuthParameter.STRING_SINGLE);
 		descriptors.put(param_password, OAuthParameter.STRING_SINGLE);
+
+		descriptors.put(param_refresh_token, OAuthParameter.STRING_SINGLE);
 
 		descriptors.put(param_assertion, OAuthParameter.STRING_SINGLE);
 
