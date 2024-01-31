@@ -1,10 +1,10 @@
 package com.vordel.circuit.script.context.resources;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import com.vordel.kps.Model;
 import com.vordel.kps.ObjectExists;
@@ -13,41 +13,13 @@ import com.vordel.kps.Store;
 import com.vordel.kps.Transaction;
 import com.vordel.kps.impl.KPS;
 import com.vordel.kps.query.KeyQuery;
+import com.vordel.persistence.kps.KPSInterface;
 
 public abstract class KPSResource implements ContextResource, ViewableResource {
-	private static final Method MODEL_METHOD;
-	private static final Object INSTANCE;
-
-	static {
-		try {
-			/*
-			 * reflection stuff to support from 7.5 to 7.7.0.20200530
-			 */
-			Method instanceMethod = KPS.class.getMethod("getInstance");
-			Class<?> instanceType = instanceMethod.getReturnType();
-
-			INSTANCE = instanceMethod.invoke(null);
-			MODEL_METHOD = instanceType.getMethod("getModel");
-		} catch (NoSuchMethodException e) {
-			throw new IllegalStateException("Unable to find requested KPS methods", e);
-		} catch (IllegalAccessException e) {
-			throw new IllegalStateException("Unable to invoke requested KPS methods", e);
-		} catch (InvocationTargetException e) {
-			Throwable cause = e.getCause();
-
-			throw new IllegalStateException("Unable to retrieve KPS instance", cause);
-		}
-	}
 	public static Model getModel() {
-		try {
-			return (Model) MODEL_METHOD.invoke(INSTANCE);
-		} catch (IllegalAccessException e) {
-			throw new IllegalStateException("Unable to retrieve KPS model", e);
-		} catch (InvocationTargetException e) {
-			Throwable cause = e.getCause();
-
-			throw new IllegalStateException("Unable to retrieve KPS model", cause);
-		}
+		KPSInterface instance = KPS.getInstance();
+		
+		return instance.getModel();
 	}
 
 	public abstract Store getStore();
@@ -158,18 +130,16 @@ public abstract class KPSResource implements ContextResource, ViewableResource {
 	}
 
 	public static class KeyQueryBuilder {
-		private final List<String> keys = new ArrayList<String>();
-		private final List<Object> values = new ArrayList<Object>();
+		private final List<Pair<String, Object>> pairs = new ArrayList<Pair<String, Object>>();
 
 		public KeyQueryBuilder append(String key, Object value) {
-			keys.add(key);
-			values.add(value);
+			pairs.add(Pair.of(key, value));
 
 			return this;
 		}
 
 		public KeyQuery build() {
-			return new KeyQuery(keys, values);
+			return new KeyQuery(pairs);
 		}
 	}
 }

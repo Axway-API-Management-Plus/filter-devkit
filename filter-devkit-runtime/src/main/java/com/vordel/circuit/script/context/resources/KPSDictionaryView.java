@@ -1,7 +1,9 @@
 package com.vordel.circuit.script.context.resources;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import com.vordel.common.Dictionary;
 import com.vordel.kps.ObjectNotFound;
@@ -48,9 +50,13 @@ public class KPSDictionaryView implements Dictionary {
 		if (next < values.length) {
 			result = new KPSDictionaryView(store, keys, values, next);
 		} else {
-			List<String> keyList = Arrays.asList(keys);
-			List<String> valueList = Arrays.asList(values);
-			KeyQuery query = new KeyQuery(keyList, valueList);
+			List<Pair<String, Object>> pairs = new ArrayList<Pair<String, Object>>();
+
+			for (int index = 0; index < keys.length; index++) {
+				pairs.add(Pair.of(keys[index], values[index]));
+			}
+
+			KeyQuery query = new KeyQuery(pairs);
 
 			try {
 				result = store.getCached(query);
