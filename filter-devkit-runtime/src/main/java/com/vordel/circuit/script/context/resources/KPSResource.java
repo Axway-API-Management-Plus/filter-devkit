@@ -157,14 +157,6 @@ public abstract class KPSResource implements ContextResource, ViewableResource {
 		return new KPSDictionaryView(this);
 	}
 
-	public Map<Object, Map<String, Object>> asMap() {
-		return new KPSMap(getStore(), null);
-	}
-
-	public Map<Object, Map<String, Object>> asMap(int ttl) {
-		return new KPSMap(getStore(), ttl);
-	}
-
 	public static class KeyQueryBuilder {
 		private final List<String> keys = new ArrayList<String>();
 		private final List<Object> values = new ArrayList<Object>();

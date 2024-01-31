@@ -24,6 +24,7 @@ import javax.ws.rs.ext.RuntimeDelegate.HeaderDelegate;
 import com.nimbusds.jose.util.Base64URL;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
+import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.MessageProperties;
 import com.vordel.circuit.ext.filter.quick.QuickFilterField;
 import com.vordel.circuit.ext.filter.quick.QuickFilterType;
@@ -180,9 +181,9 @@ public class GenerateHttpSignatureFilter extends GenerateHttpDigestFilter {
 	}
 
 	@Override
-	public boolean invokeFilter(Circuit c, Message m) throws CircuitAbortException {
+	public boolean invokeFilter(Circuit c, Message m, MessageProcessor p) throws CircuitAbortException {
 		/* generate digest if needed */
-		boolean result = super.invokeFilter(c, m);
+		boolean result = super.invokeFilter(c, m, p);
 
 		if (result) {
 			List<String> resolved = new ArrayList<String>();

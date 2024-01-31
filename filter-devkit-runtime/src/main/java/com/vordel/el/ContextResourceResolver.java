@@ -109,7 +109,7 @@ public class ContextResourceResolver extends ELResolver {
 		 * @return
 		 */
 		private Object resolve(String key) {
-			Object result = extension.getContextResource(dict, key);
+			Object result = extension.getContextResource(key);
 
 			if (result == null) {
 				result = DictionaryResolver.createSlice(this, key);
@@ -122,7 +122,7 @@ public class ContextResourceResolver extends ELResolver {
 
 		@Override
 		public Object get(String key) {
-			Object result = extension.getContextResource(dict, key);
+			Object result = extension.getContextResource(key);
 
 			return result == null ? null : substitute(result, key);
 		}

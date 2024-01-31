@@ -25,7 +25,6 @@ import com.vordel.circuit.script.context.resources.ContextResource;
 import com.vordel.circuit.script.context.resources.ContextResourceFactory;
 import com.vordel.circuit.script.context.resources.ContextResourceProvider;
 import com.vordel.circuit.script.context.resources.InvocableResource;
-import com.vordel.circuit.script.context.resources.KPSCacheResource;
 import com.vordel.circuit.script.context.resources.KPSResource;
 import com.vordel.circuit.script.context.resources.SelectorResource;
 import com.vordel.circuit.script.context.resources.SubstitutableResource;
@@ -419,27 +418,23 @@ public class GroovyScriptProcessor extends MessageProcessor {
 		}
 
 		@Override
-		public boolean invoke(Circuit c, Message m, String name) throws CircuitAbortException {
-			InvocableResource resource = getInvocableResource(m, name);
+		public boolean invoke(Message m, String name) throws CircuitAbortException {
+			InvocableResource resource = getInvocableResource(name);
 
 			if (resource == null) {
 				throw new CircuitAbortException("resource is not invocable or does not exists");
-			}
-
-			if (c == null) {
-				throw new CircuitAbortException("no policy context");
 			}
 
 			if (m == null) {
 				throw new CircuitAbortException("no message context");
 			}
 
-			return resource.invoke(c, m);
+			return resource.invoke(m);
 		}
 
 		@Override
 		public Object substitute(Dictionary dict, String name) {
-			SubstitutableResource<?> resource = getSubstitutableResource(dict, name);
+			SubstitutableResource<?> resource = getSubstitutableResource(name);
 			Object result = null;
 
 			if (resource != null) {
@@ -463,33 +458,29 @@ public class GroovyScriptProcessor extends MessageProcessor {
 		}
 
 		public final ContextResource getContextResource(Dictionary dict, String name) {
-			return exports.getContextResource(dict, name);
+			return exports.getContextResource(name);
 		}
 
 		public final InvocableResource getInvocableResource(Dictionary dict, String name) {
-			return exports.getInvocableResource(dict, name);
+			return exports.getInvocableResource(name);
 		}
 
 		public final SubstitutableResource<?> getSubstitutableResource(Dictionary dict, String name) {
-			return exports.getSubstitutableResource(dict, name);
+			return exports.getSubstitutableResource(name);
 		}
 
 		public final KPSResource getKPSResource(Dictionary dict, String name) {
-			return exports.getKPSResource(dict, name);
+			return exports.getKPSResource(name);
 		}
 
 		public final CacheResource getCacheResource(Dictionary dict, String name) {
 			ContextResource resource = getContextResource(dict, name);
 
-			if (resource instanceof KPSResource) {
-				resource = new KPSCacheResource(((KPSResource) resource));
-			}
-
 			return resource instanceof CacheResource ? (CacheResource) resource : null;
 		}
 
 		public final boolean invokeResource(Circuit c, Message m, String name) throws CircuitAbortException {
-			return exports.invoke(c, m, name);
+			return exports.invoke(m, name);
 		}
 
 		public final Object substituteResource(Dictionary dict, String name) {

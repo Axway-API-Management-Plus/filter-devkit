@@ -2,6 +2,7 @@ package com.vordel.sdk.samples.quick;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
+import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.ext.filter.quick.QuickFilterField;
 import com.vordel.circuit.ext.filter.quick.QuickFilterType;
 import com.vordel.circuit.ext.filter.quick.QuickJavaFilterDefinition;
@@ -46,7 +47,7 @@ public class QuickFilterJavaProto extends QuickJavaFilterDefinition {
 	}
 
 	@Override
-	public boolean invokeFilter(Circuit c, Message m) throws CircuitAbortException {
+	public boolean invokeFilter(Circuit c, Message m, MessageProcessor p) throws CircuitAbortException {
 		if (hello != null) {
 			String value = hello.substitute(m);
 			
@@ -59,7 +60,7 @@ public class QuickFilterJavaProto extends QuickJavaFilterDefinition {
 			throw new CircuitAbortException("No Policy Configured");
 		}
 
-		return policy.invoke(c, m);
+		return policy.invoke(m);
 	}
 
 	@Override

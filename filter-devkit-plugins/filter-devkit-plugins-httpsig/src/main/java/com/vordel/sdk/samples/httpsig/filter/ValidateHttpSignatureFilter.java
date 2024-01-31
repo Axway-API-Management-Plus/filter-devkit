@@ -16,6 +16,7 @@ import java.util.Set;
 import com.nimbusds.jose.util.Base64URL;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
+import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.MessageProperties;
 import com.vordel.circuit.ext.filter.quick.QuickFilterField;
 import com.vordel.circuit.ext.filter.quick.QuickFilterType;
@@ -118,9 +119,9 @@ public class ValidateHttpSignatureFilter extends ValidateHttpDigestFilter {
 	}
 
 	@Override
-	public boolean invokeFilter(Circuit c, Message m) throws CircuitAbortException {
+	public boolean invokeFilter(Circuit c, Message m, MessageProcessor p) throws CircuitAbortException {
 		/* start by validating entity digest */
-		boolean result = super.invokeFilter(c, m);
+		boolean result = super.invokeFilter(c, m, p);
 
 		if (result) {
 			SignatureValue<Message> signature = null;
@@ -302,7 +303,7 @@ public class ValidateHttpSignatureFilter extends ValidateHttpDigestFilter {
 
 		m.put(attributeName, keyId);
 
-		if (!signatureCircuit.invoke(c, m)) {
+		if (!signatureCircuit.invoke(m)) {
 			Trace.error("Key Retrieval circuit failed");
 
 			return null;

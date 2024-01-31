@@ -6,12 +6,12 @@ import java.io.InputStream;
 import org.eclipse.swt.widgets.Composite;
 
 import com.vordel.circuit.ext.filter.quick.QuickFilterSupport;
-import com.vordel.client.ext.filter.VordelPageCompat;
+import com.vordel.client.ext.filter.VordelLegacyPage;
 import com.vordel.common.ResourceBase;
 import com.vordel.es.Entity;
 import com.vordel.es.EntityType;
 
-public class QuickFilterPage extends VordelPageCompat 
+public class QuickFilterPage extends VordelLegacyPage 
 {    
 	public QuickFilterPage() {
 		super("QuickFilterPage");

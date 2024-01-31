@@ -29,7 +29,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
-import com.vordel.circuit.script.context.MessageContextTracker;
 import com.vordel.circuit.script.jaxrs.ScriptContainer;
 import com.vordel.store.cert.CertStore;
 import com.vordel.trace.Trace;
@@ -76,10 +75,6 @@ public abstract class AbstractWebComponent {
 
 	protected final boolean service(ContainerRequest request, Message message, boolean reportNoMatch) throws CircuitAbortException {
 		boolean result = false;
-
-		if (MessageContextTracker.getMessageContextTracker(message) == null) {
-			throw new CircuitAbortException("no message context tracker available");
-		}
 
 		JerseyResponseWriter writer = new JerseyResponseWriter(message);
 

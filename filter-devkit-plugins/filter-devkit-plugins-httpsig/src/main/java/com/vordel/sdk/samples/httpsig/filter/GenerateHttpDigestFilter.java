@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
+import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.MessageProperties;
 import com.vordel.circuit.ext.filter.quick.QuickFilterField;
 import com.vordel.circuit.ext.filter.quick.QuickFilterType;
@@ -46,7 +47,7 @@ public class GenerateHttpDigestFilter extends QuickJavaFilterDefinition {
 	}
 
 	@Override
-	public boolean invokeFilter(Circuit c, Message m) throws CircuitAbortException {
+	public boolean invokeFilter(Circuit c, Message m, MessageProcessor p) throws CircuitAbortException {
 		List<String> resolved = new ArrayList<String>();
 		Body body = BODY_SELECTOR.substitute(m);
 

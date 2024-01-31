@@ -6,11 +6,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import com.vordel.circuit.script.bind.ExtensionScanner;
-import com.vordel.circuit.script.bind.ExtensionModule;
 import com.vordel.circuit.ext.filter.quick.QuickFilterType;
 import com.vordel.circuit.script.bind.ExtensionContext;
-import com.vordel.circuit.script.context.MessageContextTracker.MessageContextCreator;
+import com.vordel.circuit.script.bind.ExtensionModule;
+import com.vordel.circuit.script.bind.ExtensionScanner;
 import com.vordel.common.Dictionary;
 import com.vordel.config.ConfigContext;
 import com.vordel.config.LoadableModule;
@@ -27,7 +26,7 @@ public final class MessageContextModule implements LoadableModule {
 	private static final Object SYNC = new Object();
 
 	private static int load = 0;
-	
+
 	static {
 		/* register extensions global name */
 		Selector.addGlobalNamespace("extensions", getExtensionsDictionary());
@@ -58,53 +57,48 @@ public final class MessageContextModule implements LoadableModule {
 
 	@Override
 	public void load(LoadableModule l, String type) throws FatalException {
-		MessageContextCreator.load();
 	}
 
 	@Override
 	public void unload() {
-		try {
-			MessageContextCreator.unload();
-		} finally {
-			synchronized (SYNC) {
-				if (load > 0) {
-					/* just in case, handle integer overflow */
-					load -= 1;
+		synchronized (SYNC) {
+			if (load > 0) {
+				/* just in case, handle integer overflow */
+				load -= 1;
+			}
+
+			if (load == 0) {
+				Iterator<ExtensionModule> modules = LOADED_MODULES.iterator();
+				Iterator<Runnable> callbacks = UNLOAD_CALLBACKS.iterator();
+
+				LOADED_PLUGINS.clear();
+				QUICKJAVAFILTERS.clear();
+
+				while (callbacks.hasNext()) {
+					try {
+						callbacks.next().run();
+						callbacks.remove();
+					} catch (Exception e) {
+						Trace.error("got error with unload callback", e);
+					}
 				}
 
-				if (load == 0) {
-					Iterator<ExtensionModule> modules = LOADED_MODULES.iterator();
-					Iterator<Runnable> callbacks = UNLOAD_CALLBACKS.iterator();
+				while (modules.hasNext()) {
+					try {
+						ExtensionModule module = modules.next();
 
-					LOADED_PLUGINS.clear();
-					QUICKJAVAFILTERS.clear();
+						modules.remove();
+						module.detachModule();
 
-					while (callbacks.hasNext()) {
-						try {
-							callbacks.next().run();
-							callbacks.remove();
-						} catch (Exception e) {
-							Trace.error("got error with unload callback", e);
-						}
-					}
-
-					while (modules.hasNext()) {
-						try {
-							ExtensionModule module = modules.next();
-
-							modules.remove();
-							module.detachModule();
-
-							Trace.info(String.format("unloaded '%s'", module.getClass().getName()));
-						} catch (Exception e) {
-							Trace.error("got error calling detach", e);
-						}
+						Trace.info(String.format("unloaded '%s'", module.getClass().getName()));
+					} catch (Exception e) {
+						Trace.error("got error calling detach", e);
 					}
 				}
 			}
 		}
 	}
-	
+
 	public static void registerUndeployCallback(Runnable callback) {
 		if (callback != null) {
 			synchronized (SYNC) {
@@ -148,7 +142,7 @@ public final class MessageContextModule implements LoadableModule {
 			synchronized (SYNC) {
 				QuickFilterType filterType = clazz.getAnnotation(QuickFilterType.class);
 				String name = filterType == null ? null : filterType.name();
-				
+
 				if ((name != null) && (!name.isEmpty())) {
 					Trace.info(String.format("registered class '%s' for EntityType '%s'", clazz.getName(), name));
 
@@ -159,7 +153,7 @@ public final class MessageContextModule implements LoadableModule {
 			}
 		}
 	}
-	
+
 	public static Class<?> getQuickJavaFilter(String name) {
 		synchronized (SYNC) {
 			return QUICKJAVAFILTERS.get(name);
@@ -179,7 +173,7 @@ public final class MessageContextModule implements LoadableModule {
 			return LOADED_PLUGINS.get(name);
 		}
 	}
-	
+
 	private static Dictionary getExtensionsDictionary() {
 		return new Dictionary() {
 			@Override

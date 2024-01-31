@@ -73,7 +73,7 @@ public abstract class OAuthServiceEndpoint {
 
 	public static final boolean invokePolicy(Message msg, Circuit circuit, PolicyResource resource) throws CircuitAbortException {
 		try {
-			return resource.invoke(circuit, msg);
+			return resource.invoke(msg);
 		} finally {
 			Object exception = msg.get("oauth.exception");
 

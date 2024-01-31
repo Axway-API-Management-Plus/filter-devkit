@@ -19,7 +19,6 @@ import org.glassfish.jersey.server.spi.Container;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProperties;
 import com.vordel.circuit.script.bind.PolicyHelper;
-import com.vordel.circuit.script.context.MessageContextTracker;
 import com.vordel.circuit.script.context.resources.SelectorResource;
 import com.vordel.circuit.script.jaxrs.MessagePropertiesDelegate;
 import com.vordel.el.Selector;
@@ -179,22 +178,8 @@ public abstract class AbstractContainer<T extends AbstractWebComponent> implemen
 
 		@Override
 		public Principal getUserPrincipal() {
-			MessageContextTracker tracker = MessageContextTracker.getMessageContextTracker(msg);
-			MessagePrincipal principal = null;
-
-			if (tracker != null) {
-				String subject = tracker.getAuthenticationSubject();
-
-				if (subject != null) {
-					principal = new MessagePrincipal(subject);
-
-					if (principal.equals(this.principal)) {
-						principal = this.principal;
-					}
-				}
-			}
-
-			return this.principal = principal;
+			// XXX find a new way
+			return null;
 		}
 
 		@Override
@@ -204,16 +189,14 @@ public abstract class AbstractContainer<T extends AbstractWebComponent> implemen
 
 		@Override
 		public boolean isSecure() {
-			MessageContextTracker tracker = MessageContextTracker.getMessageContextTracker(msg);
-
-			return tracker == null ? MessageContextTracker.isSecure(msg) : tracker.isSecure();
+			// XXX find a new way
+			return false;
 		}
 
 		@Override
 		public String getAuthenticationScheme() {
-			MessageContextTracker tracker = MessageContextTracker.getMessageContextTracker(msg);
-
-			return tracker == null ? null : tracker.getAuthenticationScheme();
+			// XXX find a new way
+			return null;
 		}
 	}
 }

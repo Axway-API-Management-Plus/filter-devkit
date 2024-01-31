@@ -17,7 +17,6 @@ import com.vordel.circuit.oauth.common.OAuthScopeUtils.ScopesMustMatchSelection;
 import com.vordel.circuit.oauth.kps.ApplicationDetails;
 import com.vordel.circuit.oauth.store.AuthorizationCodeStore;
 import com.vordel.circuit.oauth.store.TokenStore;
-import com.vordel.circuit.script.context.MessageContextTracker;
 import com.vordel.circuit.script.context.resources.PolicyResource;
 import com.vordel.circuit.script.context.resources.SelectorResource;
 import com.vordel.circuit.script.jaxrs.ScriptWebComponent;
@@ -468,10 +467,10 @@ public class AuthorizeServiceFilter extends QuickJavaFilterDefinition {
 	}
 
 	@Override
-	public boolean invokeFilter(Circuit c, Message m) throws CircuitAbortException {
+	public boolean invokeFilter(Circuit c, Message m, MessageProcessor p) throws CircuitAbortException {
 		try {
 			/* set message service context */
-			InvocationEngine.invokeFilter(c, serviceProcessor, m, MessageContextTracker.getMessageContextTracker(m).getMessageProcessor(), null);
+			InvocationEngine.invokeFilter(c, serviceProcessor, m, p, null);
 
 			return service.service(m);
 		} finally {

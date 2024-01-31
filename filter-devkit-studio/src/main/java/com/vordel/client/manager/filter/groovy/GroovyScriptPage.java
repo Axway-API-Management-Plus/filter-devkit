@@ -2,12 +2,11 @@ package com.vordel.client.manager.filter.groovy;
 
 import java.io.InputStream;
 
-import org.apache.commons.io.IOUtils;
 import org.eclipse.swt.widgets.Composite;
 
-import com.vordel.client.ext.filter.VordelPageCompat;
+import com.vordel.client.ext.filter.VordelLegacyPage;
 
-public class GroovyScriptPage extends VordelPageCompat {
+public class GroovyScriptPage extends VordelLegacyPage {
 	public GroovyScriptPage() {
 		super("GroovyScriptPage");
 
@@ -25,7 +24,7 @@ public class GroovyScriptPage extends VordelPageCompat {
 
 			setControl(container);
 		} finally {
-			IOUtils.closeQuietly(is);
+			closeQuietly(is);
 		}
 	}
 

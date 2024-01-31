@@ -10,6 +10,7 @@ import java.util.Set;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
+import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.ext.filter.quick.QuickFilterField;
 import com.vordel.circuit.ext.filter.quick.QuickFilterType;
 import com.vordel.circuit.ext.filter.quick.QuickJavaFilterDefinition;
@@ -50,7 +51,7 @@ public class ValidateHttpDigestFilter extends QuickJavaFilterDefinition {
 	}
 
 	@Override
-	public boolean invokeFilter(Circuit c, Message m) throws CircuitAbortException {
+	public boolean invokeFilter(Circuit c, Message m, MessageProcessor p) throws CircuitAbortException {
 		/*
 		 * start by validating the Content-MD5 header, the 'validateContentMD5'
 		 * indicated if this header is mandatory. Any invalid hash in headers (even if

@@ -2,12 +2,11 @@ package com.vordel.client.manager.filter.assertion;
 
 import java.io.InputStream;
 
-import org.apache.commons.io.IOUtils;
 import org.eclipse.swt.widgets.Composite;
 
-import com.vordel.client.ext.filter.VordelPageCompat;
+import com.vordel.client.ext.filter.VordelLegacyPage;
 
-public class AssertionPage extends VordelPageCompat {
+public class AssertionPage extends VordelLegacyPage {
 	public AssertionPage() {
 		super("AssertionPage");
 
@@ -25,7 +24,7 @@ public class AssertionPage extends VordelPageCompat {
 
 			setControl(container);
 		} finally {
-			IOUtils.closeQuietly(is);
+			closeQuietly(is);
 		}
 	}
 

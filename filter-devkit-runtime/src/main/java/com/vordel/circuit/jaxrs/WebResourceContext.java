@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.CompletionCallback;
 import javax.ws.rs.container.TimeoutHandler;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.EntityTag;
@@ -34,7 +33,6 @@ import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Providers;
 
 import com.vordel.circuit.Message;
-import com.vordel.circuit.script.context.MessageContextTracker;
 
 public final class WebResourceContext implements UriInfo, HttpHeaders, Request, SecurityContext, Providers, AsyncResponse {
 	private final int id;
@@ -60,20 +58,6 @@ public final class WebResourceContext implements UriInfo, HttpHeaders, Request, 
 
 		synchronized (SYNC) {
 			this.id = count++;
-		}
-
-		final MessageContextTracker tracker = MessageContextTracker.getMessageContextTracker(message);
-
-		if (tracker != null) {
-			CompletionCallback callback = new CompletionCallback() {
-				@Override
-				public void onComplete(Throwable throwable) {
-					tracker.removeWebResourceContext(WebResourceContext.this);
-				}
-			};
-
-			tracker.pushWebResourceContext(this);
-			asyncResponse.register(callback);
 		}
 	}
 

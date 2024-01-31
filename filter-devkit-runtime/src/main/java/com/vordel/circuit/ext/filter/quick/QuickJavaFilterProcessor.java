@@ -36,7 +36,6 @@ public class QuickJavaFilterProcessor extends MessageProcessor {
 		if (definitionClazz == null) {
 			throw new EntityStoreException(String.format("Missing class for filter type '%s'", definitionName));
 		}
-		
 
 		try {
 			Set<String> duplicates = new HashSet<String>();
@@ -157,6 +156,6 @@ public class QuickJavaFilterProcessor extends MessageProcessor {
 			throw new CircuitAbortException("No underlying implementation");
 		}
 
-		return instance.invokeFilter(c, m);
+		return instance.invokeFilter(c, m, this);
 	}
 }

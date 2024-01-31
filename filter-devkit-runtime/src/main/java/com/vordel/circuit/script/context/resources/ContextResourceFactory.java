@@ -16,9 +16,6 @@ import com.vordel.es.ESPK;
 import com.vordel.es.Entity;
 import com.vordel.es.EntityStore;
 import com.vordel.es.EntityStoreException;
-import com.vordel.kps.ObjectExists;
-import com.vordel.kps.ObjectNotFound;
-import com.vordel.kps.Store;
 import com.vordel.trace.Trace;
 
 public class ContextResourceFactory {
@@ -93,33 +90,9 @@ public class ContextResourceFactory {
 					if ("FilterCircuit".equals(referenceType)) {
 						resource = new PolicyResource(ctx, reference);
 					} else if ("Cache".equals(referenceType) || "DistributedCache".equals(referenceType)) {
-						/* try to retrieve a registered ttl for this cache */
-						String expression = expressions.get(String.format("%s.ttl", resourceName));
-
 						resource = new EHCacheResource(ctx, reference);
-
-						if (expression != null) {
-							/* if we got one, return a SubstitutableMessageResource instead */
-							resource = new DelayedCacheResource(createSelectorResource(expression, Integer.class), (CacheResource) resource);
-						}
 					} else if ("KPSReadWriteStore".equals(referenceType) || "KPSDatabaseReadStore".equals(referenceType) || "KPSCertStore".equals(referenceType)) {
-						/* try to retrieve a registered ttl for this resource */
-						String expression = expressions.get(String.format("%s.ttl", resourceName));
-
 						resource = new KPSStoreResource(ctx, reference);
-
-						if (expression != null) {
-							/* if we got one, return a SubstitutableMessageResource instead */
-							resource = new DelayedKPSResource(createSelectorResource(expression, Integer.class), (KPSResource) resource);
-						}
-					} else if ("AuthzCodePersist".equals(referenceType)) {
-						resource = new OAuthAuthzCodeStoreResource(ctx, reference);
-					} else if ("AccessTokenPersist".equals(referenceType)) {
-						resource = new OAuthAccessTokenStoreResource(ctx, reference);
-					} else if ("LdapDirectory".equals(referenceType)) {
-						resource = new LDAPResource(ctx, reference);
-					} else if ("DbConnection".equals(referenceType)) {
-						resource = new DatabaseResource(ctx, reference);
 					}
 				}
 
@@ -166,64 +139,5 @@ public class ContextResourceFactory {
 		}
 
 		return released;
-	}
-
-	private static class DelayedCacheResource implements DelayedResource<CacheResource> {
-		private final SelectorResource<Integer> selector;
-		private final CacheResource cache;
-
-		public DelayedCacheResource(SelectorResource<Integer> selector, CacheResource cache) {
-			this.selector = selector;
-			this.cache = cache;
-		}
-
-		@Override
-		public CacheResource substitute(Dictionary dict) {
-			Integer ttl = selector.substitute(dict);
-
-			return ttl == null ? cache : CacheResource.wrap(cache, ttl.intValue());
-		}
-	}
-
-	private static class DelayedKPSResource implements DelayedResource<KPSResource> {
-		private final SelectorResource<Integer> selector;
-		private final KPSResource kps;
-
-		public DelayedKPSResource(SelectorResource<Integer> selector, KPSResource kps) {
-			this.selector = selector;
-			this.kps = kps;
-		}
-
-		@Override
-		public KPSResource substitute(Dictionary dict) {
-			Integer ttl = selector.substitute(dict);
-
-			/*
-			 * kps resources registered with a ttl will create and update entries with this
-			 * ttl. also, returned cache wrapping resources will enforce this ttl.
-			 */
-
-			return ttl == null ? kps : new KPSResource() {
-				@Override
-				public Store getStore() {
-					return kps.getStore();
-				}
-
-				@Override
-				public Map<String, Object> createEntry(Map<String, Object> entry) throws ObjectExists {
-					return createEntry(entry, ttl);
-				}
-
-				@Override
-				public Map<String, Object> updateEntry(Map<String, Object> entry) throws ObjectNotFound, ObjectExists {
-					return updateEntry(entry, ttl);
-				}
-
-				@Override
-				public Map<Object, Map<String, Object>> asMap() {
-					return new KPSMap(getStore(), ttl);
-				}
-			};
-		}
 	}
 }

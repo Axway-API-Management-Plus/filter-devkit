@@ -14,6 +14,7 @@ import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
+import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.MessageProperties;
 import com.vordel.circuit.aws.AWSFactory;
 import com.vordel.circuit.ext.filter.quick.QuickFilterField;
@@ -244,7 +245,7 @@ public class AWSLambdaQuickFilter extends QuickJavaFilterDefinition {
 	}
 
 	@Override
-	public boolean invokeFilter(Circuit c, Message m) throws CircuitAbortException {
+	public boolean invokeFilter(Circuit c, Message m, MessageProcessor p) throws CircuitAbortException {
 		String vLambdaFunctionName = awsFunctionNameSelector.substitute(m);
 		boolean response = false;
 

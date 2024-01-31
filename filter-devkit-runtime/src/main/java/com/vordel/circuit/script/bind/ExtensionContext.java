@@ -14,16 +14,13 @@ import java.util.Set;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
-import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.script.ScriptHelper;
-import com.vordel.circuit.script.context.MessageContextTracker;
 import com.vordel.circuit.script.context.resources.AbstractContextResourceProvider;
 import com.vordel.circuit.script.context.resources.ContextResource;
 import com.vordel.circuit.script.context.resources.InvocableResource;
 import com.vordel.circuit.script.context.resources.SelectorResource;
 import com.vordel.circuit.script.context.resources.SubstitutableResource;
 import com.vordel.common.Dictionary;
-import com.vordel.config.Circuit;
 import com.vordel.el.Selector;
 import com.vordel.trace.Trace;
 
@@ -209,8 +206,8 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 
 		return new InvocableResource() {
 			@Override
-			public boolean invoke(Circuit c, Message m) throws CircuitAbortException {
-				MethodDictionary dictionary = new MethodDictionary(c, m, m);
+			public boolean invoke(Message m) throws CircuitAbortException {
+				MethodDictionary dictionary = new MethodDictionary(m, m);
 				boolean result = false;
 
 				try {
@@ -271,7 +268,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		return new SubstitutableResource<T>() {
 			@Override
 			public T substitute(Dictionary dict) {
-				MethodDictionary dictionary = new MethodDictionary(null, dict instanceof Message ? (Message) dict : null, dict);
+				MethodDictionary dictionary = new MethodDictionary(dict instanceof Message ? (Message) dict : null, dict);
 				T result = null;
 
 				try {
@@ -392,14 +389,8 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 			} else {
 				parameter = new SelectorParameter<T>(expression, type);
 			}
-		} else if (type.isAssignableFrom(MessageContextTracker.class)) {
-			parameter = new MessageContextTrackerParameter();
-		} else if (type.isAssignableFrom(MessageProcessor.class)) {
-			parameter = new MessageProcessorParameter();
 		} else if (type.isAssignableFrom(Message.class)) {
 			parameter = new MessageParameter();
-		} else if (type.isAssignableFrom(Circuit.class)) {
-			parameter = new CircuitParameter();
 		} else if (type.isAssignableFrom(Dictionary.class)) {
 			parameter = new DictionaryParameter();
 		} else {
@@ -440,19 +431,19 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	}
 
 	@Override
-	public final boolean invoke(Circuit c, Message m, String name) throws CircuitAbortException {
-		ContextResource resource = getContextResource(m, name);
+	public final boolean invoke(Message m, String name) throws CircuitAbortException {
+		ContextResource resource = getContextResource(name);
 
 		if (!(resource instanceof InvocableResource)) {
 			throw new CircuitAbortException(String.format("resource '%s' is not invocable", name));
 		}
 
-		return ((InvocableResource) resource).invoke(c, m);
+		return ((InvocableResource) resource).invoke(m);
 	}
 
 	@Override
 	public final Object substitute(Dictionary dict, String name) {
-		ContextResource resource = getContextResource(dict, name);
+		ContextResource resource = getContextResource(name);
 		Object result = null;
 
 		if (resource instanceof SubstitutableResource) {
@@ -474,10 +465,9 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	private static class MethodDictionary implements Dictionary {
 		private final Map<String, Object> properties;
 
-		private MethodDictionary(Circuit c, Message m, Dictionary dict) {
+		private MethodDictionary(Message m, Dictionary dict) {
 			Map<String, Object> properties = new HashMap<String, Object>();
 
-			properties.put("circuit", c);
 			properties.put("message", m);
 			properties.put("dictionary", dict);
 
@@ -486,28 +476,6 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 
 		public Message getMessage() {
 			return (Message) get("message");
-		}
-
-		public MessageContextTracker getMessageContextTracker() {
-			return MessageContextTracker.getMessageContextTracker(getMessage());
-		}
-
-		public MessageProcessor getMessageProcessor() {
-			MessageContextTracker tracker = getMessageContextTracker();
-
-			return tracker == null ? null : tracker.getMessageProcessor();
-		}
-
-		public Circuit getCircuit() {
-			Circuit c = (Circuit) get("circuit");
-
-			if (c == null) {
-				MessageContextTracker tracker = getMessageContextTracker();
-
-				c = tracker == null ? null : tracker.getCircuit();
-			}
-
-			return c;
 		}
 
 		public Dictionary getDictionary() {
@@ -545,30 +513,6 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		}
 	}
 
-	private static class MessageContextTrackerParameter extends MethodParameter<MessageContextTracker> {
-		@Override
-		protected MessageContextTracker resolve(MethodDictionary dictionary) {
-			return dictionary.getMessageContextTracker();
-		}
-
-		@Override
-		protected String debug(MessageContextTracker tracker) {
-			return "MessageContextTracker";
-		}
-	}
-
-	private static class MessageProcessorParameter extends MethodParameter<MessageProcessor> {
-		@Override
-		protected MessageProcessor resolve(MethodDictionary dictionary) {
-			return dictionary.getMessageProcessor();
-		}
-
-		@Override
-		protected String debug(MessageProcessor processor) {
-			return "MessageProcessor";
-		}
-	}
-
 	private static class MessageParameter extends MethodParameter<Message> {
 		@Override
 		protected Message resolve(MethodDictionary dictionary) {
@@ -578,18 +522,6 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		@Override
 		protected String debug(Message message) {
 			return "Message";
-		}
-	}
-
-	private static class CircuitParameter extends MethodParameter<Circuit> {
-		@Override
-		protected Circuit resolve(MethodDictionary dictionary) {
-			return dictionary.getCircuit();
-		}
-
-		@Override
-		protected String debug(Circuit circuit) {
-			return "Circuit";
 		}
 	}
 
