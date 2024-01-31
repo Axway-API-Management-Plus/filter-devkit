@@ -1,8 +1,8 @@
 .DS_Store
+/.gradle
+/.mvn
 /.project
 /.settings
+/bin
+/build
 /.classpath
-/target/
-/.pydevproject
-/src/main/quickfilters/*/build
-

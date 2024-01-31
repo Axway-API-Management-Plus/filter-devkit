@@ -8,6 +8,7 @@ import com.vordel.circuit.DefaultFilter;
 import com.vordel.circuit.FilterContainerImpl;
 import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.MessageProperties;
+import com.vordel.circuit.VordelLegacyFilter;
 import com.vordel.circuit.script.context.resources.SelectorResource;
 import com.vordel.common.Dictionary;
 import com.vordel.config.ConfigContext;
@@ -18,7 +19,7 @@ import com.vordel.es.EntityStore;
 import com.vordel.es.EntityStoreException;
 import com.vordel.es.EntityType;
 
-public class GroovyScriptFilter extends DefaultFilter {
+public class GroovyScriptFilter extends DefaultFilter implements VordelLegacyFilter{
 	private Selector<String> exportSelector = null;
 
 	@Override

@@ -6,11 +6,11 @@ import java.util.Vector;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 
-import com.vordel.client.ext.filter.DefaultGUIFilterCompat;
+import com.vordel.client.ext.filter.VordelLegacyGUIFilter;
 import com.vordel.client.manager.Images;
 import com.vordel.client.manager.wizard.VordelPage;
 
-public class AssertionGUIFilter extends DefaultGUIFilterCompat {
+public class AssertionGUIFilter extends VordelLegacyGUIFilter {
 	@Override
 	public String getSmallIconId() {
 		return "has_cert_expired";

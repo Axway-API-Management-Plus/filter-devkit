@@ -1,0 +1,15 @@
+apply plugin: 'java'
+
+java {
+    sourceCompatibility = 'VERSION_1_8'
+    targetCompatibility = 'VERSION_1_8'
+}
+
+apply from: rootProject.file("apigateway.gradle")
+
+dependencies {
+    implementation('com.amazonaws:aws-java-sdk-lambda:1.11.538')
+    implementation('com.amazonaws:aws-java-sdk-sts:1.11.538')
+
+    implementation project(':filter-devkit-runtime')
+}

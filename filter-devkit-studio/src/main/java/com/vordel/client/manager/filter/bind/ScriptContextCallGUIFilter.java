@@ -10,7 +10,7 @@ import org.eclipse.swt.graphics.Image;
 
 import com.vordel.circuit.script.bind.InitializerShortcutFilter;
 import com.vordel.client.circuit.model.Circuit;
-import com.vordel.client.ext.filter.DefaultGUIFilterCompat;
+import com.vordel.client.ext.filter.VordelLegacyGUIFilter;
 import com.vordel.client.manager.Images;
 import com.vordel.client.manager.Manager;
 import com.vordel.client.manager.wizard.VordelPage;
@@ -22,7 +22,7 @@ import com.vordel.es.EntityStoreException;
 import com.vordel.es.EntityType;
 import com.vordel.trace.Trace;
 
-public class ScriptContextCallGUIFilter extends DefaultGUIFilterCompat {
+public class ScriptContextCallGUIFilter extends VordelLegacyGUIFilter {
 	private Circuit remoteCircuit = null;
 
 	@Override

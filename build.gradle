@@ -1,0 +1,6 @@
+subprojects {
+    apply plugin: 'eclipse'
+
+    group = 'com.axway.apigw'
+    version = "1.0-SNAPSHOT"
+}

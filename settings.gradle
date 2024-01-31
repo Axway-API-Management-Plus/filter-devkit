@@ -1,0 +1,15 @@
+rootProject.name = 'filter-devkit'
+//include 'filter-devkit-runtime','filter-devkit-samples','filter-devkit-studio'
+include 'filter-devkit-runtime'
+include 'filter-devkit-studio'
+include 'filter-devkit-dynamic'
+include 'filter-devkit-samples'
+include 'filter-devkit-plugins-httpsig'
+include 'filter-devkit-plugins-lambda'
+include 'filter-devkit-plugins-oauth'
+//include 'filter-devkit-lambda'
+//include 'filter-devkit-oauth'
+
+project(':filter-devkit-plugins-httpsig').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-httpsig')
+project(':filter-devkit-plugins-lambda').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-lambda')
+project(':filter-devkit-plugins-oauth').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-oauth')

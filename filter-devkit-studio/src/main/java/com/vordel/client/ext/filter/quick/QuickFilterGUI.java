@@ -1,18 +1,19 @@
 package com.vordel.client.ext.filter.quick;
 
+import java.util.List;
 import java.util.Vector;
 
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 
 import com.vordel.circuit.ext.filter.quick.QuickFilterSupport;
-import com.vordel.client.ext.filter.DefaultGUIFilterCompat;
+import com.vordel.client.ext.filter.VordelLegacyGUIFilter;
 import com.vordel.client.manager.Images;
 import com.vordel.client.manager.wizard.VordelPage;
 import com.vordel.es.Entity;
 import com.vordel.es.EntityType;
 
-public class QuickFilterGUI extends DefaultGUIFilterCompat {
+public class QuickFilterGUI extends VordelLegacyGUIFilter {
 	private static final String DEFAULT_NAME = "Quick Filter";
 
 	@Override
@@ -69,7 +70,8 @@ public class QuickFilterGUI extends DefaultGUIFilterCompat {
 		return typeName;
 	}
 
-	public Vector<VordelPage> getPropertyPages() {
+	@Override
+	public List<VordelPage> getPropertyPages() {
 		Vector<VordelPage> pages = new Vector<VordelPage>();
 
 		pages.add(new QuickFilterPage());

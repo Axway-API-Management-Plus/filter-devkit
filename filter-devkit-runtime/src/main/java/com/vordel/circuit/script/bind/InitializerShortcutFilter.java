@@ -11,6 +11,7 @@ import com.vordel.circuit.DelegatingFilter;
 import com.vordel.circuit.FilterContainerImpl;
 import com.vordel.circuit.GlobalProperties;
 import com.vordel.circuit.MessageProcessor;
+import com.vordel.circuit.VordelLegacyFilter;
 import com.vordel.circuit.script.context.resources.SelectorResource;
 import com.vordel.config.ConfigContext;
 import com.vordel.el.Selector;
@@ -21,7 +22,7 @@ import com.vordel.es.EntityStoreException;
 import com.vordel.es.EntityType;
 import com.vordel.trace.Trace;
 
-public class InitializerShortcutFilter extends DefaultFilter implements DelegatingFilter {
+public class InitializerShortcutFilter extends DefaultFilter implements DelegatingFilter, VordelLegacyFilter {
 	private Map<String, Selector<?>> outputs = null;
 	private ESPK initializerPK = null;
 

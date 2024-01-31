@@ -1,0 +1,16 @@
+apply plugin: 'java'
+
+java {
+    sourceCompatibility = 'VERSION_1_8'
+    targetCompatibility = 'VERSION_1_8'
+}
+
+apply from: rootProject.file('policystudio.gradle')
+
+dependencies {
+    compileOnly fileTree("${studio_vdistdir}").matching {
+        include 'plugins/com.vordel.filter.jwt.*.jar'
+        include 'plugins/com.vordel.filter.script.*.jar'
+    }
+    implementation project(':filter-devkit-runtime')
+}

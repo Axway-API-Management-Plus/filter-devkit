@@ -8,8 +8,8 @@
 			<panel indent="30" columns="2" span="2" fill="true" margin="1">
 				<ReferenceSelector
 					field="configurationReference"
-					selectableTypes="FilterCircuit,Cache,DistributedCache,KPSReadWriteStore,KPSDatabaseReadStore,KPSCertStore,AuthzCodePersist,AccessTokenPersist,DbConnection"
-					searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer,CacheManager,KPSRoot,KPSPackage,KPSStoreGroup,OAuth2StoresGroup,AuthzCodeStoreGroup,AccessTokenStoreGroup,DbConnectionGroup"
+					selectableTypes="FilterCircuit,Cache,DistributedCache,KPSReadWriteStore,KPSDatabaseReadStore,KPSCertStore"
+					searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer,CacheManager,KPSRoot,KPSPackage,KPSStoreGroup"
 					label="RESOURCE_REFERENCELABEL"
 					title="RESOURCE_REFERENCETITLE" />
 			</panel>

@@ -1,0 +1,14 @@
+<entityStoreData>
+	<entityType extends="Filter" name="GroovyTrueTutorial">
+<constant name="class" type="string" value="com.vordel.circuit.ext.filter.quick.QuickScriptFilter"/>
+<constant name="displayName" type="string" value="Tutorial Groovy True Filter"/>
+<constant name="description" type="string" value="A Groovy script which always returns true"/>
+<constant name="engineName" type="string" value="groovy"/>
+<constant name="icon" type="string" value="filter_small"/>
+<constant name="palette" type="string" value="Utility"/>
+<constant name="resources" type="string" value="#Fri Dec 06 18:10:41 CET 2019&#10;FILTER_DESCRIPTION=A Groovy script which always returns true&#10;FILTER_DISPLAYNAME=Tutorial Groovy True Filter&#10;"/>
+<constant name="script" type="string" value="import com.vordel.circuit.CircuitAbortException&#10;import com.vordel.circuit.Message&#10;import com.vordel.config.Circuit&#10;import com.vordel.config.ConfigContext&#10;import com.vordel.es.Entity&#10;import com.vordel.es.EntityStoreException&#10;import com.vordel.trace.Trace&#10;&#10;void attach(ConfigContext ctx, Entity entity) throws EntityStoreException {&#10;&#9;Trace.info(&quot;Groovy True Filter attached&quot;);&#10;}&#10;&#10;boolean invoke(Circuit c, Message m) throws CircuitAbortException {&#10;&#9;Trace.info(&quot;Groovy True Filter called&quot;);&#10;&#9;return true;&#10;}&#10;&#10;void detach() {&#10;&#9;Trace.info(&quot;Groovy True Filter detached&quot;);&#10;}&#10;"/>
+<constant name="ui" type="string" value="&lt;ui&gt;&#10;&#9;&lt;panel columns=&quot;2&quot;&gt;&#10;&#9;&#9;&lt;panel columns=&quot;2&quot; fill=&quot;false&quot;&gt;&#10;&#9;&#9;&#9;&lt;!-- filter name attribute --&gt;&#10;&#9;&#9;&#9;&lt;NameAttribute/&gt;&#10;&#9;&#9;&lt;/panel&gt;&#10;&#9;&lt;/panel&gt;&#10;&lt;/ui&gt;"/>
+		<constant name="_version" type="integer" value="1"/>
+	</entityType>
+</entityStoreData>

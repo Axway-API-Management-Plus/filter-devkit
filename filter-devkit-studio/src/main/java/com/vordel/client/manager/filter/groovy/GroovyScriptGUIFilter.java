@@ -6,7 +6,7 @@ import java.util.Vector;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 
-import com.vordel.client.ext.filter.DefaultGUIFilterCompat;
+import com.vordel.client.ext.filter.VordelLegacyGUIFilter;
 import com.vordel.client.manager.Images;
 import com.vordel.client.manager.Manager;
 import com.vordel.client.manager.wizard.VordelPage;
@@ -15,7 +15,7 @@ import com.vordel.es.Entity;
 import com.vordel.es.EntityStore;
 import com.vordel.es.EntityType;
 
-public class GroovyScriptGUIFilter extends DefaultGUIFilterCompat {
+public class GroovyScriptGUIFilter extends VordelLegacyGUIFilter {
 	@Override
 	public String getSmallIconId() {
 		return "filter_small";
