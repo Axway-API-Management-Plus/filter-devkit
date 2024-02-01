@@ -39,28 +39,67 @@ import com.vordel.trace.Trace;
 import groovy.lang.Script;
 
 public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
+	/**
+	 * Resources retrieved from configured UI
+	 */
 	private Map<String, ContextResource> resources = null;
 
+	/**
+	 * Script execution context
+	 */
 	private ScriptEngine engine = null;
 
+	/**
+	 * this boolean indicated if the filter is attached (configuration functions
+	 * throws exceptions if true)
+	 */
 	private boolean attached = false;
+	/**
+	 * if true, calls invoke(circuit, message) instead of invoke(message)
+	 */
 	private boolean extendedInvoke = false;
+	/**
+	 * unwrap CircuitAbortExceptions
+	 */
 	private boolean unwrapCircuitAbortException = false;
 
+	/**
+	 * if not null, the service will replace the invoke() script call
+	 */
 	private ScriptWebComponent jaxrsService = null;
+	/**
+	 * if the JAXRS service does not match any of its configured resources, return
+	 * false instead of creating a 404 response (with the filter returning success)
+	 */
 	private boolean jaxrsReportNoMatch = false;
 
 	private ExtensionContext exports = null;
 
+	/**
+	 * Instance of reflected groovy script
+	 */
 	private Object groovyInstance = null;
+	/**
+	 * Detach method of groovy script (if compatible with argument injection)
+	 */
 	private Method groovyDetach = null;
+	/**
+	 * Invoke method of groovy script (if compatible with argument injection)
+	 */
 	private Method groovyInvoke = null;
 
+	/**
+	 * runtime object used for closures exported to script
+	 */
 	private final AdvancedScriptRuntime runtime = new ExportedRuntime();
+	/**
+	 * exportable resource provider
+	 */
 	private final ContextResourceProvider context = new ExportedResources();
 
 	@Override
 	protected String substituteScript(String script) {
+		/* apply the same behavior that we have in the default Scripting Filter */
 		Selector<String> wild = new Selector<String>(script, String.class);
 
 		return wild.substitute(Dictionary.empty);
@@ -78,20 +117,19 @@ public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	@Override
 	public boolean invoke(Circuit c, Message m) throws CircuitAbortException {
 		boolean result = false;
-	
+
 		if (jaxrsService != null) {
-	
 			if (jaxrsReportNoMatch) {
 				result = jaxrsService.filter(m);
 			} else {
 				result = jaxrsService.service(m);
 			}
-	
+
 			return result;
 		} else {
 			result = super.invoke(c, m);
 		}
-	
+
 		return result;
 	}
 
@@ -129,7 +167,7 @@ public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		EntityType resourcesType = es.getTypeForName("ScriptResource");
 		Collection<ESPK> resourceList = es.listChildren(entity.getPK(), resourcesType);
 		ContextResourceFactory factory = ContextResourceFactory.getInstance();
-	
+
 		/* create resources */
 		factory.createResources(ctx, getFilter(), resources = new HashMap<String, ContextResource>(), resourceList);
 	}
@@ -200,13 +238,13 @@ public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	private static Method getGroovyMethod(Script script, String name) {
 		Class<? extends Script> clazz = script.getClass();
 		List<Method> methods = new ArrayList<Method>();
-	
+
 		for (Method m : clazz.getMethods()) {
 			if (m.getName().equals(name)) {
 				methods.add(m);
 			}
 		}
-	
+
 		switch (methods.size()) {
 		case 0:
 			Trace.info(String.format("No %s method defined on the script", name));
@@ -216,7 +254,7 @@ public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		default:
 			throw new IllegalStateException(String.format("only one %s method is allowed", name));
 		}
-	
+
 		return null;
 	}
 
@@ -248,21 +286,21 @@ public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	private Object[] getGroovyDetachArguments(Method method) {
 		Class<?>[] types = method.getParameterTypes();
 		Object[] args = new Object[types.length];
-	
+
 		for (int index = 0; index < types.length; index++) {
 			Class<?> type = types[index];
-	
+
 			if (type.isAssignableFrom(ContextResourceProvider.class)) {
 				args[index] = context;
 			} else if (type.isAssignableFrom(MessageProcessor.class)) {
 				args[index] = this;
 			} else {
 				Trace.error("Unable to resolve arguments for detach method");
-	
+
 				return null;
 			}
 		}
-	
+
 		return args;
 	}
 

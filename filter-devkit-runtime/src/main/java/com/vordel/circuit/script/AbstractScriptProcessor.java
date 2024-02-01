@@ -108,15 +108,7 @@ public class AbstractScriptProcessor extends MessageProcessor {
 
 	@Override
 	public void filterDetached() {
-		try {
-			/* try to invoke the detach function */
-			invokeFunction(engine, DETACH_FUNCTION_NAME);
-		} catch (ScriptException ex) {
-			Trace.error("There was a problem unloading the script: " + ex.getMessage());
-			Trace.debug(ex);
-		} catch (NoSuchMethodException ex) {
-			Trace.error(String.format("can't invoke the script function '%s'", DETACH_FUNCTION_NAME), ex);
-		}
+		detachScript();
 	}
 
 	private static final ScriptEngine getScriptEngine(String engineName) throws ScriptException {
