@@ -1,19 +1,19 @@
 package com.vordel.circuit.ext.filter.quick;
 
-import com.vordel.circuit.script.ExtendedScriptFilterProcessor;
+import com.vordel.circuit.script.AbstractScriptProcessor;
 import com.vordel.es.Entity;
 import com.vordel.es.EntityType;
 
-public class QuickScriptFilterProcessor extends ExtendedScriptFilterProcessor {
+public class QuickScriptFilterProcessor extends AbstractScriptProcessor {
 	@Override
-	public String getEngineName(Entity entity) {
+	protected String getEngineName(Entity entity) {
 		EntityType type = entity.getType();
 
 		return QuickFilterSupport.getConstantStringValue(type, QuickFilterSupport.QUICKFILTER_ENGINENAME);
 	}
 
 	@Override
-	public String getEntityScript(Entity entity) {
+	protected String getEntityScript(Entity entity) {
 		EntityType type = entity.getType();
 
 		return QuickFilterSupport.getConstantStringValue(type, QuickFilterSupport.QUICKFILTER_SCRIPT);

@@ -206,7 +206,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 
 		return new InvocableResource() {
 			@Override
-			public boolean invoke(Message m) throws CircuitAbortException {
+			public Boolean invoke(Message m) throws CircuitAbortException {
 				MethodDictionary dictionary = new MethodDictionary(m, m);
 				boolean result = false;
 
@@ -428,31 +428,6 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	@Override
 	public final ContextResource getContextResource(String name) {
 		return resources.get(name);
-	}
-
-	@Override
-	public final boolean invoke(Message m, String name) throws CircuitAbortException {
-		ContextResource resource = getContextResource(name);
-
-		if (!(resource instanceof InvocableResource)) {
-			throw new CircuitAbortException(String.format("resource '%s' is not invocable", name));
-		}
-
-		return ((InvocableResource) resource).invoke(m);
-	}
-
-	@Override
-	public final Object substitute(Dictionary dict, String name) {
-		ContextResource resource = getContextResource(name);
-		Object result = null;
-
-		if (resource instanceof SubstitutableResource) {
-			result = ((SubstitutableResource<?>) resource).substitute(dict);
-		} else {
-			Trace.error(String.format("resource '%s' is not substitutable", name));
-		}
-
-		return result;
 	}
 
 	/**

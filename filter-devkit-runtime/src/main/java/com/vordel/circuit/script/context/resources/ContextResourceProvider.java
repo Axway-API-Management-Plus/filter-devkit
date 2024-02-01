@@ -8,6 +8,7 @@ public interface ContextResourceProvider {
 
 	/**
 	 * retrieve a reference to an Invocable.
+	 * 
 	 * @param name name of invocable resource
 	 * 
 	 * @return invocable resource or null if none (if not invocable)
@@ -16,6 +17,7 @@ public interface ContextResourceProvider {
 
 	/**
 	 * retrieve a reference to a Substituable object
+	 * 
 	 * @param name name of substituable resource
 	 * 
 	 * @return substituable or null if none (if not substituable)
@@ -24,6 +26,7 @@ public interface ContextResourceProvider {
 
 	/**
 	 * Retrieve a reference to a KPS resource
+	 * 
 	 * @param name name of kps resource
 	 * 
 	 * @return kps resource or null if none (if not kps)
@@ -34,16 +37,17 @@ public interface ContextResourceProvider {
 	 * Retrieve the named context resource.
 	 * 
 	 * @param name name of resource to retrieve
-	 * @return configured resource, or null if non existant.
+	 * @return configured resource, or null if non existent.
 	 */
 	public ContextResource getContextResource(String name);
 
 	/**
 	 * Invoke the named resource (if applicable). This is a convenience method which
-	 * first retrieve resource with
-	 * {@link #getInvocableResource(String)} then invoke it with
-	 * {@link InvocableResource#invoke(Message)}. If the requested resource
-	 * is not invocable an exception is thrown.
+	 * first retrieve resource with {@link #getInvocableResource(String)} then
+	 * invoke it with {@link InvocableResource#invoke(Message)}. If the requested
+	 * resource is not invocable an exception is thrown. If the requested resource
+	 * is {@code null}, null is returned.
+	 * 
 	 * @param m    current message
 	 * @param name name of the resource
 	 * 
@@ -51,7 +55,7 @@ public interface ContextResourceProvider {
 	 * @throws CircuitAbortException if an exception occurs or if resource is not
 	 *                               invocable.
 	 */
-	public boolean invoke(Message m, String name) throws CircuitAbortException;
+	public Boolean invoke(Message m, String name) throws CircuitAbortException;
 
 	/**
 	 * Substitute the named resource (if applicable)

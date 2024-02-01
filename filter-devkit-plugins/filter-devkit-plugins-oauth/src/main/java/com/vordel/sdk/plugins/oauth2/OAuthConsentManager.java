@@ -12,6 +12,7 @@ import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.oauth.common.AuthorizationStore;
 import com.vordel.circuit.oauth.common.KPSAuthorizationStoreImpl;
+import com.vordel.circuit.oauth.common.OAuthAuthorization;
 import com.vordel.circuit.oauth.common.exception.AuthorizationStorageException;
 import com.vordel.circuit.oauth.kps.ApplicationDetails;
 import com.vordel.circuit.oauth.store.TokenStore;
@@ -77,11 +78,11 @@ public class OAuthConsentManager {
 			if (authorization != null) {
 				authorization.setScopes(authorizedScopes);
 				
-				authorization.update(authzStore);
+				authzStore.update(authorization);
 			} else if (!authorizedScopes.isEmpty()) {
 				authorization = new OAuthAuthorization(app.getApplicationID(), authSubject, authorizedScopes, new Date(System.currentTimeMillis()), (String) null);
 				
-				authorization.store(authzStore);
+				authzStore.store(authorization);
 			}
 		} catch (AuthorizationStorageException e) {
 			Trace.error(e);
@@ -95,7 +96,7 @@ public class OAuthConsentManager {
 	}
 
 	public boolean scopesNeedOwnerAuthorization(Message msg, String authSubject, ApplicationDetails app, Set<String> requestedScopes, Set<?> persistentApprovedScopes, Set<?> transientApprovedScopes) throws CircuitAbortException {
-		OAuthAuthorization authorization = OAuthAuthorization.retrieveAuthorizationByAppAndSubject(authzStore, app.getApplicationID(), authSubject);
+		OAuthAuthorization authorization = authzStore.retrieveAuthorizationByAppAndSubject(app.getApplicationID(), authSubject);
 		Set<String> authzExceptionsScopes = appsAuthzStore.retrieveApplicationAuthorizedScopes(app.getApplicationID());
 
 		Set<String> scopesPreAuthorisedByOwner = new HashSet<String>();

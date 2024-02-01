@@ -47,7 +47,7 @@ public class DynamicCompilerModule implements ExtensionModule {
 	private static final Selector<String> INST_RESOURCES = SelectorResource.fromLiteral("${environment.VINSTDIR}/ext/dynamic", String.class, true);
 
 	private DynamicCompilerModule() {
-		/* inform the module if loaded */
+		/* inform the module is loaded */
 		Trace.info("Dynamic compiler module loaded");
 	}
 
@@ -116,7 +116,10 @@ public class DynamicCompilerModule implements ExtensionModule {
 		CompilerFileManager fileManager = new CompilerFileManager(sjfm, loader);
 		List<String> options = new ArrayList<String>();
 
+		/* keep line numbers and variables names for debug */
 		options.add("-g");
+		
+		/* set target to java 8 */
 		options.add("-target");
 		options.add("1.8");
 
@@ -176,10 +179,10 @@ public class DynamicCompilerModule implements ExtensionModule {
 				switch (kind) {
 				case ERROR:
 				case WARNING:
+				case MANDATORY_WARNING:
 					Trace.error(String.format("%s: %s line %d", source.getName(), kind.name(), diagnostic.getLineNumber()));
 					Trace.error(message);
 					break;
-				case MANDATORY_WARNING:
 				case NOTE:
 				case OTHER:
 					Trace.info(message);

@@ -1,7 +1,11 @@
 package com.vordel.circuit.script.context.resources;
 
+import com.vordel.circuit.CircuitAbortException;
+import com.vordel.circuit.Message;
+import com.vordel.common.Dictionary;
 import com.vordel.el.ContextResourceResolver;
 import com.vordel.el.Selector;
+import com.vordel.trace.Trace;
 
 public abstract class AbstractContextResourceProvider implements ContextResourceProvider {
 	static {
@@ -9,11 +13,7 @@ public abstract class AbstractContextResourceProvider implements ContextResource
 	}
 	
 	@Override
-	public ContextResource getContextResource(String name) {
-		ContextResource resource = getContextResource(name);
-
-		return resource;
-	}
+	public abstract ContextResource getContextResource(String name);
 
 	@Override
 	public final InvocableResource getInvocableResource(String name) {
@@ -34,5 +34,39 @@ public abstract class AbstractContextResourceProvider implements ContextResource
 		ContextResource resource = getContextResource(name);
 
 		return resource instanceof KPSResource ? (KPSResource) resource : null;
+	}
+
+	@Override
+	public final Boolean invoke(Message m, String name) throws CircuitAbortException {
+		ContextResource resource = getContextResource(name);
+		Boolean result = null;
+		
+		if (resource != null) {
+			if (!(resource instanceof InvocableResource)) {
+				throw new CircuitAbortException(String.format("resource '%s' is not invocable", name));
+			}
+
+			if (m == null) {
+				throw new CircuitAbortException("no message context");
+			}
+
+			result = ((InvocableResource) resource).invoke(m);
+		}
+
+		return result;
+	}
+
+	@Override
+	public final Object substitute(Dictionary dict, String name) {
+		ContextResource resource = getContextResource(name);
+		Object result = null;
+
+		if (resource instanceof SubstitutableResource) {
+			result = ((SubstitutableResource<?>) resource).substitute(dict);
+		} else {
+			Trace.error(String.format("resource '%s' is not substitutable", name));
+		}
+
+		return result;
 	}
 }

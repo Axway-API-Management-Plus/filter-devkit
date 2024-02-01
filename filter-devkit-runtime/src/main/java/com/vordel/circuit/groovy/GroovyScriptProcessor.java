@@ -369,7 +369,7 @@ public class GroovyScriptProcessor extends MessageProcessor {
 		case 1:
 			return methods.get(0);
 		default:
-			throw new EntityStoreException("only one attach method is allowed");
+			throw new EntityStoreException(String.format("only one %s method is allowed", name));
 		}
 	
 		return null;
@@ -415,37 +415,6 @@ public class GroovyScriptProcessor extends MessageProcessor {
 			}
 
 			return resource;
-		}
-
-		@Override
-		public boolean invoke(Message m, String name) throws CircuitAbortException {
-			InvocableResource resource = getInvocableResource(name);
-
-			if (resource == null) {
-				throw new CircuitAbortException("resource is not invocable or does not exists");
-			}
-
-			if (m == null) {
-				throw new CircuitAbortException("no message context");
-			}
-
-			return resource.invoke(m);
-		}
-
-		@Override
-		public Object substitute(Dictionary dict, String name) {
-			SubstitutableResource<?> resource = getSubstitutableResource(name);
-			Object result = null;
-
-			if (resource != null) {
-				if (dict == null) {
-					dict = Dictionary.empty;
-				}
-
-				result = resource.substitute(dict);
-			}
-
-			return result;
 		}
 
 	}
