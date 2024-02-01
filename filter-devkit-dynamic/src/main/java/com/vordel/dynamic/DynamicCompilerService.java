@@ -46,7 +46,6 @@ import com.vordel.circuit.ext.filter.quick.QuickFilterField;
 import com.vordel.circuit.ext.filter.quick.QuickFilterSupport;
 import com.vordel.circuit.ext.filter.quick.QuickFilterType;
 import com.vordel.circuit.ext.filter.quick.QuickJavaFilter;
-import com.vordel.circuit.ext.filter.quick.QuickScriptFilterBuilder;
 import com.vordel.circuit.jaxrs.VordelBodyProvider;
 import com.vordel.circuit.script.bind.ExtensionModule;
 import com.vordel.circuit.script.bind.ExtensionPlugin;
@@ -394,8 +393,8 @@ public class DynamicCompilerService implements ExtensionModule {
 				/*
 				 * populate filter constants
 				 */
-				QuickFilterSupport.insertConstant(entityTypeNode, QuickFilterSupport.QUICKFILTER_UI, QuickScriptFilterBuilder.toString(ui));
-				QuickFilterSupport.insertConstant(entityTypeNode, QuickFilterSupport.QUICKFILTER_RESOURCES, QuickScriptFilterBuilder.toString(props));
+				QuickFilterSupport.insertConstant(entityTypeNode, QuickFilterSupport.QUICKFILTER_UI, QuickFilterSupport.toString(ui));
+				QuickFilterSupport.insertConstant(entityTypeNode, QuickFilterSupport.QUICKFILTER_RESOURCES, QuickFilterSupport.toString(props));
 				QuickFilterSupport.insertConstant(entityTypeNode, QuickFilterSupport.QUICKFILTER_GENERATED, QuickFilterSupport.splitValues(props.getProperty("QUICKFILTER_GENERATED", null), true));
 				QuickFilterSupport.insertConstant(entityTypeNode, QuickFilterSupport.QUICKFILTER_CONSUMED, QuickFilterSupport.splitValues(props.getProperty("QUICKFILTER_CONSUMED", null), true));
 				QuickFilterSupport.insertConstant(entityTypeNode, QuickFilterSupport.QUICKFILTER_REQUIRED, QuickFilterSupport.splitValues(props.getProperty("QUICKFILTER_REQUIRED", null), true));

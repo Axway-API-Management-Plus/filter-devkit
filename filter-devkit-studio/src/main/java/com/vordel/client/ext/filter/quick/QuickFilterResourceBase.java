@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
+import com.vordel.circuit.ext.filter.quick.AbstractQuickFilter;
 import com.vordel.circuit.ext.filter.quick.QuickFilterSupport;
 import com.vordel.common.CompositeResourceBundle;
 import com.vordel.common.ResourceBase;
@@ -36,7 +37,7 @@ public class QuickFilterResourceBase extends ResourceBase {
 	
 	
 	private PropertyResourceBundle getDefinitionProperties() {
-		String value = QuickFilterSupport.getConstantStringValue(definition, QuickFilterSupport.QUICKFILTER_RESOURCES);
+		String value = AbstractQuickFilter.getConstantStringValue(definition, QuickFilterSupport.QUICKFILTER_RESOURCES);
 		PropertyResourceBundle resources = null;
 		
 		if (value != null) {

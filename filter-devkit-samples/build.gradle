@@ -1,4 +1,4 @@
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 java {
     sourceCompatibility = 'VERSION_1_8'
@@ -8,5 +8,5 @@ java {
 apply from: rootProject.file('apigateway.gradle')
 
 dependencies {
-    implementation project(':filter-devkit-runtime')
+    api project(':filter-devkit-runtime')
 }

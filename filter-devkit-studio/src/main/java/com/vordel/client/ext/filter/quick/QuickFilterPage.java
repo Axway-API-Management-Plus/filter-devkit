@@ -5,6 +5,7 @@ import java.io.InputStream;
 
 import org.eclipse.swt.widgets.Composite;
 
+import com.vordel.circuit.ext.filter.quick.AbstractQuickFilter;
 import com.vordel.circuit.ext.filter.quick.QuickFilterSupport;
 import com.vordel.client.ext.filter.VordelLegacyPage;
 import com.vordel.common.ResourceBase;
@@ -30,14 +31,14 @@ public class QuickFilterPage extends VordelLegacyPage
 	public void createControl(Composite parent) {
 		Entity e = getEntity();
 		EntityType filterType = e.getType();
-		String xmlUI = QuickFilterSupport.getConstantStringValue(filterType, QuickFilterSupport.QUICKFILTER_UI);
+		String xmlUI = AbstractQuickFilter.getConstantStringValue(filterType, QuickFilterSupport.QUICKFILTER_UI);
 		ResourceBase resourceBase = new QuickFilterResourceBase(filterType, getClass());
 		
 		setResourceBase(resourceBase);
 		
 		// set the title and description from the entity
-		setTitle(QuickFilterSupport.getConstantStringValue(filterType, QuickFilterSupport.QUICKFILTER_DISPLAYNAME));
-		setDescription(QuickFilterSupport.getConstantStringValue(filterType, QuickFilterSupport.QUICKFILTER_DESCRIPTION));
+		setTitle(AbstractQuickFilter.getConstantStringValue(filterType, QuickFilterSupport.QUICKFILTER_DISPLAYNAME));
+		setDescription(AbstractQuickFilter.getConstantStringValue(filterType, QuickFilterSupport.QUICKFILTER_DESCRIPTION));
 
 		// set the UI controls from the xmlUI
 		InputStream in = new ByteArrayInputStream(xmlUI.getBytes());

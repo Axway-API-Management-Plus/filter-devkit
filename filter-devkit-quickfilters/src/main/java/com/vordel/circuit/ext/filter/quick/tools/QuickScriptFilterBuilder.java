@@ -1,4 +1,4 @@
-package com.vordel.circuit.ext.filter.quick;
+package com.vordel.circuit.ext.filter.quick.tools;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.io.StringWriter;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
@@ -34,6 +33,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import com.vordel.circuit.ext.filter.quick.QuickFilterSupport;
 
 public class QuickScriptFilterBuilder {
 	private static final Pattern SCRIPTNAME_REGEX = Pattern.compile("script\\.(js|py|groovy)");
@@ -237,9 +238,9 @@ public class QuickScriptFilterBuilder {
 		/*
 		 * populate filter constants
 		 */
-		QuickFilterSupport.insertConstant(filter, QuickFilterSupport.QUICKFILTER_UI, toString(parseXml(ui)));
+		QuickFilterSupport.insertConstant(filter, QuickFilterSupport.QUICKFILTER_UI, QuickFilterSupport.toString(parseXml(ui)));
 		QuickFilterSupport.insertConstant(filter, QuickFilterSupport.QUICKFILTER_SCRIPT, parseScript(script));
-		QuickFilterSupport.insertConstant(filter, QuickFilterSupport.QUICKFILTER_RESOURCES, toString(props));
+		QuickFilterSupport.insertConstant(filter, QuickFilterSupport.QUICKFILTER_RESOURCES, QuickFilterSupport.toString(props));
 		QuickFilterSupport.insertConstant(filter, QuickFilterSupport.QUICKFILTER_GENERATED, QuickFilterSupport.splitValues(props.getProperty("QUICKFILTER_GENERATED", null), true));
 		QuickFilterSupport.insertConstant(filter, QuickFilterSupport.QUICKFILTER_CONSUMED, QuickFilterSupport.splitValues(props.getProperty("QUICKFILTER_CONSUMED", null), true));
 		QuickFilterSupport.insertConstant(filter, QuickFilterSupport.QUICKFILTER_REQUIRED, QuickFilterSupport.splitValues(props.getProperty("QUICKFILTER_REQUIRED", null), true));
@@ -332,38 +333,5 @@ public class QuickScriptFilterBuilder {
 		}
 
 		return result;
-	}
-
-	public static String toString(Document document) {
-		try {
-			Source source = new DOMSource(document.getDocumentElement());
-			StringWriter output = new StringWriter();
-			Result result = new StreamResult(output);
-
-			TransformerFactory tf = TransformerFactory.newInstance();
-			Transformer transformer = tf.newTransformer();
-
-			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-			transformer.setOutputProperty(OutputKeys.INDENT, "no");
-
-			transformer.transform(source, result);
-
-			return output.toString();
-		} catch (TransformerException e) {
-			throw new IllegalStateException(e);
-		}
-	}
-
-	public static String toString(Properties resources) {
-		StringWriter builder = new StringWriter();
-
-		try {
-			resources.store(builder, null);
-		} catch (IOException e) {
-			/* ignore */
-		}
-
-		return builder.toString();
 	}
 }

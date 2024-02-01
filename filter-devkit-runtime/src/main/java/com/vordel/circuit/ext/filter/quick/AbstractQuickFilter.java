@@ -9,6 +9,8 @@ import com.vordel.config.ConfigContext;
 import com.vordel.es.Entity;
 import com.vordel.es.EntityStoreException;
 import com.vordel.es.EntityType;
+import com.vordel.es.Field;
+import com.vordel.es.Value;
 
 public abstract class AbstractQuickFilter extends DefaultFilter implements VordelLegacyFilter {
 	@Override
@@ -22,9 +24,9 @@ public abstract class AbstractQuickFilter extends DefaultFilter implements Vorde
 		
 		EntityType type = entity.getType();
 		
-		String[] required = QuickFilterSupport.getConstantStringValues(type, QuickFilterSupport.QUICKFILTER_REQUIRED, true);
-		String[] consumed = QuickFilterSupport.getConstantStringValues(type, QuickFilterSupport.QUICKFILTER_CONSUMED, true);
-		String[] generated = QuickFilterSupport.getConstantStringValues(type, QuickFilterSupport.QUICKFILTER_GENERATED, true);
+		String[] required = AbstractQuickFilter.getConstantStringValues(type, QuickFilterSupport.QUICKFILTER_REQUIRED, true);
+		String[] consumed = AbstractQuickFilter.getConstantStringValues(type, QuickFilterSupport.QUICKFILTER_CONSUMED, true);
+		String[] generated = AbstractQuickFilter.getConstantStringValues(type, QuickFilterSupport.QUICKFILTER_GENERATED, true);
 		
 		if (required != null) {
 			addPropDefs(reqProps, Arrays.asList(required));
@@ -37,5 +39,32 @@ public abstract class AbstractQuickFilter extends DefaultFilter implements Vorde
 		if (generated != null) {
 			addPropDefs(genProps, Arrays.asList(generated));
 		}
+	}
+
+	public static String getConstantStringValue(EntityType entity, String name) {
+		String result = null;
+	
+		if (entity != null) {
+			Field clazz = entity.getConstantField(name);
+	
+			if (clazz != null) {
+				Value[] values = clazz.getValues();
+	
+				if ((values != null) && (values.length == 1)) {
+					Value value = values[0];
+					Object data = value == null ? null : value.getData();
+	
+					if (data instanceof String) {
+						result = (String) data;
+					}
+				}
+			}
+		}
+	
+		return result;
+	}
+
+	public static String[] getConstantStringValues(EntityType entity, String name, boolean trim) {
+		return QuickFilterSupport.splitValues(getConstantStringValue(entity, name), trim);
 	}
 }

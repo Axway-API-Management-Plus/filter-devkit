@@ -6,6 +6,7 @@ import java.util.Vector;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 
+import com.vordel.circuit.ext.filter.quick.AbstractQuickFilter;
 import com.vordel.circuit.ext.filter.quick.QuickFilterSupport;
 import com.vordel.client.ext.filter.VordelLegacyGUIFilter;
 import com.vordel.client.manager.Images;
@@ -33,7 +34,7 @@ public class QuickFilterGUI extends VordelLegacyGUIFilter {
 	@Override
 	public String getSmallIconId() {
 		EntityType entityType = getEntityType();
-		String id = entityType == null ? "filter_small" : QuickFilterSupport.getConstantStringValue(entityType, QuickFilterSupport.QUICKFILTER_ICON);
+		String id = entityType == null ? "filter_small" : AbstractQuickFilter.getConstantStringValue(entityType, QuickFilterSupport.QUICKFILTER_ICON);
 		
 		return id;
 	}
@@ -53,7 +54,7 @@ public class QuickFilterGUI extends VordelLegacyGUIFilter {
 	public String[] getCategories() {
 		EntityType entityType = getEntityType();
 
-		return entityType == null ? new String[] { "Utility" } : QuickFilterSupport.getConstantStringValues(entityType, QuickFilterSupport.QUICKFILTER_PALETTE, true);
+		return entityType == null ? new String[] { "Utility" } : AbstractQuickFilter.getConstantStringValues(entityType, QuickFilterSupport.QUICKFILTER_PALETTE, true);
 	}
 
 	public String getTypeName() {
@@ -65,7 +66,7 @@ public class QuickFilterGUI extends VordelLegacyGUIFilter {
 			entityType = entity.getType();
 		}
 		
-		String typeName = entityType == null ? DEFAULT_NAME : QuickFilterSupport.getConstantStringValue(entityType, QuickFilterSupport.QUICKFILTER_DISPLAYNAME);
+		String typeName = entityType == null ? DEFAULT_NAME : AbstractQuickFilter.getConstantStringValue(entityType, QuickFilterSupport.QUICKFILTER_DISPLAYNAME);
 
 		return typeName;
 	}

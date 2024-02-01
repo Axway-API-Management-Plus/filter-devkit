@@ -9,13 +9,13 @@ public class QuickScriptFilterProcessor extends AbstractScriptProcessor {
 	protected String getEngineName(Entity entity) {
 		EntityType type = entity.getType();
 
-		return QuickFilterSupport.getConstantStringValue(type, QuickFilterSupport.QUICKFILTER_ENGINENAME);
+		return AbstractQuickFilter.getConstantStringValue(type, QuickFilterSupport.QUICKFILTER_ENGINENAME);
 	}
 
 	@Override
 	protected String getEntityScript(Entity entity) {
 		EntityType type = entity.getType();
 
-		return QuickFilterSupport.getConstantStringValue(type, QuickFilterSupport.QUICKFILTER_SCRIPT);
+		return AbstractQuickFilter.getConstantStringValue(type, QuickFilterSupport.QUICKFILTER_SCRIPT);
 	}
 }

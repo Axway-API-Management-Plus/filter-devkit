@@ -1,18 +1,26 @@
 package com.vordel.circuit.ext.filter.quick;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
+
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-
-import com.vordel.es.EntityType;
-import com.vordel.es.Field;
-import com.vordel.es.Value;
 
 public class QuickFilterSupport {
 	public static final String QUICKFILTER_DISPLAYNAME = "displayName";
@@ -26,6 +34,7 @@ public class QuickFilterSupport {
 	public static final String QUICKFILTER_GENERATED = "generated";
 	public static final String QUICKFILTER_ENGINENAME = "engineName";
 	public static final String QUICKFILTER_SCRIPT = "script";
+
 	public static final Set<String> QUICKFILTER_RESERVEDFIELDS = quickFilterReservedNames();
 
 	private QuickFilterSupport() {
@@ -62,33 +71,6 @@ public class QuickFilterSupport {
 		reserved.add(QuickFilterSupport.QUICKFILTER_GENERATED);
 
 		return Collections.unmodifiableSet(reserved);
-	}
-
-	public static String getConstantStringValue(EntityType entity, String name) {
-		String result = null;
-	
-		if (entity != null) {
-			Field clazz = entity.getConstantField(name);
-	
-			if (clazz != null) {
-				Value[] values = clazz.getValues();
-	
-				if ((values != null) && (values.length == 1)) {
-					Value value = values[0];
-					Object data = value == null ? null : value.getData();
-	
-					if (data instanceof String) {
-						result = (String) data;
-					}
-				}
-			}
-		}
-	
-		return result;
-	}
-
-	public static String[] getConstantStringValues(EntityType entity, String name, boolean trim) {
-		return splitValues(getConstantStringValue(entity, name), trim);
 	}
 
 	public static void insertConstant(Element filter, String name, String... values) {
@@ -140,5 +122,38 @@ public class QuickFilterSupport {
 		}
 	
 		return values.isEmpty() ? null : values.toArray(new String[0]);
+	}
+
+	public static String toString(Document document) {
+		try {
+			Source source = new DOMSource(document.getDocumentElement());
+			StringWriter output = new StringWriter();
+			Result result = new StreamResult(output);
+	
+			TransformerFactory tf = TransformerFactory.newInstance();
+			Transformer transformer = tf.newTransformer();
+	
+			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+			transformer.setOutputProperty(OutputKeys.INDENT, "no");
+	
+			transformer.transform(source, result);
+	
+			return output.toString();
+		} catch (TransformerException e) {
+			throw new IllegalStateException(e);
+		}
+	}
+
+	public static String toString(Properties resources) {
+		StringWriter builder = new StringWriter();
+	
+		try {
+			resources.store(builder, null);
+		} catch (IOException e) {
+			/* ignore */
+		}
+	
+		return builder.toString();
 	}
 }
