@@ -39,7 +39,7 @@ public class AbstractScriptProcessor extends MessageProcessor {
 
 	protected String getEngineName(Entity entity) {
 		String name = entity.getStringValue("engineName");
-	
+
 		return name;
 	}
 
@@ -86,23 +86,23 @@ public class AbstractScriptProcessor extends MessageProcessor {
 			Trace.debug(e);
 		}
 	}
-	
+
 	@Override
 	public boolean invoke(Circuit c, Message m) throws CircuitAbortException {
 		/* invoke script main function */
 		Object result = invokeScript(c, m);
-	
+
 		Trace.debug("Return from script is: " + String.valueOf(result));
-	
+
 		if (!(result instanceof Boolean)) {
 			Trace.error(String.format("The script function '%s' must return true or false", INVOKE_FUNCTION_NAME));
 			Class<? extends Object> clazz = result == null ? null : result.getClass();
-	
+
 			throw new CircuitAbortException(String.format("Script must return a boolean value. The script returned:  '%s'", String.valueOf(clazz)));
 		}
-	
+
 		Trace.debug("ScriptProcessor.invoke: finished with status " + result);
-	
+
 		return ((Boolean) result).booleanValue();
 	}
 
@@ -113,21 +113,21 @@ public class AbstractScriptProcessor extends MessageProcessor {
 
 	private static final ScriptEngine getScriptEngine(String engineName) throws ScriptException {
 		ScriptEngineManager mgr = new ScriptEngineManager();
-	
+
 		if ((engineName == null) || engineName.isEmpty()) {
 			engineName = "nashorn";
 		}
-	
+
 		if (engineName.equals("js")) {
 			engineName = "rhino";
 		}
-		
+
 		ScriptEngine engine = mgr.getEngineByName(engineName);
-	
+
 		if (!(engine instanceof Invocable)) {
 			throw new ScriptException(String.format("Unsupported script engine: %s", engineName));
 		}
-		
+
 		return engine;
 	}
 
@@ -152,27 +152,27 @@ public class AbstractScriptProcessor extends MessageProcessor {
 		try {
 			/* invoke script main function */
 			Object result = null;
-	
+
 			if (extended) {
 				result = invokeFunction(engine, INVOKE_FUNCTION_NAME, c, m);
 			} else {
 				result = invokeFunction(engine, INVOKE_FUNCTION_NAME, m);
 			}
-	
+
 			return result;
 		} catch (ScriptException ex) {
 			if (unwrapExceptions) {
 				CircuitAbortException cause = unwrapException(ex, CircuitAbortException.class);
-	
+
 				if (cause != null) {
 					throw cause;
 				}
 			}
-	
+
 			throw new CircuitAbortException(ex);
 		} catch (NoSuchMethodException ex) {
 			Trace.error(String.format("can't invoke the script function '%s'", INVOKE_FUNCTION_NAME), ex);
-	
+
 			throw new CircuitAbortException(ex);
 		}
 	}

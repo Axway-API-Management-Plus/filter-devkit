@@ -64,7 +64,8 @@ public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	private boolean unwrapCircuitAbortException = false;
 
 	/**
-	 * if not null, the service will replace the invoke() script call
+	 * if not null, the service will replace the invoke() script call (Groovy
+	 * scripts only)
 	 */
 	private ScriptWebComponent jaxrsService = null;
 	/**
@@ -73,6 +74,9 @@ public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	 */
 	private boolean jaxrsReportNoMatch = false;
 
+	/**
+	 * Resources reflected from groovy scripts
+	 */
 	private ExtensionContext exports = null;
 
 	/**
@@ -87,15 +91,10 @@ public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	 * Invoke method of groovy script (if compatible with argument injection)
 	 */
 	private Method groovyInvoke = null;
-
-	/**
-	 * runtime object used for closures exported to script
-	 */
-	private final AdvancedScriptRuntime runtime = new ExportedRuntime();
 	/**
 	 * exportable resource provider
 	 */
-	private final ContextResourceProvider context = new ExportedResources();
+	private final ExportedResources context = new ExportedResources();
 
 	@Override
 	protected String substituteScript(String script) {
@@ -135,8 +134,7 @@ public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
 
 	@Override
 	public void filterDetached() {
-		Object[] args = (groovyInstance == null) || (groovyDetach == null) ? null
-				: getGroovyDetachArguments(groovyDetach);
+		Object[] args = (groovyInstance == null) || (groovyDetach == null) ? null : getGroovyDetachArguments(groovyDetach);
 
 		if (args != null) {
 			try {
@@ -192,6 +190,9 @@ public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		ScriptEngineFactory factory = engine.getFactory();
 		String language = factory.getLanguageName();
 
+		/* create the runtime object used to create function closures */
+		ExportedRuntime runtime = new ExportedRuntime();
+
 		if ("Groovy".equals(language)) {
 			AdvancedScriptRuntimeBinder.getGroovyBinder().bindRuntime(engine, runtime);
 		} else if ("ECMAScript".equals(language) || "EmbeddedECMAScript".equals(language)) {
@@ -205,8 +206,7 @@ public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
 
 	@Override
 	protected Object invokeScript(Circuit c, Message m) throws CircuitAbortException {
-		Object[] args = (groovyInstance == null) || (groovyInvoke == null) ? null
-				: getGroovyInvokeArguments(groovyInvoke, c, m);
+		Object[] args = (groovyInstance == null) || (groovyInvoke == null) ? null : getGroovyInvokeArguments(groovyInvoke, c, m);
 		Object result = null;
 
 		if (args != null) {
@@ -332,36 +332,36 @@ public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
 
 		@Override
 		public ContextResource getContextResource(String name) {
-			return runtime.getContextResource(name);
+			return context.getContextResource(name);
 		}
 
 		@Override
 		public InvocableResource getInvocableResource(String name) {
-			return runtime.getInvocableResource(name);
+			return context.getInvocableResource(name);
 		}
 
 		@Override
 		public KPSResource getKPSResource(String name) {
-			return runtime.getKPSResource(name);
+			return context.getKPSResource(name);
 		}
 
 		@Override
 		public CacheResource getCacheResource(String name) {
-			return runtime.getCacheResource(name);
+			return context.getCacheResource(name);
 		}
 
 		@Override
 		public Boolean invokeResource(Message msg, String name) throws CircuitAbortException {
-			return runtime.invokeResource(msg, name);
+			return context.invoke(msg, name);
 		}
 
 		@Override
-		public Object substituteResource(Dictionary msg, String name) {
-			return runtime.substituteResource(msg, name);
+		public Object substituteResource(Dictionary dict, String name) {
+			return context.substitute(dict, name);
 		}
 
 		@Override
-		public void reflectExtensions(Script script) throws ScriptException {
+		public void reflectResources(Script script) throws ScriptException {
 			checkState();
 
 			if (exports != null) {
@@ -421,5 +421,10 @@ public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
 			return resource;
 		}
 
+		public final CacheResource getCacheResource(String name) {
+			ContextResource resource = getContextResource(name);
+
+			return resource instanceof CacheResource ? (CacheResource) resource : null;
+		}
 	}
 }

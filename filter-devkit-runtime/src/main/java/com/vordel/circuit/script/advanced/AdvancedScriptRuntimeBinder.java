@@ -19,20 +19,20 @@ public abstract class AdvancedScriptRuntimeBinder {
 	}
 
 	private static final Set<String> EXPORTED_CLOSURES = getExportedMethods();
-	private static final Set<String> REFLECTIVE_CLOSURES = getExtendedMethods();
+	private static final Set<String> REFLECTIVE_CLOSURES = getReflectiveMethods();
 
 	private static final String getJavascriptClosureTemplate(int argc) {
 		StringBuilder body = new StringBuilder();
 		StringBuilder args = new StringBuilder();
-		
-		for(int index = 0; index < argc; index++) {
+
+		for (int index = 0; index < argc; index++) {
 			if (index > 0) {
 				args.append(", ");
 			}
-			
+
 			args.append(String.format("arg%d", index));
 		}
-		
+
 		String argv = args.toString();
 
 		body.append("%s = (function(bindings) {\n");
@@ -55,17 +55,17 @@ public abstract class AdvancedScriptRuntimeBinder {
 		exports.add("getCacheResource");
 		exports.add("invokeResource");
 		exports.add("substituteResource");
+		exports.add("getExportedResources");
 
 		return Collections.unmodifiableSet(exports);
 	}
 
-	private static final Set<String> getExtendedMethods() {
+	private static final Set<String> getReflectiveMethods() {
 		Set<String> exports = new HashSet<String>();
 
-		exports.add("reflectExtensions");
+		exports.add("reflectResources");
 		exports.add("reflectEntryPoints");
 		exports.add("setScriptWebComponent");
-		exports.add("getExportedResources");
 
 		return Collections.unmodifiableSet(exports);
 	}
@@ -79,7 +79,7 @@ public abstract class AdvancedScriptRuntimeBinder {
 				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
 				StringBuilder builder = new StringBuilder();
 
-				for(Method method : AdvancedScriptRuntime.class.getDeclaredMethods()) {
+				for (Method method : AdvancedScriptRuntime.class.getDeclaredMethods()) {
 					String name = method.getName();
 
 					if (EXPORTED_CLOSURES.contains(name)) {
@@ -104,7 +104,7 @@ public abstract class AdvancedScriptRuntimeBinder {
 				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
 				PyObject pyobj = Py.java2py(runtime);
 
-				for(String method : EXPORTED_CLOSURES) {
+				for (String method : EXPORTED_CLOSURES) {
 					/* sets script runtime */
 					bindings.put(method, pyobj.__findattr__(method));
 				}
@@ -118,7 +118,7 @@ public abstract class AdvancedScriptRuntimeBinder {
 			public void bindRuntime(ScriptEngine engine, AdvancedScriptRuntime runtime) throws ScriptException {
 				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
 
-				for(Method method : AdvancedScriptRuntime.class.getDeclaredMethods()) {
+				for (Method method : AdvancedScriptRuntime.class.getDeclaredMethods()) {
 					String name = method.getName();
 
 					if (EXPORTED_CLOSURES.contains(name)) {
@@ -128,7 +128,7 @@ public abstract class AdvancedScriptRuntimeBinder {
 					}
 				}
 
-				for(Method method : AdvancedScriptRuntime.class.getDeclaredMethods()) {
+				for (Method method : AdvancedScriptRuntime.class.getDeclaredMethods()) {
 					String name = method.getName();
 
 					if (REFLECTIVE_CLOSURES.contains(name)) {

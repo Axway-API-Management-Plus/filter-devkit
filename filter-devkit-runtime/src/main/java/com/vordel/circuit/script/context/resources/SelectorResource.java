@@ -77,7 +77,11 @@ public class SelectorResource<T> implements SubstitutableResource<T> {
 	}
 
 	static {
-		/* each time this class is loaded, register Selector functions */
+		/*
+		 * Those two functions allow to check is the value provided by the selector
+		 * resolution is really null. It's mainly used for String coercion. It avoids to
+		 * have "[invalid field]" instead of null for reflective calls.
+		 */
 		registerFunction("commons", "value", "value", Object.class);
 		registerFunction("commons", "isNull", "isNull", Object.class);
 

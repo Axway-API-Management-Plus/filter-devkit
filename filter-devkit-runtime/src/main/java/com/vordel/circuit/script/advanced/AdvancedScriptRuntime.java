@@ -99,7 +99,8 @@ public interface AdvancedScriptRuntime {
 	Object substituteResource(Dictionary dict, String name);
 
 	/**
-	 * bind annotated groovy methods to exportable context (usable in selectors)
+	 * bind annotated groovy methods to exportable context (usable in selectors and
+	 * other scripts)
 	 * 
 	 * @param script
 	 * @throws ScriptException
@@ -107,7 +108,7 @@ public interface AdvancedScriptRuntime {
 	 * @apiNote this method can only be used once and only when calling from initial
 	 *          eval or attach script function
 	 */
-	void reflectExtensions(Script script) throws ScriptException;
+	void reflectResources(Script script) throws ScriptException;
 
 	/**
 	 * scan a groovy script for invoke() and detach() with parameter injection. As a

@@ -505,6 +505,11 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		private final String attributeName;
 
 		private AttributeParameter(String attributeName, Class<T> type) {
+			/*
+			 * use the commons:value() function to avoid the missing property behavior
+			 * ("[invalid field]" instead of null for strings) the commons:value function is
+			 * registered in the static block of the SelectorResource class
+			 */
 			this.selector = SelectorResource.fromLiteral(String.format("${commons:value(dictionary[\"%s\"])}", attributeName), type, true);
 			this.attributeName = attributeName;
 		}
@@ -535,7 +540,11 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		private final String expression;
 
 		private SelectorParameter(String expression, Class<T> type) {
-			/* use the commons:value() function to avoid the missing property behaviour */
+			/*
+			 * use the commons:value() function to avoid the missing property behavior
+			 * ("[invalid field]" instead of null for strings) the commons:value function is
+			 * registered in the static block of the SelectorResource class
+			 */
 			this.selector = SelectorResource.fromLiteral(String.format("${commons:value(%s)}", expression), type, true);
 			this.expression = expression;
 		}
