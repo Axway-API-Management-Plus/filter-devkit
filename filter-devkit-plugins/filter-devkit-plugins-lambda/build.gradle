@@ -11,5 +11,6 @@ dependencies {
     implementation('com.amazonaws:aws-java-sdk-lambda:1.11.538')
     implementation('com.amazonaws:aws-java-sdk-sts:1.11.538')
 
+    annotationProcessor project(':filter-devkit-quickfilters')
     implementation project(':filter-devkit-runtime')
 }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         id="com.vordel.ui.filterGUI.assertion"
+         name="Filter-DevKit Filters"
+         point="com.vordel.rcp.filterbase.filterGUI">
+      <filter
+            class="com.vordel.circuit.assertion.AssertionFilter"
+            icon="images/filter_small.gif"
+            name="Assertion Filter Test"
+            page="com.vordel.client.manager.filter.assertion.AssertionPage">
+         <category
+               id="com.vordel.ui.filter.category.encryption" />
+      </filter>
+</plugin>

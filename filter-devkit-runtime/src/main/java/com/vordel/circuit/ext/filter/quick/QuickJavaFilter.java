@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.vordel.circuit.MessageProcessor;
+import com.vordel.circuit.ext.filter.AbstractQuickFilter;
 import com.vordel.config.ConfigContext;
 import com.vordel.es.Entity;
 

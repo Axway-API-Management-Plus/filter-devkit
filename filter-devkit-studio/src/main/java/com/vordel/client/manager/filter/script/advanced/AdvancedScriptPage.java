@@ -1,4 +1,4 @@
-package com.vordel.client.manager.filter.groovy;
+package com.vordel.client.manager.filter.script.advanced;
 
 import java.io.InputStream;
 
@@ -6,18 +6,18 @@ import org.eclipse.swt.widgets.Composite;
 
 import com.vordel.client.ext.filter.VordelLegacyPage;
 
-public class GroovyScriptPage extends VordelLegacyPage {
-	public GroovyScriptPage() {
-		super("GroovyScriptPage");
+public class AdvancedScriptPage extends VordelLegacyPage {
+	public AdvancedScriptPage() {
+		super("AdvancedScriptPage");
 
-		setTitle(resolve("GROOVYSCRIPT_PAGE_TITLE"));
-		setDescription(resolve("GROOVYSCRIPT_PAGE_DESCRIPTION"));
+		setTitle(resolve("ADVANCEDSCRIPT_PAGE_TITLE"));
+		setDescription(resolve("ADVANCEDSCRIPT_PAGE_DESCRIPTION"));
 		setPageComplete(true);
 	}
 
 	@Override
 	public void createControl(Composite parent) {
-		InputStream is = getClass().getResourceAsStream("groovyscriptpage.xml");
+		InputStream is = getClass().getResourceAsStream("advancedscriptpage.xml");
 
 		try {
 			Composite container = render(parent, is);

@@ -15,7 +15,6 @@ import javax.script.ScriptException;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProcessor;
-import com.vordel.circuit.script.AbstractScriptProcessor;
 import com.vordel.circuit.script.bind.ExtensionContext;
 import com.vordel.circuit.script.context.resources.AbstractContextResourceProvider;
 import com.vordel.circuit.script.context.resources.CacheResource;
@@ -225,6 +224,8 @@ public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
 				} else {
 					throw new CircuitAbortException("Unexpected exception during groovy invocation", cause);
 				}
+			} catch (RuntimeException e) {
+				throw (RuntimeException) e;
 			} catch (Exception e) {
 				throw new CircuitAbortException("Unable to run groovy invoke function", e);
 			}

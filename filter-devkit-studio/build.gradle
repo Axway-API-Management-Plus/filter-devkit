@@ -1,16 +1,29 @@
-apply plugin: 'java'
+plugins {
+	id 'biz.aQute.bnd.builder' version '6.4.0'
+}
 
 java {
-    sourceCompatibility = 'VERSION_1_8'
-    targetCompatibility = 'VERSION_1_8'
+	sourceCompatibility = 'VERSION_1_8'
+	targetCompatibility = 'VERSION_1_8'
+}
+
+jar {
+	manifest {
+		// to be recognized as filter, symbolic name MUST start with 'com.vordel.filter.'
+		// or 'com.vordel.policystudio.ext.' and it must not end with '.help'
+		attributes("Bundle-SymbolicName": "com.vordel.filter.${project.name};singleton:=true",
+		"-include": "src/main/bundle/bundle.bnd")
+	}
 }
 
 apply from: rootProject.file('policystudio.gradle')
 
 dependencies {
-    compileOnly fileTree("${studio_vdistdir}").matching {
-        include 'plugins/com.vordel.filter.jwt.*.jar'
-        include 'plugins/com.vordel.filter.script.*.jar'
-    }
-    implementation project(':filter-devkit-runtime')
+	compileOnly fileTree("${studio_vdistdir}").matching {
+		include 'plugins/com.vordel.filter.jwt.*.jar'
+		include 'plugins/com.vordel.filter.script.*.jar'
+	}
+
+    implementation project(':filter-devkit-quickfilters')
+	implementation project(':filter-devkit-runtime')
 }

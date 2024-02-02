@@ -14,10 +14,6 @@ import groovy.transform.Field
 @Field private static final ExtensionContext DYNAMIC_COMPILER = MessageContextModule.getGlobalResources("dynamic.compiler");
 
 boolean invoke(Message msg) {
-	/* retrieve current circuit for this message */
-	MessageContextTracker tracker = MessageContextTracker.getMessageContextTracker(msg);
-	Circuit circuit = tracker.getCircuit();
-
 	/* incoke the dynamic compiler service */
-	return DYNAMIC_COMPILER.invoke(circuit, msg, "TypeSetService");
+	return DYNAMIC_COMPILER.invoke(msg, "TypeSetService");
 }

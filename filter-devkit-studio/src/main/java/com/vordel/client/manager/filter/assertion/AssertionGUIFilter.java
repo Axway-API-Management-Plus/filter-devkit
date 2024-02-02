@@ -13,7 +13,7 @@ import com.vordel.client.manager.wizard.VordelPage;
 public class AssertionGUIFilter extends VordelLegacyGUIFilter {
 	@Override
 	public String getSmallIconId() {
-		return "has_cert_expired";
+		return "images/alert_icon.gif";
 	}
 
 	public Image getSmallImage() {

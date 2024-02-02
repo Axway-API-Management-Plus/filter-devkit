@@ -8,5 +8,6 @@ java {
 apply from: rootProject.file('apigateway.gradle')
 
 dependencies {
+    annotationProcessor project(':filter-devkit-quickfilters')
     api project(':filter-devkit-runtime')
 }

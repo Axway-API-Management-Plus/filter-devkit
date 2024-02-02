@@ -1,4 +1,4 @@
-package com.vordel.client.manager.filter.groovy;
+package com.vordel.client.manager.filter.script.advanced;
 
 import java.util.List;
 import java.util.Vector;
@@ -15,10 +15,10 @@ import com.vordel.es.Entity;
 import com.vordel.es.EntityStore;
 import com.vordel.es.EntityType;
 
-public class GroovyScriptGUIFilter extends VordelLegacyGUIFilter {
+public class AdvancedScriptGUIFilter extends VordelLegacyGUIFilter {
 	@Override
 	public String getSmallIconId() {
-		return "filter_small";
+		return "images/javascript.gif";
 	}
 
 	public Image getSmallImage() {
@@ -34,18 +34,18 @@ public class GroovyScriptGUIFilter extends VordelLegacyGUIFilter {
 	}
 
 	public String[] getCategories() {
-		return new String[] { resolve("FILTER_GROUP_GROOVYSCRIPT") };
+		return new String[] { resolve("FILTER_GROUP_ADVANCEDSCRIPT") };
 	}
 
 	public String getTypeName() {
-		return resolve("GROOVYSCRIPT_PALETTE_NAME");
+		return resolve("ADVANCEDSCRIPT_PALETTE_NAME");
 	}
 
 	@Override
 	public List<VordelPage> getPropertyPages() {
 		Vector<VordelPage> pages = new Vector<VordelPage>();
 
-		pages.add(new GroovyScriptPage());
+		pages.add(new AdvancedScriptPage());
 		pages.add(createLogPage());
 
 		return pages;

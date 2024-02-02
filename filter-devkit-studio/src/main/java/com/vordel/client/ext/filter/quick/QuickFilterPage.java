@@ -5,7 +5,7 @@ import java.io.InputStream;
 
 import org.eclipse.swt.widgets.Composite;
 
-import com.vordel.circuit.ext.filter.quick.AbstractQuickFilter;
+import com.vordel.circuit.ext.filter.AbstractQuickFilter;
 import com.vordel.circuit.ext.filter.quick.QuickFilterSupport;
 import com.vordel.client.ext.filter.VordelLegacyPage;
 import com.vordel.common.ResourceBase;

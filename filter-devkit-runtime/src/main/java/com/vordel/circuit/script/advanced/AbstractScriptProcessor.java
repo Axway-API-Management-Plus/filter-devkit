@@ -1,4 +1,4 @@
-package com.vordel.circuit.script;
+package com.vordel.circuit.script.advanced;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -145,7 +145,8 @@ public class AbstractScriptProcessor extends MessageProcessor {
 	}
 
 	protected Object invokeScript(Circuit c, Message m) throws CircuitAbortException {
-		return invokeScript(c, m, true, true);
+		/* default behavior for regular script filter */
+		return invokeScript(c, m, false, false);
 	}
 
 	protected final Object invokeScript(Circuit c, Message m, boolean extended, boolean unwrapExceptions) throws CircuitAbortException {

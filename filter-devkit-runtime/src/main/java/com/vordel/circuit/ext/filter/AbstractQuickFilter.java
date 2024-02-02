@@ -1,10 +1,10 @@
-package com.vordel.circuit.ext.filter.quick;
+package com.vordel.circuit.ext.filter;
 
 import java.util.Arrays;
 
 import com.vordel.circuit.DefaultFilter;
 import com.vordel.circuit.FilterContainerImpl;
-import com.vordel.circuit.VordelLegacyFilter;
+import com.vordel.circuit.ext.filter.quick.QuickFilterSupport;
 import com.vordel.config.ConfigContext;
 import com.vordel.es.Entity;
 import com.vordel.es.EntityStoreException;
