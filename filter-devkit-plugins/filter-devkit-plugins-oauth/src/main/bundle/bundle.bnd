@@ -1,5 +1,5 @@
-Bundle-Name: Filter-DevKit AWS Lambda Plugin
-Bundle-Description: API Gateway implementation for AWS Lambda
+Bundle-Name: Filter-DevKit OAuth Plugin
+Bundle-Description: API Gateway implementation for Advanced OAuth implementation
 Bundle-Vendor: Axway
 Bundle-DocURL: https://github.com/Axway-API-Management-Plus/filter-devkit
 Bundle-ClassPath: .
