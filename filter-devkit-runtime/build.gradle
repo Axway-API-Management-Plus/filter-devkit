@@ -1,12 +1,19 @@
-apply plugin: 'java-library'
+apply plugin: 'java'
 
 java {
-    sourceCompatibility = 'VERSION_1_8'
-    targetCompatibility = 'VERSION_1_8'
+	sourceCompatibility = 'VERSION_1_8'
+	targetCompatibility = 'VERSION_1_8'
+
+	withJavadocJar()
+	withSourcesJar()
 }
 
 apply from: rootProject.file("apigateway.gradle")
 
+configurations {
+	compile.extendsFrom(apigw_central)
+}
+
 dependencies {
-	api project(':filter-devkit-quickfilters')
+	implementation project(':filter-devkit-quickfilters')
 }

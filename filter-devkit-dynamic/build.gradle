@@ -3,12 +3,20 @@ apply plugin: 'java'
 java {
     sourceCompatibility = 'VERSION_1_8'
     targetCompatibility = 'VERSION_1_8'
+
+	withJavadocJar()
+	withSourcesJar()
 }
 
 apply from: rootProject.file('apigateway.gradle')
 
+configurations {
+	compile.extendsFrom(apigw_central)
+}
+
 dependencies {
     implementation 'org.eclipse.jdt:ecj:3.16.0'
+    implementation project(':filter-devkit-quickfilters')
     implementation project(':filter-devkit-runtime')
 }
 

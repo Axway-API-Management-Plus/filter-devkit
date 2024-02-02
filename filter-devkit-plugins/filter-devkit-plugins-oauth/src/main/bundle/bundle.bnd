@@ -1,17 +1,9 @@
-Bundle-Name: Filter-DevKit UI
-Bundle-Description: API Gateway components for implementing filters and advanced scripting
+Bundle-Name: Filter-DevKit AWS Lambda Plugin
+Bundle-Description: API Gateway implementation for AWS Lambda
 Bundle-Vendor: Axway
 Bundle-DocURL: https://github.com/Axway-API-Management-Plus/filter-devkit
 Bundle-ClassPath: .
-Export-Package: \
-	com.vordel.circuit.jaxrs,\
-	com.vordel.circuit.assertion,\
-	com.vordel.circuit.ext.filter,\
-	com.vordel.circuit.ext.filter.quick;-split-package:=merge-first,\
-	com.vordel.circuit.script.filter,\
-	com.vordel.client.ext.filter.quick,\
-	com.vordel.client.manager.filter.assertion,\
-	com.vordel.client.manager.filter.script.advanced
+Export-Package: com.vordel.sdk.plugins.oauth2.filter
 Import-Package: \
 	com.vordel.client.ext.filter,\
 	com.vordel.client.manager.filter.script,\
@@ -32,8 +24,5 @@ Import-Package: \
 	org.eclipse.osgi.util,\
 	org.eclipse.swt.widgets,\
 	*
--includeresource: \
-META-INF/lib/filter-devkit-quickfilters.jar=filter-devkit-quickfilters-*.jar;lib:=true,\
-META-INF/lib/filter-devkit-runtime.jar=filter-devkit-runtime-*.jar;lib:=true
 
 -noee=true

@@ -23,7 +23,8 @@ public interface AdvancedScriptRuntime {
 	 * 
 	 * @param unwrap {@code true} to unwrap {@link CircuitAbortException},
 	 *               {@code false} for default behavior.
-	 * @throws ScriptException
+	 * @throws ScriptException if this method is called outside script attachment
+	 *                         phase
 	 */
 	void setUnwrapCircuitAbortException(boolean unwrap) throws ScriptException;
 
@@ -37,10 +38,8 @@ public interface AdvancedScriptRuntime {
 	 *                 {@code true}, {@link Circuit} and {@link Message} are used
 	 *                 respectively as first and second parameter (Ex:
 	 *                 {@code invoke(circuit, message)})
-	 * @throws ScriptException
-	 * 
-	 * @apiNote this method can only be used when calling from initial eval or
-	 *          attach script function
+	 * @throws ScriptException if this method is called outside script attachment
+	 *                         phase
 	 */
 	void setExtendedInvoke(boolean extended) throws ScriptException;
 
@@ -79,7 +78,7 @@ public interface AdvancedScriptRuntime {
 	 * resource is not invocable an exception is thrown. If the requested resource
 	 * is {@code null}, null is returned.
 	 * 
-	 * @param m    current message
+	 * @param msg  current message
 	 * @param name name of the resource
 	 * 
 	 * @return resource call result
@@ -102,11 +101,9 @@ public interface AdvancedScriptRuntime {
 	 * bind annotated groovy methods to exportable context (usable in selectors and
 	 * other scripts)
 	 * 
-	 * @param script
-	 * @throws ScriptException
-	 * 
-	 * @apiNote this method can only be used once and only when calling from initial
-	 *          eval or attach script function
+	 * @param script current script instance
+	 * @throws ScriptException if this method is called outside script attachment
+	 *                         phase
 	 */
 	void reflectResources(Script script) throws ScriptException;
 
@@ -115,11 +112,9 @@ public interface AdvancedScriptRuntime {
 	 * side effect CircuitAbortExceptions are not wrapped (since this is a direct
 	 * Java reflective call).
 	 * 
-	 * @param script
-	 * @throws ScriptException
-	 * 
-	 * @apiNote if no method matches using injection regular script function call is
-	 *          applied
+	 * @param script current script instance
+	 * @throws ScriptException if this method is called outside script attachment
+	 *                         phase
 	 */
 	void reflectEntryPoints(Script script) throws ScriptException;
 
@@ -129,10 +124,8 @@ public interface AdvancedScriptRuntime {
 	 * @param jaxrs         service reflected from current groovy script
 	 * @param reportNoMatch if {@code true}, the service will return {@code false}
 	 *                      if the JAXRS service fails
-	 * @throws ScriptException
-	 * 
-	 * @apiNote this method can only be used when calling from initial eval or
-	 *          attach script function.
+	 * @throws ScriptException if this method is called outside script attachment
+	 *                         phase
 	 */
 	void setScriptWebComponent(ScriptWebComponent jaxrs, boolean reportNoMatch) throws ScriptException;
 

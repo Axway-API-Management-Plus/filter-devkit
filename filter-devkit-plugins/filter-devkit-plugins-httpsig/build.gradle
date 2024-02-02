@@ -1,4 +1,6 @@
-apply plugin: 'java'
+plugins {
+	id 'biz.aQute.bnd.builder' version '6.4.0'
+}
 
 java {
     sourceCompatibility = 'VERSION_1_8'
@@ -6,8 +8,32 @@ java {
 }
 
 apply from: rootProject.file('apigateway.gradle')
+apply from: rootProject.file('policystudio.gradle')
+
+configurations {
+	compile.extendsFrom(apigw_central)
+	osgi.extendsFrom(studio_dist);
+}
 
 dependencies {
     annotationProcessor project(':filter-devkit-quickfilters')
-    implementation project(':filter-devkit-runtime')
+    implementation project(':filter-devkit-quickfilters')
+	implementation project(':filter-devkit-runtime')
+	
+	osgi project(':filter-devkit-quickfilters')
+	osgi project(':filter-devkit-runtime')
+	osgi project(':filter-devkit-studio')
+}
+
+tasks.withType(Zip) {
+	classpath = configurations.osgi
+}
+
+jar {
+	manifest {
+		// to be recognized as filter, symbolic name MUST start with 'com.vordel.filter.'
+		// or 'com.vordel.policystudio.ext.' and it must not end with '.help'
+		attributes("Bundle-SymbolicName": "com.vordel.filter.${project.name};singleton:=true",
+		"-include": "src/main/bundle/bundle.bnd")
+	}
 }

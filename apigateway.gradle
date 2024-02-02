@@ -7,767 +7,774 @@ repositories {
     mavenCentral()
 }
 
-task checkProperties {
+def checkAPIGatewayProperties() {
     if (!project.hasProperty('apigw_vdistdir')) {
         throw new RuntimeException("Could not find 'apigw_vdistdir'. Did you forget to specify it in ~/.gradle/gradle.properties ?")
     }
 }
 
+checkAPIGatewayProperties()
+
+configurations {
+	apigw_central
+	apigw_dist
+}
+
 dependencies {
-    compileOnly('org.apache.activemq:activemq-broker:5.16.0') {
+    apigw_central('org.apache.activemq:activemq-broker:5.16.0') {
         transitive = false
     }
-    compileOnly('org.apache.activemq:activemq-client:5.16.0') {
+    apigw_central('org.apache.activemq:activemq-client:5.16.0') {
         transitive = false
     }
-    compileOnly('org.apache.activemq:activemq-kahadb-store:5.16.0') {
+    apigw_central('org.apache.activemq:activemq-kahadb-store:5.16.0') {
         transitive = false
     }
-    compileOnly('org.apache.activemq:activemq-leveldb-store:5.16.0') {
+    apigw_central('org.apache.activemq:activemq-leveldb-store:5.16.0') {
         transitive = false
     }
-    compileOnly('org.apache.activemq:activemq-openwire-legacy:5.16.0') {
+    apigw_central('org.apache.activemq:activemq-openwire-legacy:5.16.0') {
         transitive = false
     }
-    compileOnly('org.apache.activemq.protobuf:activemq-protobuf:1.1') {
+    apigw_central('org.apache.activemq.protobuf:activemq-protobuf:1.1') {
         transitive = false
     }
-    compileOnly('org.apache.ant:ant:1.10.11') {
+    apigw_central('org.apache.ant:ant:1.10.11') {
         transitive = false
     }
-    compileOnly('ant-contrib:ant-contrib:1.0b3') {
+    apigw_central('ant-contrib:ant-contrib:1.0b3') {
         transitive = false
     }
-    compileOnly('org.apache.ant:ant-launcher:1.10.11') {
+    apigw_central('org.apache.ant:ant-launcher:1.10.11') {
         transitive = false
     }
-    compileOnly('org.antlr:antlr:3.2') {
+    apigw_central('org.antlr:antlr:3.2') {
         transitive = false
     }
-    compileOnly('org.glassfish.hk2.external:aopalliance-repackaged:2.6.1') {
+    apigw_central('org.glassfish.hk2.external:aopalliance-repackaged:2.6.1') {
         transitive = false
     }
-    compileOnly('org.apache.directory.api:api-asn1-api:2.1.0') {
+    apigw_central('org.apache.directory.api:api-asn1-api:2.1.0') {
         transitive = false
     }
-    compileOnly('org.apache.directory.api:api-asn1-ber:2.1.0') {
+    apigw_central('org.apache.directory.api:api-asn1-ber:2.1.0') {
         transitive = false
     }
-    compileOnly('org.apache.directory.api:api-i18n:2.1.0') {
+    apigw_central('org.apache.directory.api:api-i18n:2.1.0') {
         transitive = false
     }
-    compileOnly('org.apache.directory.api:api-ldap-model:2.1.0') {
+    apigw_central('org.apache.directory.api:api-ldap-model:2.1.0') {
         transitive = false
     }
-    compileOnly('org.apache.directory.api:api-util:2.1.0') {
+    apigw_central('org.apache.directory.api:api-util:2.1.0') {
         transitive = false
     }
-    compileOnly('org.objectstyle.ashwood:ashwood:2.0') {
+    apigw_central('org.objectstyle.ashwood:ashwood:2.0') {
         transitive = false
     }
-    compileOnly('net.minidev:asm:1.0') {
+    apigw_central('net.minidev:asm:1.0') {
         transitive = false
     }
-    compileOnly('org.ow2.asm:asm-all:4.0') {
+    apigw_central('org.ow2.asm:asm-all:4.0') {
         transitive = false
     }
-    compileOnly('org.ow2.asm:asm-analysis:5.0.3') {
+    apigw_central('org.ow2.asm:asm-analysis:5.0.3') {
         transitive = false
     }
-    compileOnly('org.ow2.asm:asm-commons:5.0.3') {
+    apigw_central('org.ow2.asm:asm-commons:5.0.3') {
         transitive = false
     }
-    compileOnly('org.ow2.asm:asm-tree:5.0.3') {
+    apigw_central('org.ow2.asm:asm-tree:5.0.3') {
         transitive = false
     }
-    compileOnly('org.ow2.asm:asm-util:5.0.3') {
+    apigw_central('org.ow2.asm:asm-util:5.0.3') {
         transitive = false
     }
-    compileOnly('com.amazonaws:aws-java-sdk-core:1.11.564') {
+    apigw_central('com.amazonaws:aws-java-sdk-core:1.11.564') {
         transitive = false
     }
-    compileOnly('com.amazonaws:aws-java-sdk-kms:1.11.564') {
+    apigw_central('com.amazonaws:aws-java-sdk-kms:1.11.564') {
         transitive = false
     }
-    compileOnly('com.amazonaws:aws-java-sdk-s3:1.11.564') {
+    apigw_central('com.amazonaws:aws-java-sdk-s3:1.11.564') {
         transitive = false
     }
-    compileOnly('com.amazonaws:aws-java-sdk-simpledb:1.11.564') {
+    apigw_central('com.amazonaws:aws-java-sdk-simpledb:1.11.564') {
         transitive = false
     }
-    compileOnly('com.amazonaws:aws-java-sdk-sns:1.11.564') {
+    apigw_central('com.amazonaws:aws-java-sdk-sns:1.11.564') {
         transitive = false
     }
-    compileOnly('com.amazonaws:aws-java-sdk-sqs:1.11.564') {
+    apigw_central('com.amazonaws:aws-java-sdk-sqs:1.11.564') {
         transitive = false
     }
-    compileOnly('backport-util-concurrent:backport-util-concurrent-java12:3.1') {
+    apigw_central('backport-util-concurrent:backport-util-concurrent-java12:3.1') {
         transitive = false
     }
-    compileOnly('org.bouncycastle:bcpg-jdk15on:1.66') {
+    apigw_central('org.bouncycastle:bcpg-jdk15on:1.66') {
         transitive = false
     }
-    compileOnly('org.bouncycastle:bcpkix-jdk15on:1.66') {
+    apigw_central('org.bouncycastle:bcpkix-jdk15on:1.66') {
         transitive = false
     }
-    compileOnly('org.bouncycastle:bcprov-ext-jdk15on:1.66') {
+    apigw_central('org.bouncycastle:bcprov-ext-jdk15on:1.66') {
         transitive = false
     }
-    compileOnly('org.bouncycastle:bcprov-jdk15on:1.66') {
+    apigw_central('org.bouncycastle:bcprov-jdk15on:1.66') {
         transitive = false
     }
-    compileOnly('com.github.java-json-tools:btf:1.3') {
+    apigw_central('com.github.java-json-tools:btf:1.3') {
         transitive = false
     }
-    compileOnly('com.datastax.cassandra:cassandra-driver-core:3.10.2') {
+    apigw_central('com.datastax.cassandra:cassandra-driver-core:3.10.2') {
         transitive = false
     }
-    compileOnly('org.apache.cayenne:cayenne-client:4.1') {
+    apigw_central('org.apache.cayenne:cayenne-client:4.1') {
         transitive = false
     }
-    compileOnly('org.apache.cayenne:cayenne-di:4.1') {
+    apigw_central('org.apache.cayenne:cayenne-di:4.1') {
         transitive = false
     }
-    compileOnly('org.apache.cayenne:cayenne-server:4.1') {
+    apigw_central('org.apache.cayenne:cayenne-server:4.1') {
         transitive = false
     }
-    compileOnly('org.apache.cayenne:cayenne-velocity:4.1') {
+    apigw_central('org.apache.cayenne:cayenne-velocity:4.1') {
         transitive = false
     }
-    compileOnly('com.fasterxml:classmate:1.0.0') {
+    apigw_central('com.fasterxml:classmate:1.0.0') {
         transitive = false
     }
-    compileOnly('org.eclipse.persistence:commonj.sdo:2.1.1') {
+    apigw_central('org.eclipse.persistence:commonj.sdo:2.1.1') {
         transitive = false
     }
-    compileOnly('commons-beanutils:commons-beanutils:1.9.4') {
+    apigw_central('commons-beanutils:commons-beanutils:1.9.4') {
         transitive = false
     }
-    compileOnly('commons-cli:commons-cli:1.4') {
+    apigw_central('commons-cli:commons-cli:1.4') {
         transitive = false
     }
-    compileOnly('commons-codec:commons-codec:1.15') {
+    apigw_central('commons-codec:commons-codec:1.15') {
         transitive = false
     }
-    compileOnly('commons-collections:commons-collections:3.2.2') {
+    apigw_central('commons-collections:commons-collections:3.2.2') {
         transitive = false
     }
-    compileOnly('org.apache.commons:commons-collections4:4.2') {
+    apigw_central('org.apache.commons:commons-collections4:4.2') {
         transitive = false
     }
-    compileOnly('org.apache.commons:commons-compress:1.21') {
+    apigw_central('org.apache.commons:commons-compress:1.21') {
         transitive = false
     }
-    compileOnly('org.apache.commons:commons-configuration2:2.7') {
+    apigw_central('org.apache.commons:commons-configuration2:2.7') {
         transitive = false
     }
-    compileOnly('commons-dbcp:commons-dbcp:1.4') {
+    apigw_central('commons-dbcp:commons-dbcp:1.4') {
         transitive = false
     }
-    compileOnly('commons-dbutils:commons-dbutils:1.7') {
+    apigw_central('commons-dbutils:commons-dbutils:1.7') {
         transitive = false
     }
-    compileOnly('org.apache.commons:commons-digester3:3.2') {
+    apigw_central('org.apache.commons:commons-digester3:3.2') {
         transitive = false
     }
-    compileOnly('commons-discovery:commons-discovery:0.2') {
+    apigw_central('commons-discovery:commons-discovery:0.2') {
         transitive = false
     }
-    compileOnly('org.apache.commons:commons-email:1.5') {
+    apigw_central('org.apache.commons:commons-email:1.5') {
         transitive = false
     }
-    compileOnly('org.apache.commons:commons-exec:1.3') {
+    apigw_central('org.apache.commons:commons-exec:1.3') {
         transitive = false
     }
-    compileOnly('commons-httpclient:commons-httpclient:3.1') {
+    apigw_central('commons-httpclient:commons-httpclient:3.1') {
         transitive = false
     }
-    compileOnly('commons-io:commons-io:2.11.0') {
+    apigw_central('commons-io:commons-io:2.11.0') {
         transitive = false
     }
-    compileOnly('commons-lang:commons-lang:2.6') {
+    apigw_central('commons-lang:commons-lang:2.6') {
         transitive = false
     }
-    compileOnly('org.apache.commons:commons-lang3:3.12.0') {
+    apigw_central('org.apache.commons:commons-lang3:3.12.0') {
         transitive = false
     }
-    compileOnly('commons-logging:commons-logging:1.2') {
+    apigw_central('commons-logging:commons-logging:1.2') {
         transitive = false
     }
-    compileOnly('commons-net:commons-net:3.6') {
+    apigw_central('commons-net:commons-net:3.6') {
         transitive = false
     }
-    compileOnly('commons-pool:commons-pool:1.6') {
+    apigw_central('commons-pool:commons-pool:1.6') {
         transitive = false
     }
-    compileOnly('org.apache.commons:commons-text:1.9') {
+    apigw_central('org.apache.commons:commons-text:1.9') {
         transitive = false
     }
-    compileOnly('commons-validator:commons-validator:1.6') {
+    apigw_central('commons-validator:commons-validator:1.6') {
         transitive = false
     }
-    compileOnly('org.cryptacular:cryptacular:1.1.4') {
+    apigw_central('org.cryptacular:cryptacular:1.1.4') {
         transitive = false
     }
-    compileOnly('com.lmax:disruptor:3.4.4') {
+    apigw_central('com.lmax:disruptor:3.4.4') {
         transitive = false
     }
-    compileOnly('org.dom4j:dom4j:2.1.3') {
+    apigw_central('org.dom4j:dom4j:2.1.3') {
         transitive = false
     }
-    compileOnly('org.eclipse.persistence:eclipselink:2.6.0') {
+    apigw_central('org.eclipse.persistence:eclipselink:2.6.0') {
         transitive = false
     }
-    compileOnly('net.sf.ehcache:ehcache:2.10.6') {
+    apigw_central('net.sf.ehcache:ehcache:2.10.6') {
         transitive = false
     }
-    compileOnly('com.google.guava:failureaccess:1.0.1') {
+    apigw_central('com.google.guava:failureaccess:1.0.1') {
         transitive = false
     }
-    compileOnly('org.apache.ftpserver:ftplet-api:1.0.6') {
+    apigw_central('org.apache.ftpserver:ftplet-api:1.0.6') {
         transitive = false
     }
-    compileOnly('org.apache.ftpserver:ftpserver-core:1.0.6') {
+    apigw_central('org.apache.ftpserver:ftpserver-core:1.0.6') {
         transitive = false
     }
-    compileOnly('org.apache.geronimo.specs:geronimo-j2ee-management_1.1_spec:1.0.1') {
+    apigw_central('org.apache.geronimo.specs:geronimo-j2ee-management_1.1_spec:1.0.1') {
         transitive = false
     }
-    compileOnly('org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1') {
+    apigw_central('org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1') {
         transitive = false
     }
-    compileOnly('org.apache.geronimo.specs:geronimo-jpa_2.0_spec:1.1') {
+    apigw_central('org.apache.geronimo.specs:geronimo-jpa_2.0_spec:1.1') {
         transitive = false
     }
-    compileOnly('org.apache.geronimo.specs:geronimo-jta_1.1_spec:1.1.1') {
+    apigw_central('org.apache.geronimo.specs:geronimo-jta_1.1_spec:1.1.1') {
         transitive = false
     }
-    compileOnly('org.codehaus.groovy:groovy:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy:2.5.13') {
         transitive = false
     }
-    compileOnly('org.codehaus.groovy:groovy-bsf:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-bsf:2.5.13') {
         transitive = false
     }
-    compileOnly('org.codehaus.groovy:groovy-datetime:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-datetime:2.5.13') {
         transitive = false
     }
-    compileOnly('org.codehaus.groovy:groovy-dateutil:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-dateutil:2.5.13') {
         transitive = false
     }
-    compileOnly('org.codehaus.groovy:groovy-jaxb:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-jaxb:2.5.13') {
         transitive = false
     }
-    compileOnly('org.codehaus.groovy:groovy-jmx:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-jmx:2.5.13') {
         transitive = false
     }
-    compileOnly('org.codehaus.groovy:groovy-json:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-json:2.5.13') {
         transitive = false
     }
-    compileOnly('org.codehaus.groovy:groovy-json-direct:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-json-direct:2.5.13') {
         transitive = false
     }
-    compileOnly('org.codehaus.groovy:groovy-jsr223:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-jsr223:2.5.13') {
         transitive = false
     }
-    compileOnly('org.codehaus.groovy:groovy-macro:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-macro:2.5.13') {
         transitive = false
     }
-    compileOnly('org.codehaus.groovy:groovy-nio:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-nio:2.5.13') {
         transitive = false
     }
-    compileOnly('org.codehaus.groovy:groovy-servlet:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-servlet:2.5.13') {
         transitive = false
     }
-    compileOnly('org.codehaus.groovy:groovy-sql:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-sql:2.5.13') {
         transitive = false
     }
-    compileOnly('org.codehaus.groovy:groovy-templates:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-templates:2.5.13') {
         transitive = false
     }
-    compileOnly('org.codehaus.groovy:groovy-xml:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-xml:2.5.13') {
         transitive = false
     }
-    compileOnly('com.google.guava:guava:30.0-jre') {
+    apigw_central('com.google.guava:guava:30.0-jre') {
         transitive = false
     }
-    compileOnly('com.github.jknack:handlebars:4.2.1') {
+    apigw_central('com.github.jknack:handlebars:4.2.1') {
         transitive = false
     }
-    compileOnly('org.fusesource.hawtbuf:hawtbuf:1.11') {
+    apigw_central('org.fusesource.hawtbuf:hawtbuf:1.11') {
         transitive = false
     }
-    compileOnly('org.fusesource.hawtbuf:hawtbuf-proto:1.11') {
+    apigw_central('org.fusesource.hawtbuf:hawtbuf-proto:1.11') {
         transitive = false
     }
-    compileOnly('org.fusesource.hawtdispatch:hawtdispatch:1.22') {
+    apigw_central('org.fusesource.hawtdispatch:hawtdispatch:1.22') {
         transitive = false
     }
-    compileOnly('org.fusesource.hawtdispatch:hawtdispatch-scala-2.11:1.22') {
+    apigw_central('org.fusesource.hawtdispatch:hawtdispatch-scala-2.11:1.22') {
         transitive = false
     }
-    compileOnly('org.fusesource.hawtdispatch:hawtdispatch-transport:1.22') {
+    apigw_central('org.fusesource.hawtdispatch:hawtdispatch-transport:1.22') {
         transitive = false
     }
-    compileOnly('org.fusesource.hawtjni:hawtjni-runtime:1.9') {
+    apigw_central('org.fusesource.hawtjni:hawtjni-runtime:1.9') {
         transitive = false
     }
-    compileOnly('org.hectorclient:hector-core:2.0-0') {
+    apigw_central('org.hectorclient:hector-core:2.0-0') {
         transitive = false
     }
-    compileOnly('org.hibernate.validator:hibernate-validator:6.1.5.Final') {
+    apigw_central('org.hibernate.validator:hibernate-validator:6.1.5.Final') {
         transitive = false
     }
-    compileOnly('org.hibernate.validator:hibernate-validator-annotation-processor:6.1.5.Final') {
+    apigw_central('org.hibernate.validator:hibernate-validator-annotation-processor:6.1.5.Final') {
         transitive = false
     }
-    compileOnly('org.glassfish.hk2:hk2-api:2.6.1') {
+    apigw_central('org.glassfish.hk2:hk2-api:2.6.1') {
         transitive = false
     }
-    compileOnly('org.glassfish.hk2:hk2-locator:2.6.1') {
+    apigw_central('org.glassfish.hk2:hk2-locator:2.6.1') {
         transitive = false
     }
-    compileOnly('org.glassfish.hk2:hk2-utils:2.6.1') {
+    apigw_central('org.glassfish.hk2:hk2-utils:2.6.1') {
         transitive = false
     }
-    compileOnly('org.apache.httpcomponents:httpclient:4.5.13') {
+    apigw_central('org.apache.httpcomponents:httpclient:4.5.13') {
         transitive = false
     }
-    compileOnly('org.apache.httpcomponents:httpclient-cache:4.5.13') {
+    apigw_central('org.apache.httpcomponents:httpclient-cache:4.5.13') {
         transitive = false
     }
-    compileOnly('org.apache.httpcomponents:httpcore:4.4.13') {
+    apigw_central('org.apache.httpcomponents:httpcore:4.4.13') {
         transitive = false
     }
-    compileOnly('org.apache.httpcomponents:httpmime:4.5.13') {
+    apigw_central('org.apache.httpcomponents:httpmime:4.5.13') {
         transitive = false
     }
-    compileOnly('com.fasterxml.jackson.core:jackson-annotations:2.13.2') {
+    apigw_central('com.fasterxml.jackson.core:jackson-annotations:2.13.2') {
         transitive = false
     }
-    compileOnly('com.fasterxml.jackson.core:jackson-core:2.13.2') {
+    apigw_central('com.fasterxml.jackson.core:jackson-core:2.13.2') {
         transitive = false
     }
-    compileOnly('com.github.java-json-tools:jackson-coreutils:1.12') {
+    apigw_central('com.github.java-json-tools:jackson-coreutils:1.12') {
         transitive = false
     }
-    compileOnly('com.fasterxml.jackson.core:jackson-databind:2.13.2.2') {
+    apigw_central('com.fasterxml.jackson.core:jackson-databind:2.13.2.2') {
         transitive = false
     }
-    compileOnly('com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.2') {
+    apigw_central('com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.2') {
         transitive = false
     }
-    compileOnly('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.2') {
+    apigw_central('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.2') {
         transitive = false
     }
-    compileOnly('com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.2') {
+    apigw_central('com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.2') {
         transitive = false
     }
-    compileOnly('com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:2.13.2') {
+    apigw_central('com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:2.13.2') {
         transitive = false
     }
-    compileOnly('com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.13.2') {
+    apigw_central('com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.13.2') {
         transitive = false
     }
-    compileOnly('com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.13.2') {
+    apigw_central('com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.13.2') {
         transitive = false
     }
-    compileOnly('com.fasterxml.jackson.module:jackson-module-jsonSchema:2.13.2') {
+    apigw_central('com.fasterxml.jackson.module:jackson-module-jsonSchema:2.13.2') {
         transitive = false
     }
-    compileOnly('jakarta.activation:jakarta.activation-api:2.0.1') {
+    apigw_central('jakarta.activation:jakarta.activation-api:2.0.1') {
         transitive = false
     }
-    compileOnly('jakarta.annotation:jakarta.annotation-api:1.3.5') {
+    apigw_central('jakarta.annotation:jakarta.annotation-api:1.3.5') {
         transitive = false
     }
-    compileOnly('org.glassfish:jakarta.el:3.0.4') {
+    apigw_central('org.glassfish:jakarta.el:3.0.4') {
         transitive = false
     }
-    compileOnly('jakarta.el:jakarta.el-api:3.0.3') {
+    apigw_central('jakarta.el:jakarta.el-api:3.0.3') {
         transitive = false
     }
-    compileOnly('org.glassfish.hk2.external:jakarta.inject:2.6.1') {
+    apigw_central('org.glassfish.hk2.external:jakarta.inject:2.6.1') {
         transitive = false
     }
-    compileOnly('jakarta.validation:jakarta.validation-api:2.0.2') {
+    apigw_central('jakarta.validation:jakarta.validation-api:2.0.2') {
         transitive = false
     }
-    compileOnly('jakarta.ws.rs:jakarta.ws.rs-api:2.1.6') {
+    apigw_central('jakarta.ws.rs:jakarta.ws.rs-api:2.1.6') {
         transitive = false
     }
-    compileOnly('net.shibboleth.utilities:java-support:7.5.2') {
+    apigw_central('net.shibboleth.utilities:java-support:7.5.2') {
         transitive = false
     }
-    compileOnly('javax.help:javahelp:2.0.02') {
+    apigw_central('javax.help:javahelp:2.0.02') {
         transitive = false
     }
-    compileOnly('org.javassist:javassist:3.27.0-GA') {
+    apigw_central('org.javassist:javassist:3.27.0-GA') {
         transitive = false
     }
-    compileOnly('org.glassfish:javax.json:1.0.4') {
+    apigw_central('org.glassfish:javax.json:1.0.4') {
         transitive = false
     }
-    compileOnly('com.sun.mail:javax.mail:1.6.2') {
+    apigw_central('com.sun.mail:javax.mail:1.6.2') {
         transitive = false
     }
-    compileOnly('com.sun.xml.bind:jaxb-impl:2.2.3') {
+    apigw_central('com.sun.xml.bind:jaxb-impl:2.2.3') {
         transitive = false
     }
-    compileOnly('com.sun.xml.bind:jaxb1-impl:2.2.3') {
+    apigw_central('com.sun.xml.bind:jaxb1-impl:2.2.3') {
         transitive = false
     }
-    compileOnly('javax.xml:jaxr-api:1.0_04') {
+    apigw_central('javax.xml:jaxr-api:1.0_04') {
         transitive = false
     }
-    compileOnly('com.sun.xml.registry:jaxr-impl:1.0.6') {
+    apigw_central('com.sun.xml.registry:jaxr-impl:1.0.6') {
         transitive = false
     }
-    compileOnly('javax.xml:jaxrpc-api:1.1') {
+    apigw_central('javax.xml:jaxrpc-api:1.1') {
         transitive = false
     }
-    compileOnly('org.jboss.logging:jboss-logging:3.2.1.Final') {
+    apigw_central('org.jboss.logging:jboss-logging:3.2.1.Final') {
         transitive = false
     }
-    compileOnly('org.slf4j:jcl-over-slf4j:1.7.31') {
+    apigw_central('org.slf4j:jcl-over-slf4j:1.7.31') {
         transitive = false
     }
-    compileOnly('com.beust:jcommander:1.48') {
+    apigw_central('com.beust:jcommander:1.48') {
         transitive = false
     }
-    compileOnly('org.glassfish.jersey.connectors:jersey-apache-connector:2.31') {
+    apigw_central('org.glassfish.jersey.connectors:jersey-apache-connector:2.31') {
         transitive = false
     }
-    compileOnly('org.glassfish.jersey.ext:jersey-bean-validation:2.31') {
+    apigw_central('org.glassfish.jersey.ext:jersey-bean-validation:2.31') {
         transitive = false
     }
-    compileOnly('org.glassfish.jersey.core:jersey-client:2.31') {
+    apigw_central('org.glassfish.jersey.core:jersey-client:2.31') {
         transitive = false
     }
-    compileOnly('org.glassfish.jersey.core:jersey-common:2.31') {
+    apigw_central('org.glassfish.jersey.core:jersey-common:2.31') {
         transitive = false
     }
-    compileOnly('org.glassfish.jersey.containers:jersey-container-servlet-core:2.31') {
+    apigw_central('org.glassfish.jersey.containers:jersey-container-servlet-core:2.31') {
         transitive = false
     }
-    compileOnly('org.glassfish.jersey.ext:jersey-entity-filtering:2.31') {
+    apigw_central('org.glassfish.jersey.ext:jersey-entity-filtering:2.31') {
         transitive = false
     }
-    compileOnly('org.glassfish.jersey.inject:jersey-hk2:2.31') {
+    apigw_central('org.glassfish.jersey.inject:jersey-hk2:2.31') {
         transitive = false
     }
-    compileOnly('org.glassfish.jersey.media:jersey-media-json-jackson:2.31') {
+    apigw_central('org.glassfish.jersey.media:jersey-media-json-jackson:2.31') {
         transitive = false
     }
-    compileOnly('org.glassfish.jersey.media:jersey-media-multipart:2.31') {
+    apigw_central('org.glassfish.jersey.media:jersey-media-multipart:2.31') {
         transitive = false
     }
-    compileOnly('org.glassfish.jersey.core:jersey-server:2.31') {
+    apigw_central('org.glassfish.jersey.core:jersey-server:2.31') {
         transitive = false
     }
-    compileOnly('org.codehaus.jettison:jettison:1.3.3') {
+    apigw_central('org.codehaus.jettison:jettison:1.3.3') {
         transitive = false
     }
-    compileOnly('com.floreysoft:jmte:3.1.1') {
+    apigw_central('com.floreysoft:jmte:3.1.1') {
         transitive = false
     }
-    compileOnly('net.java.dev.jna:jna:4.1.0') {
+    apigw_central('net.java.dev.jna:jna:4.1.0') {
         transitive = false
     }
-    compileOnly('net.java.dev.jna:jna-platform:4.1.0') {
+    apigw_central('net.java.dev.jna:jna-platform:4.1.0') {
         transitive = false
     }
-    compileOnly('joda-time:joda-time:2.10.3') {
+    apigw_central('joda-time:joda-time:2.10.3') {
         transitive = false
     }
-    compileOnly('com.jcraft:jsch:0.1.54') {
+    apigw_central('com.jcraft:jsch:0.1.54') {
         transitive = false
     }
-    compileOnly('org.json:json:20140107') {
+    apigw_central('org.json:json:20140107') {
         transitive = false
     }
-    compileOnly('com.github.java-json-tools:json-patch:1.12') {
+    apigw_central('com.github.java-json-tools:json-patch:1.12') {
         transitive = false
     }
-    compileOnly('com.jayway.jsonpath:json-path:2.2.0') {
+    apigw_central('com.jayway.jsonpath:json-path:2.2.0') {
         transitive = false
     }
-    compileOnly('com.github.java-json-tools:json-schema-core:1.2.13') {
+    apigw_central('com.github.java-json-tools:json-schema-core:1.2.13') {
         transitive = false
     }
-    compileOnly('com.github.java-json-tools:json-schema-validator:2.2.13') {
+    apigw_central('com.github.java-json-tools:json-schema-validator:2.2.13') {
         transitive = false
     }
-    compileOnly('com.googlecode.json-simple:json-simple:1.1') {
+    apigw_central('com.googlecode.json-simple:json-simple:1.1') {
         transitive = false
     }
-    compileOnly('net.minidev:json-smart:2.1.1') {
+    apigw_central('net.minidev:json-smart:2.1.1') {
         transitive = false
     }
-    compileOnly('com.google.code.findbugs:jsr305:3.0.1') {
+    apigw_central('com.google.code.findbugs:jsr305:3.0.1') {
         transitive = false
     }
-    compileOnly('org.apache.juddi:juddi-client:3.3.10') {
+    apigw_central('org.apache.juddi:juddi-client:3.3.10') {
         transitive = false
     }
-    compileOnly('de.odysseus.juel:juel-api:2.2.4') {
+    apigw_central('de.odysseus.juel:juel-api:2.2.4') {
         transitive = false
     }
-    compileOnly('de.odysseus.juel:juel-impl:2.2.4') {
+    apigw_central('de.odysseus.juel:juel-impl:2.2.4') {
         transitive = false
     }
-    compileOnly('org.slf4j:jul-to-slf4j:1.7.31') {
+    apigw_central('org.slf4j:jul-to-slf4j:1.7.31') {
         transitive = false
     }
-    compileOnly('org.python:jython:2.7.2') {
+    apigw_central('org.python:jython:2.7.2') {
         transitive = false
     }
-    compileOnly('org.iq80.leveldb:leveldb:0.9') {
+    apigw_central('org.iq80.leveldb:leveldb:0.9') {
         transitive = false
     }
-    compileOnly('org.iq80.leveldb:leveldb-api:0.9') {
+    apigw_central('org.iq80.leveldb:leveldb-api:0.9') {
         transitive = false
     }
-    compileOnly('org.fusesource.leveldbjni:leveldbjni:1.8') {
+    apigw_central('org.fusesource.leveldbjni:leveldbjni:1.8') {
         transitive = false
     }
-    compileOnly('com.googlecode.libphonenumber:libphonenumber:8.11.0') {
+    apigw_central('com.googlecode.libphonenumber:libphonenumber:8.11.0') {
         transitive = false
     }
-    compileOnly('org.apache.logging.log4j:log4j-1.2-api:2.17.1') {
+    apigw_central('org.apache.logging.log4j:log4j-1.2-api:2.17.1') {
         transitive = false
     }
-    compileOnly('org.apache.logging.log4j:log4j-api:2.17.1') {
+    apigw_central('org.apache.logging.log4j:log4j-api:2.17.1') {
         transitive = false
     }
-    compileOnly('org.apache.logging.log4j:log4j-core:2.17.1') {
+    apigw_central('org.apache.logging.log4j:log4j-core:2.17.1') {
         transitive = false
     }
-    compileOnly('org.slf4j:log4j-over-slf4j:1.7.31') {
+    apigw_central('org.slf4j:log4j-over-slf4j:1.7.31') {
         transitive = false
     }
-    compileOnly('org.apache.logging.log4j:log4j-slf4j-impl:2.17.1') {
+    apigw_central('org.apache.logging.log4j:log4j-slf4j-impl:2.17.1') {
         transitive = false
     }
-    compileOnly('com.yammer.metrics:metrics-core:2.2.0') {
+    apigw_central('com.yammer.metrics:metrics-core:2.2.0') {
         transitive = false
     }
-    compileOnly('io.dropwizard.metrics:metrics-core:3.1.2') {
+    apigw_central('io.dropwizard.metrics:metrics-core:3.1.2') {
         transitive = false
     }
-    compileOnly('org.jvnet.mimepull:mimepull:1.9.6') {
+    apigw_central('org.jvnet.mimepull:mimepull:1.9.6') {
         transitive = false
     }
-    compileOnly('org.apache.mina:mina-core:2.0.2') {
+    apigw_central('org.apache.mina:mina-core:2.0.2') {
         transitive = false
     }
-    compileOnly('com.github.java-json-tools:msg-simple:1.2') {
+    apigw_central('com.github.java-json-tools:msg-simple:1.2') {
         transitive = false
     }
-    compileOnly('io.netty:netty-buffer:4.1.66.Final') {
+    apigw_central('io.netty:netty-buffer:4.1.66.Final') {
         transitive = false
     }
-    compileOnly('io.netty:netty-codec:4.1.66.Final') {
+    apigw_central('io.netty:netty-codec:4.1.66.Final') {
         transitive = false
     }
-    compileOnly('io.netty:netty-common:4.1.66.Final') {
+    apigw_central('io.netty:netty-common:4.1.66.Final') {
         transitive = false
     }
-    compileOnly('io.netty:netty-handler:4.1.66.Final') {
+    apigw_central('io.netty:netty-handler:4.1.66.Final') {
         transitive = false
     }
-    compileOnly('io.netty:netty-resolver:4.1.66.Final') {
+    apigw_central('io.netty:netty-resolver:4.1.66.Final') {
         transitive = false
     }
-    compileOnly('io.netty:netty-transport:4.1.66.Final') {
+    apigw_central('io.netty:netty-transport:4.1.66.Final') {
         transitive = false
     }
-    compileOnly('com.nimbusds:nimbus-jose-jwt:9.5') {
+    apigw_central('com.nimbusds:nimbus-jose-jwt:9.5') {
         transitive = false
     }
-    compileOnly('com.narupley:not-going-to-be-commons-ssl:0.3.18') {
+    apigw_central('com.narupley:not-going-to-be-commons-ssl:0.3.18') {
         transitive = false
     }
-    compileOnly('com.oracle.database.jdbc:ojdbc8:21.1.0.0') {
+    apigw_central('com.oracle.database.jdbc:ojdbc8:21.1.0.0') {
         transitive = false
     }
-    compileOnly('org.apache.openjpa:openjpa:2.4.0') {
+    apigw_central('org.apache.openjpa:openjpa:2.4.0') {
         transitive = false
     }
-    compileOnly('org.apache.openjpa:openjpa-jest:2.4.0') {
+    apigw_central('org.apache.openjpa:openjpa-jest:2.4.0') {
         transitive = false
     }
-    compileOnly('org.opensaml:opensaml-core:3.4.6') {
+    apigw_central('org.opensaml:opensaml-core:3.4.6') {
         transitive = false
     }
-    compileOnly('org.opensaml:opensaml-messaging-api:3.4.6') {
+    apigw_central('org.opensaml:opensaml-messaging-api:3.4.6') {
         transitive = false
     }
-    compileOnly('org.opensaml:opensaml-messaging-impl:3.4.6') {
+    apigw_central('org.opensaml:opensaml-messaging-impl:3.4.6') {
         transitive = false
     }
-    compileOnly('org.opensaml:opensaml-profile-api:3.4.6') {
+    apigw_central('org.opensaml:opensaml-profile-api:3.4.6') {
         transitive = false
     }
-    compileOnly('org.opensaml:opensaml-saml-api:3.4.6') {
+    apigw_central('org.opensaml:opensaml-saml-api:3.4.6') {
         transitive = false
     }
-    compileOnly('org.opensaml:opensaml-saml-impl:3.4.6') {
+    apigw_central('org.opensaml:opensaml-saml-impl:3.4.6') {
         transitive = false
     }
-    compileOnly('org.opensaml:opensaml-security-api:3.4.6') {
+    apigw_central('org.opensaml:opensaml-security-api:3.4.6') {
         transitive = false
     }
-    compileOnly('org.opensaml:opensaml-security-impl:3.4.6') {
+    apigw_central('org.opensaml:opensaml-security-impl:3.4.6') {
         transitive = false
     }
-    compileOnly('org.opensaml:opensaml-soap-api:3.4.6') {
+    apigw_central('org.opensaml:opensaml-soap-api:3.4.6') {
         transitive = false
     }
-    compileOnly('org.opensaml:opensaml-soap-impl:3.4.6') {
+    apigw_central('org.opensaml:opensaml-soap-impl:3.4.6') {
         transitive = false
     }
-    compileOnly('org.opensaml:opensaml-storage-api:3.4.6') {
+    apigw_central('org.opensaml:opensaml-storage-api:3.4.6') {
         transitive = false
     }
-    compileOnly('org.opensaml:opensaml-xmlsec-api:3.4.6') {
+    apigw_central('org.opensaml:opensaml-xmlsec-api:3.4.6') {
         transitive = false
     }
-    compileOnly('org.opensaml:opensaml-xmlsec-impl:3.4.6') {
+    apigw_central('org.opensaml:opensaml-xmlsec-impl:3.4.6') {
         transitive = false
     }
-    compileOnly('org.apache.servicemix.bundles:org.apache.servicemix.bundles.antlr:2.7.7_5') {
+    apigw_central('org.apache.servicemix.bundles:org.apache.servicemix.bundles.antlr:2.7.7_5') {
         transitive = false
     }
-    compileOnly('oro:oro:2.0.8') {
+    apigw_central('oro:oro:2.0.8') {
         transitive = false
     }
-    compileOnly('org.glassfish.hk2:osgi-resource-locator:1.0.3') {
+    apigw_central('org.glassfish.hk2:osgi-resource-locator:1.0.3') {
         transitive = false
     }
-    compileOnly('com.sun.xml.ws:policy:2.5') {
+    apigw_central('com.sun.xml.ws:policy:2.5') {
         transitive = false
     }
-    compileOnly('org.quartz-scheduler:quartz:1.8.4') {
+    apigw_central('org.quartz-scheduler:quartz:1.8.4') {
         transitive = false
     }
-    compileOnly('org.mozilla:rhino:1.7R5') {
+    apigw_central('org.mozilla:rhino:1.7R5') {
         transitive = false
     }
-    compileOnly('javax.xml.soap:saaj-api:1.3') {
+    apigw_central('javax.xml.soap:saaj-api:1.3') {
         transitive = false
     }
-    compileOnly('net.sourceforge.saxon:saxon:9.1.0.8:dom') {
+    apigw_central('net.sourceforge.saxon:saxon:9.1.0.8:dom') {
         transitive = false
     }
-    compileOnly('net.sourceforge.saxon:saxon:9.1.0.8') {
+    apigw_central('net.sourceforge.saxon:saxon:9.1.0.8') {
         transitive = false
     }
-    compileOnly('org.scala-lang:scala-library:2.11.12') {
+    apigw_central('org.scala-lang:scala-library:2.11.12') {
         transitive = false
     }
-    compileOnly('xalan:serializer:2.7.2') {
+    apigw_central('xalan:serializer:2.7.2') {
         transitive = false
     }
-    compileOnly('net.sourceforge.serp:serp:1.15.1') {
+    apigw_central('net.sourceforge.serp:serp:1.15.1') {
         transitive = false
     }
-    compileOnly('javax.servlet:servlet-api:2.4') {
+    apigw_central('javax.servlet:servlet-api:2.4') {
         transitive = false
     }
-    compileOnly('org.fusesource:sigar:1.6.4') {
+    apigw_central('org.fusesource:sigar:1.6.4') {
         transitive = false
     }
-    compileOnly('org.slf4j:slf4j-api:1.7.31') {
+    apigw_central('org.slf4j:slf4j-api:1.7.31') {
         transitive = false
     }
-    compileOnly('org.yaml:snakeyaml:1.29') {
+    apigw_central('org.yaml:snakeyaml:1.29') {
         transitive = false
     }
-    compileOnly('com.ecyrd.speed4j:speed4j:0.9') {
+    apigw_central('com.ecyrd.speed4j:speed4j:0.9') {
         transitive = false
     }
-    compileOnly('org.apache.sshd:sshd-common:2.7.0') {
+    apigw_central('org.apache.sshd:sshd-common:2.7.0') {
         transitive = false
     }
-    compileOnly('org.apache.sshd:sshd-core:2.7.0') {
+    apigw_central('org.apache.sshd:sshd-core:2.7.0') {
         transitive = false
     }
-    compileOnly('org.apache.sshd:sshd-sftp:2.7.0') {
+    apigw_central('org.apache.sshd:sshd-sftp:2.7.0') {
         transitive = false
     }
-    compileOnly('org.codehaus.woodstox:stax2-api:4.2.1') {
+    apigw_central('org.codehaus.woodstox:stax2-api:4.2.1') {
         transitive = false
     }
-    compileOnly('io.swagger:swagger-annotations:1.6.3') {
+    apigw_central('io.swagger:swagger-annotations:1.6.3') {
         transitive = false
     }
-    compileOnly('io.swagger.core.v3:swagger-annotations:2.1.11') {
+    apigw_central('io.swagger.core.v3:swagger-annotations:2.1.11') {
         transitive = false
     }
-    compileOnly('io.swagger:swagger-compat-spec-parser:1.0.56') {
+    apigw_central('io.swagger:swagger-compat-spec-parser:1.0.56') {
         transitive = false
     }
-    compileOnly('io.swagger:swagger-core:1.6.3') {
+    apigw_central('io.swagger:swagger-core:1.6.3') {
         transitive = false
     }
-    compileOnly('io.swagger.core.v3:swagger-core:2.1.11') {
+    apigw_central('io.swagger.core.v3:swagger-core:2.1.11') {
         transitive = false
     }
-    compileOnly('io.swagger:swagger-jaxrs:1.6.3') {
+    apigw_central('io.swagger:swagger-jaxrs:1.6.3') {
         transitive = false
     }
-    compileOnly('io.swagger:swagger-models:1.6.3') {
+    apigw_central('io.swagger:swagger-models:1.6.3') {
         transitive = false
     }
-    compileOnly('io.swagger.core.v3:swagger-models:2.1.11') {
+    apigw_central('io.swagger.core.v3:swagger-models:2.1.11') {
         transitive = false
     }
-    compileOnly('io.swagger:swagger-parser:1.0.56') {
+    apigw_central('io.swagger:swagger-parser:1.0.56') {
         transitive = false
     }
-    compileOnly('io.swagger.parser.v3:swagger-parser-core:2.0.28') {
+    apigw_central('io.swagger.parser.v3:swagger-parser-core:2.0.28') {
         transitive = false
     }
-    compileOnly('io.swagger.parser.v3:swagger-parser-v3:2.0.28') {
+    apigw_central('io.swagger.parser.v3:swagger-parser-v3:2.0.28') {
         transitive = false
     }
-    compileOnly('org.twitter4j:twitter4j-core:3.0.3') {
+    apigw_central('org.twitter4j:twitter4j-core:3.0.3') {
         transitive = false
     }
-    compileOnly('org.apache.juddi:uddi-ws:3.3.10') {
+    apigw_central('org.apache.juddi:uddi-ws:3.3.10') {
         transitive = false
     }
-    compileOnly('com.github.java-json-tools:uri-template:0.10') {
+    apigw_central('com.github.java-json-tools:uri-template:0.10') {
         transitive = false
     }
-    compileOnly('com.github.stephenc.eaio-uuid:uuid:3.2.0') {
+    apigw_central('com.github.stephenc.eaio-uuid:uuid:3.2.0') {
         transitive = false
     }
-    compileOnly('org.apache.velocity:velocity-engine-core:2.3') {
+    apigw_central('org.apache.velocity:velocity-engine-core:2.3') {
         transitive = false
     }
-    compileOnly('com.fasterxml.woodstox:woodstox-core:6.2.8') {
+    apigw_central('com.fasterxml.woodstox:woodstox-core:6.2.8') {
         transitive = false
     }
-    compileOnly('wsdl4j:wsdl4j:1.6.2') {
+    apigw_central('wsdl4j:wsdl4j:1.6.2') {
         transitive = false
     }
-    compileOnly('xalan:xalan:2.7.2') {
+    apigw_central('xalan:xalan:2.7.2') {
         transitive = false
     }
-    compileOnly('org.apache.xbean:xbean-asm5-shaded:3.17') {
+    apigw_central('org.apache.xbean:xbean-asm5-shaded:3.17') {
         transitive = false
     }
-    compileOnly('xerces:xercesImpl:2.12.2') {
+    apigw_central('xerces:xercesImpl:2.12.2') {
         transitive = false
     }
-    compileOnly('xml-apis:xml-apis:1.4.01') {
+    apigw_central('xml-apis:xml-apis:1.4.01') {
         transitive = false
     }
-    compileOnly('org.apache.santuario:xmlsec:1.5.8') {
+    apigw_central('org.apache.santuario:xmlsec:1.5.8') {
         transitive = false
     }
-    compileOnly fileTree("${apigw_vdistdir}").matching {
+    apigw_central fileTree("${apigw_vdistdir}").matching {
         exclude 'system/lib/embeddedAMQ/activemq-broker-*.jar'
         exclude 'system/lib/embeddedAMQ/activemq-kahadb-store-*.jar'
         exclude 'system/lib/embeddedAMQ/activemq-leveldb-store-*.jar'
@@ -977,6 +984,9 @@ dependencies {
         exclude 'system/lib/plugins/handlebars-*.jar'
         exclude 'system/lib/plugins/jsr305-*.jar'
         exclude 'system/lib/plugins/rhino-*.jar'
+        include 'system/lib/**/*.jar'
+    }
+    apigw_dist fileTree("${apigw_vdistdir}").matching {
         include 'system/lib/**/*.jar'
     }
 }

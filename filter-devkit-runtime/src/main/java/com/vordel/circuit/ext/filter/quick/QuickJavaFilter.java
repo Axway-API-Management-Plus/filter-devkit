@@ -32,7 +32,7 @@ public class QuickJavaFilter extends AbstractQuickFilter {
 			duplicates = new HashSet<String>();
 		}
 
-		for(QuickFilterComponent field : methods.values()) {
+		for (QuickFilterComponent field : methods.values()) {
 			String name = field.name();
 
 			if (!fieldNames.add(name)) {
@@ -44,7 +44,7 @@ public class QuickJavaFilter extends AbstractQuickFilter {
 		/* last step, remove duplicate components */
 		Iterator<QuickFilterComponent> iterator = methods.values().iterator();
 
-		while(iterator.hasNext()) {
+		while (iterator.hasNext()) {
 			QuickFilterComponent field = iterator.next();
 			String name = field.name();
 
@@ -66,7 +66,7 @@ public class QuickJavaFilter extends AbstractQuickFilter {
 			duplicates = new HashSet<String>();
 		}
 
-		for(QuickFilterField field : methods.values()) {
+		for (QuickFilterField field : methods.values()) {
 			String name = field.name();
 
 			if (!fieldNames.add(name)) {
@@ -78,7 +78,7 @@ public class QuickJavaFilter extends AbstractQuickFilter {
 		/* last step, remove duplicate fields */
 		Iterator<QuickFilterField> iterator = methods.values().iterator();
 
-		while(iterator.hasNext()) {
+		while (iterator.hasNext()) {
 			QuickFilterField field = iterator.next();
 			String name = field.name();
 
@@ -89,12 +89,12 @@ public class QuickJavaFilter extends AbstractQuickFilter {
 
 		return methods;
 	}
-	
+
 	private static <T extends Annotation> Map<Method, T> scanMethods(Class<?> clazz, Class<T> annotation, Class<?> parameter) {
 		List<Method> annotated = scanMethods(clazz, new ArrayList<Method>(), annotation);
 		Map<Method, T> methods = new HashMap<Method, T>();
 
-		for(Method method : annotated) {
+		for (Method method : annotated) {
 			Class<?>[] parameters = method.getParameterTypes();
 
 			/* filter methods that can be set by runtime */
@@ -115,7 +115,7 @@ public class QuickJavaFilter extends AbstractQuickFilter {
 		return methods;
 	}
 
-	private static List<Method> scanMethods(Class<?> clazz, List<Method> annotated, Class<?  extends Annotation> annotation) {
+	private static List<Method> scanMethods(Class<?> clazz, List<Method> annotated, Class<? extends Annotation> annotation) {
 		Class<?> superClazz = clazz.getSuperclass();
 		Class<?>[] interfaces = clazz.getInterfaces();
 
@@ -123,11 +123,11 @@ public class QuickJavaFilter extends AbstractQuickFilter {
 			annotated = scanMethods(superClazz, annotated, annotation);
 		}
 
-		for(Class<?> impl : interfaces) {
+		for (Class<?> impl : interfaces) {
 			annotated = scanMethods(impl, annotated, annotation);
 		}
 
-		for(Method method : clazz.getDeclaredMethods()) {
+		for (Method method : clazz.getDeclaredMethods()) {
 			Annotation field = method.getAnnotation(annotation);
 
 			if (field != null) {

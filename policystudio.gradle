@@ -7,10 +7,16 @@ repositories {
     mavenCentral()
 }
 
-task checkProperties {
+def checkPolicyStudioProperties() {
     if (!project.hasProperty('studio_vdistdir')) {
         throw new RuntimeException("Could not find 'studio_vdistdir'. Did you forget to specify it in ~/.gradle/gradle.properties ?")
     }
+}
+
+checkPolicyStudioProperties()
+
+configurations {
+	studio_dist
 }
 
 def rcpClasses(prefix) {
@@ -27,12 +33,12 @@ def rcpClasses(prefix) {
 }
 
 dependencies {
-    compileOnly rcpClasses("com.vordel.rcp.common.resources")
-    compileOnly rcpClasses("com.vordel.rcp.filterbase")
-    compileOnly rcpClasses("com.vordel.rcp.navigator")
-    compileOnly rcpClasses("com.vordel.rcp.policystudio.resources")
+    studio_dist rcpClasses("com.vordel.rcp.common.resources")
+    studio_dist rcpClasses("com.vordel.rcp.filterbase")
+    studio_dist rcpClasses("com.vordel.rcp.navigator")
+    studio_dist rcpClasses("com.vordel.rcp.policystudio.resources")
 
-    compileOnly fileTree("${studio_vdistdir}").matching {
+    studio_dist fileTree("${studio_vdistdir}").matching {
         include 'plugins/com.vordel.rcp.common*.jar'
         include 'plugins/com.vordel.rcp.policystudio*.jar'
         include 'plugins/org.eclipse.swt*.jar'
