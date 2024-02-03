@@ -42,7 +42,7 @@
 						<TablePage
 							type="ScriptResource"
 							tableHeight="300"
-							dialogClass="com.vordel.client.manager.filter.script.advanced.AdvancedScriptResourceDialog"
+							dialogClass="com.vordel.client.manager.filter.advancedscript.AdvancedScriptResourceDialog"
 							columnProperties="name"
 							columnResources="SCRIPT_RESOURCE_NAME"
 							columnWidths="300"
