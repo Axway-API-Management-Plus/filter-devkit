@@ -19,11 +19,11 @@ jar {
 apply from: rootProject.file('policystudio.gradle')
 
 configurations {
-	compile.extendsFrom(studio_dist)
+	implementation.extendsFrom(studio_dist)
 }
 
 dependencies {
-	compileOnly fileTree("${studio_vdistdir}").matching {
+	implementation fileTree("${studio_vdistdir}").matching {
 		include 'plugins/com.vordel.filter.jwt.*.jar'
 		include 'plugins/com.vordel.filter.script.*.jar'
 	}

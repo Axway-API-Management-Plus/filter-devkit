@@ -1,4 +1,4 @@
-package com.vordel.circuit.ext.filter.quick;
+package com.vordel.client.manager.filter.quick;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -12,14 +12,15 @@ import java.util.Map;
 import java.util.Set;
 
 import com.vordel.circuit.MessageProcessor;
-import com.vordel.circuit.ext.filter.AbstractQuickFilter;
+import com.vordel.circuit.ext.filter.quick.QuickFilterComponent;
+import com.vordel.circuit.ext.filter.quick.QuickFilterField;
 import com.vordel.config.ConfigContext;
 import com.vordel.es.Entity;
 
 public class QuickJavaFilter extends AbstractQuickFilter {
 	@Override
 	public Class<? extends MessageProcessor> getMessageProcessorClass() throws ClassNotFoundException {
-		return Class.forName("com.vordel.circuit.ext.filter.quick.QuickJavaFilterProcessor").asSubclass(MessageProcessor.class);
+		return Class.forName("com.vordel.circuit.ext.filter.quick.runtime.QuickJavaFilterProcessor").asSubclass(MessageProcessor.class);
 	}
 
 	public static Map<Method, QuickFilterComponent> scanComponents(Class<?> clazz, Set<String> duplicates) {

@@ -11,8 +11,8 @@ apply from: rootProject.file('apigateway.gradle')
 apply from: rootProject.file('policystudio.gradle')
 
 configurations {
-	compile.extendsFrom(apigw_central)
-	osgi.extendsFrom(studio_dist);
+	compileOnly.extendsFrom(apigw_central)
+	osgi.extendsFrom(studio_dist)
 }
 
 dependencies {

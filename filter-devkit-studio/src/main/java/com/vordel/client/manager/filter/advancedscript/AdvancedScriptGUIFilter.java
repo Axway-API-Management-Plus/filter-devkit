@@ -1,4 +1,4 @@
-package com.vordel.client.manager.filter.script.advanced;
+package com.vordel.client.manager.filter.advancedscript;
 
 import java.util.List;
 import java.util.Vector;
@@ -6,9 +6,9 @@ import java.util.Vector;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 
-import com.vordel.client.ext.filter.VordelLegacyGUIFilter;
 import com.vordel.client.manager.Images;
 import com.vordel.client.manager.Manager;
+import com.vordel.client.manager.filter.legacy.VordelLegacyGUIFilter;
 import com.vordel.client.manager.wizard.VordelPage;
 import com.vordel.es.ESPK;
 import com.vordel.es.Entity;

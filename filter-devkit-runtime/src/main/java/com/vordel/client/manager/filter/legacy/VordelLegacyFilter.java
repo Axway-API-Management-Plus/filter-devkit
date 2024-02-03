@@ -1,4 +1,4 @@
-package com.vordel.circuit.ext.filter;
+package com.vordel.client.manager.filter.legacy;
 
 import com.vordel.circuit.FilterContainerImpl;
 

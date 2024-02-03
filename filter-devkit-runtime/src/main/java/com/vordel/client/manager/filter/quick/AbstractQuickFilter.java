@@ -1,10 +1,11 @@
-package com.vordel.circuit.ext.filter;
+package com.vordel.client.manager.filter.quick;
 
 import java.util.Arrays;
 
 import com.vordel.circuit.DefaultFilter;
 import com.vordel.circuit.FilterContainerImpl;
 import com.vordel.circuit.ext.filter.quick.QuickFilterSupport;
+import com.vordel.client.manager.filter.legacy.VordelLegacyFilter;
 import com.vordel.config.ConfigContext;
 import com.vordel.es.Entity;
 import com.vordel.es.EntityStoreException;
@@ -15,7 +16,7 @@ import com.vordel.es.Value;
 public abstract class AbstractQuickFilter extends DefaultFilter implements VordelLegacyFilter {
 	@Override
 	public Class<? extends FilterContainerImpl> getConfigPanelClass() throws ClassNotFoundException {
-		return Class.forName("com.vordel.client.ext.filter.quick.QuickFilterGUI").asSubclass(FilterContainerImpl.class);
+		return Class.forName("com.vordel.client.manager.filter.quick.QuickFilterGUI").asSubclass(FilterContainerImpl.class);
 	}
 
 	@Override

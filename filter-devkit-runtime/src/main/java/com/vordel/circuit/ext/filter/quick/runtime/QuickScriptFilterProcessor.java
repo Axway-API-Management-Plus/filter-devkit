@@ -1,9 +1,10 @@
-package com.vordel.circuit.ext.filter.quick;
+package com.vordel.circuit.ext.filter.quick.runtime;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
-import com.vordel.circuit.ext.filter.AbstractQuickFilter;
+import com.vordel.circuit.ext.filter.quick.QuickFilterSupport;
 import com.vordel.circuit.script.advanced.AbstractScriptProcessor;
+import com.vordel.client.manager.filter.quick.AbstractQuickFilter;
 import com.vordel.config.Circuit;
 import com.vordel.es.Entity;
 import com.vordel.es.EntityType;

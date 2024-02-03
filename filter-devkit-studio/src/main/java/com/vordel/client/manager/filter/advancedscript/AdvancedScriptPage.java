@@ -1,10 +1,10 @@
-package com.vordel.client.manager.filter.script.advanced;
+package com.vordel.client.manager.filter.advancedscript;
 
 import java.io.InputStream;
 
 import org.eclipse.swt.widgets.Composite;
 
-import com.vordel.client.ext.filter.VordelLegacyPage;
+import com.vordel.client.manager.filter.legacy.VordelLegacyPage;
 
 public class AdvancedScriptPage extends VordelLegacyPage {
 	public AdvancedScriptPage() {

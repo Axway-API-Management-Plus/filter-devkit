@@ -5,7 +5,7 @@ import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.ext.filter.quick.QuickFilterField;
 import com.vordel.circuit.ext.filter.quick.QuickFilterType;
-import com.vordel.circuit.ext.filter.quick.QuickJavaFilterDefinition;
+import com.vordel.circuit.ext.filter.quick.runtime.QuickJavaFilterDefinition;
 import com.vordel.circuit.script.context.resources.PolicyResource;
 import com.vordel.config.Circuit;
 import com.vordel.config.ConfigContext;

@@ -1,7 +1,7 @@
 <entityStoreData>
 	<entityType extends="Filter" name="AssertionFilterFilter">
 		<constant name="_version" type="integer" value="1" />
-		<constant name="class" type="string" value="com.vordel.circuit.assertion.AssertionFilter" />
+		<constant name="class" type="string" value="com.vordel.client.manager.filter.assertion.AssertionFilter" />
 		
 		<!-- Define a set of properties for application -->
 		<componentType cardinality="*" name="Property" />

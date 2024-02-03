@@ -249,7 +249,7 @@ public class QuickScriptFilterBuilder {
 		QuickFilterSupport.insertConstant(filter, QuickFilterSupport.QUICKFILTER_ENGINENAME, engineName);
 		QuickFilterSupport.insertConstant(filter, QuickFilterSupport.QUICKFILTER_DESCRIPTION, description);
 		QuickFilterSupport.insertConstant(filter, QuickFilterSupport.QUICKFILTER_DISPLAYNAME, name);
-		QuickFilterSupport.insertConstant(filter, "class", "com.vordel.circuit.ext.filter.quick.QuickScriptFilter");
+		QuickFilterSupport.insertConstant(filter, "class", "com.vordel.circuit.ext.filter.quick.runtime.QuickScriptFilter");
 
 		return filter;
 	}

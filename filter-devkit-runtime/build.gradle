@@ -11,7 +11,7 @@ java {
 apply from: rootProject.file("apigateway.gradle")
 
 configurations {
-	compile.extendsFrom(apigw_central)
+	compileOnly.extendsFrom(apigw_central)
 }
 
 dependencies {

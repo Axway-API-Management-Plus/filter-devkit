@@ -4,7 +4,7 @@ import java.io.InputStream;
 
 import org.eclipse.swt.widgets.Composite;
 
-import com.vordel.client.ext.filter.VordelLegacyPage;
+import com.vordel.client.manager.filter.legacy.VordelLegacyPage;
 
 public class AssertionPage extends VordelLegacyPage {
 	public AssertionPage() {

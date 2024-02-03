@@ -22,7 +22,7 @@ import java.util.jar.JarFile;
 import javax.annotation.Priority;
 
 import com.vordel.circuit.ext.filter.quick.QuickFilterType;
-import com.vordel.circuit.ext.filter.quick.QuickJavaFilterDefinition;
+import com.vordel.circuit.ext.filter.quick.runtime.QuickJavaFilterDefinition;
 import com.vordel.circuit.script.context.MessageContextModule;
 import com.vordel.config.ConfigContext;
 import com.vordel.trace.Trace;

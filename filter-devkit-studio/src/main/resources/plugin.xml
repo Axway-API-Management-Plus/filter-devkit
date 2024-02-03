@@ -6,23 +6,20 @@
          name="Filter-DevKit Filters"
          point="com.vordel.rcp.filterbase.filterGUI">
       <filter
-            class="com.vordel.circuit.assertion.AssertionFilter"
+            class="com.vordel.client.manager.filter.assertion.AssertionFilter"
             icon="images/alert_icon.gif"
             name="Assertion Filter"
             page="com.vordel.client.manager.filter.assertion.AssertionPage">
          <category
                id="com.vordel.ui.filter.category.utility" />
       </filter>
-   <extension
-         id="com.vordel.ui.filterGUI.AdvancedScriptFilter"
-         name="Filter-DevKit Filters"
-         point="com.vordel.rcp.filterbase.filterGUI">
       <filter
-            class="com.vordel.circuit.script.filter.AdvancedScriptFilter"
+            class="com.vordel.client.manager.filter.advancedscript.AdvancedScriptFilter"
             icon="images/javascript.gif"
             name="Advanced Script Filter"
-            page="com.vordel.client.manager.filter.script.advanced.AdvancedScriptPage">
+            page="com.vordel.client.manager.filter.advancedscript.AdvancedScriptPage">
          <category
                id="com.vordel.ui.filter.category.utility" />
       </filter>
+   </extension>
 </plugin>

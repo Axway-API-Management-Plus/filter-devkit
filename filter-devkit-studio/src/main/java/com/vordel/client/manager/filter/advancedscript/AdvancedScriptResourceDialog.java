@@ -1,4 +1,4 @@
-package com.vordel.client.manager.filter.script.advanced;
+package com.vordel.client.manager.filter.advancedscript;
 
 import com.vordel.client.manager.EntityContextAdapterDialog;
 import com.vordel.client.manager.Manager;

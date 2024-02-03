@@ -1,4 +1,4 @@
-package com.vordel.client.ext.filter.quick;
+package com.vordel.client.manager.filter.quick;
 
 import java.util.List;
 import java.util.Vector;
@@ -6,10 +6,9 @@ import java.util.Vector;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 
-import com.vordel.circuit.ext.filter.AbstractQuickFilter;
 import com.vordel.circuit.ext.filter.quick.QuickFilterSupport;
-import com.vordel.client.ext.filter.VordelLegacyGUIFilter;
 import com.vordel.client.manager.Images;
+import com.vordel.client.manager.filter.legacy.VordelLegacyGUIFilter;
 import com.vordel.client.manager.wizard.VordelPage;
 import com.vordel.es.Entity;
 import com.vordel.es.EntityType;

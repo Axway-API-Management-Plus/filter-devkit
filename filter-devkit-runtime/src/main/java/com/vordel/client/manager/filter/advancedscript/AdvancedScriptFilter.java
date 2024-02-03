@@ -1,9 +1,9 @@
-package com.vordel.circuit.script.filter;
+package com.vordel.client.manager.filter.advancedscript;
 
 import com.vordel.circuit.DefaultFilter;
 import com.vordel.circuit.FilterContainerImpl;
 import com.vordel.circuit.MessageProcessor;
-import com.vordel.circuit.ext.filter.VordelLegacyFilter;
+import com.vordel.client.manager.filter.legacy.VordelLegacyFilter;
 
 public class AdvancedScriptFilter extends DefaultFilter implements VordelLegacyFilter {
 	@Override
@@ -13,6 +13,6 @@ public class AdvancedScriptFilter extends DefaultFilter implements VordelLegacyF
 
 	@Override
 	public Class<? extends FilterContainerImpl> getConfigPanelClass() throws ClassNotFoundException {
-		return Class.forName("com.vordel.client.manager.filter.script.advanced.AdvancedScriptGUIFilter").asSubclass(FilterContainerImpl.class);
+		return Class.forName("com.vordel.client.manager.filter.advancedscript.AdvancedScriptGUIFilter").asSubclass(FilterContainerImpl.class);
 	}
 }

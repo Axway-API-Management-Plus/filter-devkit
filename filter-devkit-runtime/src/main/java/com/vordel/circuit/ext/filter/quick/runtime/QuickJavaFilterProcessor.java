@@ -1,4 +1,4 @@
-package com.vordel.circuit.ext.filter.quick;
+package com.vordel.circuit.ext.filter.quick.runtime;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -13,7 +13,10 @@ import java.util.Set;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProcessor;
+import com.vordel.circuit.ext.filter.quick.QuickFilterComponent;
+import com.vordel.circuit.ext.filter.quick.QuickFilterField;
 import com.vordel.circuit.script.context.MessageContextModule;
+import com.vordel.client.manager.filter.quick.QuickJavaFilter;
 import com.vordel.config.Circuit;
 import com.vordel.config.ConfigContext;
 import com.vordel.es.ESPK;

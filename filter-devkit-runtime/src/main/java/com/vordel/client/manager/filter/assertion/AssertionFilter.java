@@ -1,9 +1,9 @@
-package com.vordel.circuit.assertion;
+package com.vordel.client.manager.filter.assertion;
 
 import com.vordel.circuit.DefaultFilter;
 import com.vordel.circuit.FilterContainerImpl;
 import com.vordel.circuit.MessageProcessor;
-import com.vordel.circuit.ext.filter.VordelLegacyFilter;
+import com.vordel.client.manager.filter.legacy.VordelLegacyFilter;
 
 public class AssertionFilter extends DefaultFilter implements VordelLegacyFilter {
 	@Override

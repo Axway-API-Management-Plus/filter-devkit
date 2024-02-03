@@ -1,7 +1,7 @@
 <entityStoreData>
 	<entityType extends="Filter" name="AdvancedScriptFilter">
 		<constant name="_version" type="integer" value="1" />
-		<constant name="class" type="string" value="com.vordel.circuit.script.filter.AdvancedScriptFilter" />
+		<constant name="class" type="string" value="com.vordel.client.manager.filter.advancedscript.AdvancedScriptFilter" />
 
 		<!-- Define a set of function resources which will be binded at deploy time -->
 		<componentType cardinality="*" name="ScriptResource" />

@@ -1,4 +1,4 @@
-package com.vordel.client.ext.filter;
+package com.vordel.client.manager.filter.legacy;
 
 import java.io.InputStream;
 

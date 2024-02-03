@@ -12,7 +12,7 @@ import com.vordel.circuit.MessageProperties;
 import com.vordel.circuit.ext.filter.quick.QuickFilterComponent;
 import com.vordel.circuit.ext.filter.quick.QuickFilterField;
 import com.vordel.circuit.ext.filter.quick.QuickFilterType;
-import com.vordel.circuit.ext.filter.quick.QuickJavaFilterDefinition;
+import com.vordel.circuit.ext.filter.quick.runtime.QuickJavaFilterDefinition;
 import com.vordel.circuit.oauth.common.OAuthScopeUtils.ScopesMustMatchSelection;
 import com.vordel.circuit.oauth.kps.ApplicationDetails;
 import com.vordel.circuit.oauth.store.AuthorizationCodeStore;

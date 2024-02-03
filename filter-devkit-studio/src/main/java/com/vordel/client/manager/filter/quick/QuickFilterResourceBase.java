@@ -1,4 +1,4 @@
-package com.vordel.client.ext.filter.quick;
+package com.vordel.client.manager.filter.quick;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
-import com.vordel.circuit.ext.filter.AbstractQuickFilter;
 import com.vordel.circuit.ext.filter.quick.QuickFilterSupport;
 import com.vordel.common.CompositeResourceBundle;
 import com.vordel.common.ResourceBase;
