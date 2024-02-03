@@ -9,10 +9,12 @@
 			<tabFolder span="2">
 				<tab label="ADVANCEDSCRIPT">
 					<panel columns="2" span="2" fill="true">
-						<ComboAttribute field="engineName" columns="2" span="2"
-							required="true" readOnly="true" label="ADVANCEDSCRIPT_LANGUAGE_LABEL"
-							contentSource="com.vordel.client.manager.filter.script.ScriptDialog.LANGUAGES"
-						/>
+						<RadioGroupAttribute field="engineName" columns="1" span="2" default="INVOKE">
+							<choice value="nashorn" label="ADVANCEDSCRIPT_LANGUAGE_NASHORN" />
+							<choice value="js" label="ADVANCEDSCRIPT_LANGUAGE_RHINO" />
+							<choice value="groovy" label="ADVANCEDSCRIPT_LANGUAGE_GROOVY" />
+							<choice value="jython" label="ADVANCEDSCRIPT_LANGUAGE_PYTHON" />
+						</RadioGroupAttribute>
 						<TextAttribute field="script" widthHint="300" heightHint="40" multiline="true" vscroll="true" span="2"  required="true" />
 					</panel>
 				</tab>

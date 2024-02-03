@@ -1,6 +1,11 @@
 subprojects {
-    apply plugin: 'eclipse'
+	apply plugin: 'eclipse'
 
-    group = 'com.axway.apigw'
-    version = "1.0-SNAPSHOT"
+	group = 'com.axway.apigw'
+	version = "1.0-SNAPSHOT"
+}
+
+task copyArchives(type: Copy) {
+	from subprojects.collect { it.tasks.withType(AbstractArchiveTask) }
+	into "$buildDir/archives"
 }

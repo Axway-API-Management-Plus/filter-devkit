@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 
@@ -37,16 +36,11 @@ import com.vordel.trace.Trace;
 
 import groovy.lang.Script;
 
-public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
+public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	/**
 	 * Resources retrieved from configured UI
 	 */
 	private Map<String, ContextResource> resources = null;
-
-	/**
-	 * Script execution context
-	 */
-	private ScriptEngine engine = null;
 
 	/**
 	 * this boolean indicated if the filter is attached (configuration functions
@@ -166,7 +160,7 @@ public abstract class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		ContextResourceFactory factory = ContextResourceFactory.getInstance();
 
 		/* create resources */
-		factory.createResources(ctx, getFilter(), resources = new HashMap<String, ContextResource>(), resourceList);
+		factory.createResources(ctx, getFilter(), resources, resourceList);
 	}
 
 	@Override
