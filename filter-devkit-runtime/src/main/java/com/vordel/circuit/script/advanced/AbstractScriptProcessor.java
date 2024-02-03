@@ -108,7 +108,15 @@ public class AbstractScriptProcessor extends MessageProcessor {
 
 	@Override
 	public void filterDetached() {
-		detachScript();
+		try {
+			detachScript();
+		} catch (NoSuchMethodException e) {
+			if (Trace.isDebugEnabled()) {
+				Trace.error(String.format("can't invoke the script function '%s'", DETACH_FUNCTION_NAME), e);
+			} else {
+				Trace.error(String.format("can't invoke the script function '%s'", DETACH_FUNCTION_NAME));
+			}
+		}
 	}
 
 	private static final ScriptEngine getScriptEngine(String engineName) throws ScriptException {
@@ -172,21 +180,26 @@ public class AbstractScriptProcessor extends MessageProcessor {
 
 			throw new CircuitAbortException(ex);
 		} catch (NoSuchMethodException ex) {
-			Trace.error(String.format("can't invoke the script function '%s'", INVOKE_FUNCTION_NAME), ex);
+			if (Trace.isDebugEnabled()) {
+				Trace.error(String.format("can't invoke the script function '%s'", INVOKE_FUNCTION_NAME), ex);
+			} else {
+				Trace.error(String.format("can't invoke the script function '%s'", INVOKE_FUNCTION_NAME));
+			}
 
 			throw new CircuitAbortException(ex);
 		}
 	}
 
-	protected void detachScript() {
+	protected void detachScript() throws NoSuchMethodException {
 		try {
 			/* try to invoke the detach function */
 			invokeFunction(engine, DETACH_FUNCTION_NAME);
 		} catch (ScriptException ex) {
-			Trace.error("There was a problem unloading the script: " + ex.getMessage());
-			Trace.debug(ex);
-		} catch (NoSuchMethodException ex) {
-			Trace.error(String.format("can't invoke the script function '%s'", DETACH_FUNCTION_NAME), ex);
+			if (Trace.isDebugEnabled()) {
+				Trace.error("There was a problem unloading the script: " + ex.getMessage(), ex);
+			} else {
+				Trace.error("There was a problem unloading the script: " + ex.getMessage());
+			}
 		}
 	}
 

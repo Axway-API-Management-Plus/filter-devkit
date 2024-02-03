@@ -141,7 +141,11 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 				Trace.error("Unable to run script detach function", e);
 			}
 		} else {
-			detachScript();
+			try {
+				detachScript();
+			} catch (NoSuchMethodException e) {
+				/* ignore, detach is optional */
+			}
 		}
 
 		try {
@@ -375,12 +379,12 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 			Method detach = getGroovyMethod(script, "detach");
 			Method invoke = getGroovyMethod(script, "invoke");
 
-			if (getGroovyDetachArguments(detach) == null) {
-				detach = null;
+			if ((detach != null) && getGroovyDetachArguments(detach) == null) {
+				throw new ScriptException("Unable to reflect detach arguments");
 			}
 
-			if (getGroovyInvokeArguments(invoke, null, null) == null) {
-				invoke = null;
+			if ((invoke != null) && getGroovyInvokeArguments(invoke, null, null) == null) {
+				throw new ScriptException("Unable to reflect invoke arguments");
 			}
 
 			if ((detach != null) || (invoke != null)) {
