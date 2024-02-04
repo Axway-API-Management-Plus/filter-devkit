@@ -6,3 +6,5 @@
 /bin
 /build
 /.classpath
+/dist/*
+!/dist/.keep
