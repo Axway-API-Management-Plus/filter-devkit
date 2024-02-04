@@ -8,3 +8,7 @@ java {
 	withSourcesJar()
 }
 
+apply from: rootProject.file('apigateway.gradle')
+
+deployRuntime.enabled = true
+

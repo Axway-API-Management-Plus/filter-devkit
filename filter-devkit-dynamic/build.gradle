@@ -10,12 +10,16 @@ java {
 
 apply from: rootProject.file('apigateway.gradle')
 
+deployRuntime.enabled = true
+
 configurations {
 	compileOnly.extendsFrom(apigw_central)
 }
 
 dependencies {
-    implementation 'org.eclipse.jdt:ecj:3.16.0'
+    apigw_deploy 'org.eclipse.jdt:ecj:3.16.0'
+
+	implementation 'org.eclipse.jdt:ecj:3.16.0'
     implementation project(':filter-devkit-quickfilters')
     implementation project(':filter-devkit-runtime')
 }

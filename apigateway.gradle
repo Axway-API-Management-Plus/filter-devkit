@@ -16,9 +16,17 @@ def checkAPIGatewayProperties() {
 checkAPIGatewayProperties()
 
 configurations {
+	apigw_deploy
 	apigw_central
 	apigw_dist
 }
+
+task deployRuntime(type: Copy) {
+	from jar, configurations.apigw_deploy
+    into file("${apigw_vdistdir}/ext/lib")
+}
+
+deployRuntime.enabled = false
 
 dependencies {
     apigw_central('org.apache.activemq:activemq-broker:5.16.0') {
