@@ -6,27 +6,28 @@ This project contains a set of libraries for implementing API Gateway Filters an
 
 To build this artefact, you need the following items:
  - JDK 1.8
- - Apache Maven 3.6.1
- - API Gateway and Policy Studio 7.7 with no fixpack
+ - API Gateway and Policy Studio 7.7.20220530
 
-Produced libraries should be useable on API Gateway and Policy Studio from version 7.5.3 to 7.7
+Produced libraries are only valid on this particular release. new branches will appear for newer versions
+
+Please not that this release is a work in progress and not ready yet for upgrade or production. If you wish to test, use a docker image built using the provided Dockerfile.
 
 ## Basic Features
 
- - [Quick Filters integration for scripts](docs/QuickScriptFilter.md) (Javascript, Jython, Groovy)
- - [Quick Filters integration for Java](docs/QuickJavaFilter.md) using annotations
  - [Pluggable module support for Java](docs/ClassPathScanning.md)
- - [Extended Groovy script filter](docs/GroovyScriptFilter.md)
+ - [Advanced script filter](docs/AdvancedScriptFilter.md)
  - Assertion Filter (trigger error handling on condition)
- - Initializer Shortcut Filter
- - KPS Read/Write Framework
  - Deployment time compilation support for developers
+
+QuickFilter code is still around but not ready yet for use. As time of writing, only the above feature are considered stable.
 
 ## Developer Feature
 
  - [Dynamic compilation support](docs/DynamicCompiler.md)
 
-## Installation
+## Quick start
+
+A QuickStart Dockerfile is provided. This Dockerfile will build a Theia IDE, install an API Gateway (with minimal ANM configuration) and deploy the FDK on it.
 
 Start by cloning the project on github and set working directory to the root of the project
 
@@ -34,52 +35,30 @@ Start by cloning the project on github and set working directory to the root of 
 git clone https://github.com/Axway-API-Management-Plus/filter-devkit.git
 ```
 
-The Filter development kit is provided with a bootstrap script. Boostrap process will populate the local maven repository with artifacts retrieved from a local fresh install of API Gateway and Policy Studio after configuration of API Manager on a linux machine with direct access to internet. Please note that the first active proxy in the maven configuration may be used as well as configured credentials. Maven proxy configuration with proxy credentials is however not supported as time of writing (the bootstrap script is still a work in progress).
+Copy the Axway setup file (APIGateway_7.7.20220530_Install_linux-x86-64_BN02.run) and licence file in the project 'dist' directory
 
-Type the following command in the linux shell (replace api gateway path and policy studio path by relevant information on your local machine).
-
-```
-./boostrap.sh /Volumes/Unix/linux-x86_64/apigateway/opt/Axway/7.7.0/apigateway /Volumes/Unix/linux-x86_64/apigateway/opt/Axway/7.7.0/policystudio
-```
-
-The bootstrap script will search and create maven artifacts in the local repository. Once this is done, check out the project from GitHub and build modules using the following command:
+Execute the following docker build command (filenames can change, but keep the dist prefix with a forward slash).
 
 ```
-mvn clean package
+docker build --build-arg APIM_RUN_FILE=dist/APIGateway_7.7.20220530_Install_linux-x86-64_BN02.run --build-arg APIM_LIC_FILE=dist/licence.lic -t filter-devkit-docker -f src\main\docker\Dockerfile .
 ```
 
-The build command will compile all module, produce an export archive and deploy directories.
+At the end of the build, you should have a docker image called 'filter-devkit-docker'. run it with the following docker command
 
-### Developer Install
+```
+docker run -p=3000:3000 -p=8090:8090 -p=8080:8080 --mount type=tmpfs,destination=/tmp filter-devkit-docker
+```
 
-Stop you API Gateway instance, copy the following jars from the 'filter-devkit-delivery/target/developer' directory in the ext/lib directory of instance and start it back
- - ecj-*.jar (eclipse compiler plugin)
- - filter-devkit-dynamic-*.jar (dynamic compilation support for instance)
- - filter-devkit-runtime-*.jar (basic runtime)
- - filter-devkit-samples-*.jar (sample implementations)
+once started, go to http://localhost:3000/
 
-In the policy studio, import the following jars as runtime dependencies and restart the policy studio with the '-clean' option:
- - filter-devkit-runtime-*.jar
- - filter-devkit-studio-*.jar
+You can now start the ANM (API Gateway is installed in /opt/axway/apigateway) using the following commands in a theia terminal
 
-In the policy studio, import the following typesets into a open configuration:
- - filter-devkit-delivery/target/developer/typesets/apigwsdkset.xml
- - filter-devkit-delivery/target/developer/typesets/apigwsdk-advancedset.xml
+```
+cd /opt/axway/apigateway
+posix/bin/nodemanager
+```
 
-_Warning_ : If you're in a Team Dev configuration, import sets in the project with Server Settings.
+Create an instance using the ANM available at https://localhost:8090/
+Make the instance with the default services port listening at 8080 (otherwise you have to restart you docker container with a new forwarded port) and keep the default 8085 for the management port. Do not use YAML !
 
-Once all those actions are done, you have an API Gateway instance and configuration ready for Quick Filter and advanced scripting.
-
-### Production Install (for production or deployment pipeline)
-
-Stop you API Gateway instance, copy the following jars from the 'filter-devkit-delivery/target/production-base' directory in the ext/lib directory of instance and start it back
- - filter-devkit-runtime-*.jar (basic runtime)
-
-In the policy studio, import the following jars as runtime dependencies and restart the policy studio with the '-clean' option:
- - filter-devkit-runtime-*.jar
- - filter-devkit-studio-*.jar
-
-In the policy studio, import the following typesets into a open configuration:
- - filter-devkit-delivery/target/production-base/typesets/apigwsdkset.xml
-
-_Warning_ : If you're in a Team Dev configuration, import sets in the project with Server Settings.
+Happy testing !

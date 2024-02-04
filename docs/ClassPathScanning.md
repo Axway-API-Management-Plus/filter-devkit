@@ -1,11 +1,12 @@
 # Pluggable module support 
 
+**Please note that this feature may change from ClassPath scanning to ServiceLoader implementation. Except for a new annotation to be present on the classes implementing ExtensionModule there should be no change on implementation.**
+
 The Pluggable module support feature allows to execute code on deployment events (attach/detach) and to export Methods to be executed from scripts or selector substitution.
 
-Pulggable modules are discovered using classpath scanning. There is actually 3 kinds of Pluggable modules:
+Pulggable modules are discovered using classpath scanning. There is actually 2 kinds of Pluggable modules:
  - Extension Modules : Execute code on deployment events
  - Extension Plugins : Register methods to be invoked from scripts or selectors
- - Quick Filter Type : Register class as a Quick Java Filter
 
 Once classpath scanning has been done, discovered classes are sorted using the optional annotation 'javax.annotation.Priority'. If absent a default priority of zero is assumed. The lowest priority is registered first.
 
@@ -40,30 +41,40 @@ When a class has the @ExtensionPlugin extension, all methods which are 'public' 
 
 There is two kind of exportable methods:
  - @InvocableMethod : This kind of method can throw a CircuitAbortException and must return a boolean
- - @SubstitutableMethod : This kind of method can return any object, but is not able to throw an exception
+ - @SubstitutableMethod : This kind of method can return any object, but is not able to throw an exception (null is assumed as return value)
 
 All extensions are available in messages under the global dictionary 'extensions'
 
 ### Extension Plugin example
 
 ```java
-package com.vordel.sdk.samples;
+package com.vordel.circuit.filter.devkit.samples;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProperties;
-import com.vordel.circuit.script.ScriptHelper;
-import com.vordel.circuit.script.bind.ExtensionPlugin;
-import com.vordel.circuit.script.bind.InvocableMethod;
-import com.vordel.circuit.script.bind.SelectorExpression;
-import com.vordel.circuit.script.bind.SubstitutableMethod;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionPlugin;
+import com.vordel.circuit.filter.devkit.context.annotations.InvocableMethod;
+import com.vordel.circuit.filter.devkit.context.annotations.SelectorExpression;
+import com.vordel.circuit.filter.devkit.context.annotations.SubstitutableMethod;
+import com.vordel.circuit.filter.devkit.script.ScriptHelper;
 
 @ExtensionPlugin("hello.module")
 public class ClassResource {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
+	/**
+	 * This method will be callable within script or using an eval selector using
+	 * ${extensions['hello.module'].Hello}
+	 * 
+	 * @param msg  injected message
+	 * @param name injected result of selector <code>${http.querystring.name}</code>
+	 * @return a json object containing a "hello" property with provided name as
+	 *         value
+	 * @throws CircuitAbortException if any error occurs
+	 */
 	@InvocableMethod("Hello")
 	public static boolean service(Message msg, @SelectorExpression("http.querystring.name") String name) throws CircuitAbortException {
 		boolean result = false;
@@ -80,57 +91,50 @@ public class ClassResource {
 		return result;
 	}
 
+	/**
+	 * This method can be called anywhere you can use a selector (Set Attribute, Set
+	 * Message, etc...). It will return a string value. It is useable with the
+	 * expression <code>${extensions['hello.module'].HelloMessage}</code>.
+	 * 
+	 * @param name injected result of selector <code>${http.querystring.name}</code>
+	 * @return an Hello with name message
+	 */
 	@SubstitutableMethod("HelloMessage")
 	public static String getHelloMessage(@SelectorExpression("http.querystring.name") String name) {
 		return name == null ? null : String.format("Hello %s !", name);
 	}
 }
+
 ```
 
 The above class expose two methods under the extension 'hello.module'.
 
 The method 'HelloMessage' will be called by the selector substitution ${extensions["hello.module"].HelloMessage}. The 'name' parameter of the method will be injected using string coercion of the selector expression ${http.querystring.name}. You should use and abuse of substituable methods whenever possible.
 
-The method 'Hello' is only available to scripts or to advanced scripting context call filters. The following regular script shows how to call an exported invocable method.
+The method 'Hello' is available to scripts (advanced or not) and eval selector (since it is patched by the FDK). The following regular script shows how to call an exported invocable method.
 
 ```groovy
-package com.vordel.sdk.samples
-
 import com.vordel.circuit.Message
-import com.vordel.circuit.script.bind.ExtensionContext
-import com.vordel.circuit.script.context.MessageContextModule
-import com.vordel.circuit.script.context.MessageContextTracker
-import com.vordel.config.Circuit
+import com.vordel.circuit.filter.devkit.context.ExtensionContext
+import com.vordel.circuit.filter.devkit.context.ExtensionLoader
 
 import groovy.transform.Field
 
 /**
  * retrieve registered extension
  */
-@Field final ExtensionContext EXTENSION = MessageContextModule.getGlobalResources("hello.module");
+@Field final ExtensionContext EXTENSION = ExtensionLoader.getGlobalResources("hello.module");
 
 /**
- * script entry point. will set a ScriptInvocationContext in the attribute
- * 'script.context'.
- * 
+ * script entry point.
+ *
  * @param msg message being handled
  * @return result of the Hello method
  */
 boolean invoke(Message msg) {
-	/* 
-	 * get a pointer for the current circuit If writing a QuickFilter script drop these two lines
-	 * and use the function Circuit argument instead.
-	 */
-	MessageContextTracker tracker = MessageContextTracker.getMessageContextTracker(msg);
-	Circuit circuit = tracker.getCircuit();
-	
 	/* invoke the exported 'Hello' method */
-	return EXTENSION.invoke(circuit, msg, "Hello");
+	return EXTENSION.invoke(msg, "Hello");
 }
 ```
 
-Usage of invocable method is encouraged when combined with Advanced Scripting Context Call filter or Quick Filters (Script or Java). Purpose of this feature is to build sharable components. Usage is discouraged in regular scripting filter because of Exception handling.
-
-## Quick Filter Types
-
-Quick Filter types get registered when the class is elligible to be used as a [Quick Java Filter](QuickJavaFilter.md).
+Usage of invocable method is encouraged when combined with Advanced Scripting Context Call filter. Purpose of this feature is to build sharable components. Usage is discouraged in regular scripting filter because of Exception handling.
