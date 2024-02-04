@@ -32,7 +32,7 @@ A QuickStart Dockerfile is provided. This Dockerfile will build a Theia IDE, ins
 Start by cloning the project on github and set working directory to the root of the project
 
 ```
-git clone https://github.com/Axway-API-Management-Plus/filter-devkit.git
+git clone -b develop https://github.com/Axway-API-Management-Plus/filter-devkit.git
 ```
 
 Copy the Axway setup file (APIGateway_7.7.20220530_Install_linux-x86-64_BN02.run) and licence file in the project 'dist' directory
