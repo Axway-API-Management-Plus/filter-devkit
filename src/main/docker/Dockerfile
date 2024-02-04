@@ -25,8 +25,10 @@ FROM node:16-bookworm
 ARG APIM_RUN_FILE
 ARG APIM_LIC_FILE
 
-COPY ${APIM_RUN_FILE} /opt/axway/APIGateway_Install_linux-x86-64.run
-COPY ${APIM_LIC_FILE} /opt/axway/API.lic
+RUN --mount=type=tmpfs,target=/tmp
+
+COPY ${APIM_RUN_FILE} /tmp/APIGateway_Install_linux-x86-64.run
+COPY ${APIM_LIC_FILE} /tmp/API.lic
 COPY . /home/project/filter-devkit
 
 RUN apt update && \
@@ -36,7 +38,8 @@ RUN apt update && \
 	apt update && \
 	apt upgrade -y && \
 	apt install -y git openssh-client bash libsecret-1-0 temurin-8-jdk temurin-11-jdk temurin-17-jdk && \
-	apt --no-install-recommends install -y build-essential libx11-dev libxkbfile-dev sudo
+	apt --no-install-recommends install -y build-essential libx11-dev libxkbfile-dev sudo && \
+	apt clean autoclean && apt autoremove --yes && rm -rf /var/lib/apt/lists/*
 
 # Create theia user and directories
 # Application will be copied to /home/theia
@@ -48,6 +51,7 @@ RUN adduser theia --shell /bin/bash && \
 	chmod 700 /etc/sudoers.d && \
 	chmod g+rw /home && \
 	mkdir -p /home/theia/.gradle && \
+	mkdir -p /opt/axway && \
 	echo 'org.gradle.java.home=/usr/lib/jvm/temurin-8-jdk-amd64' >> /home/theia/.gradle/gradle.properties && \
 	echo 'apigw_vdistdir=/opt/axway/apigateway' >> /home/theia/.gradle/gradle.properties && \
 	echo 'studio_vdistdir=/opt/axway/policystudio' >> /home/theia/.gradle/gradle.properties && \
@@ -58,8 +62,8 @@ RUN adduser theia --shell /bin/bash && \
 
 WORKDIR /home/theia
 
-RUN chmod 755 /opt/axway/APIGateway_Install_linux-x86-64.run && \
-	su theia -c "/opt/axway/APIGateway_Install_linux-x86-64.run \
+RUN chmod 755 /tmp/APIGateway_Install_linux-x86-64.run && \
+	su theia -c "/tmp/APIGateway_Install_linux-x86-64.run \
 		--mode unattended \
 		--acceptGeneralConditions yes \
 		--setup_type advanced \
@@ -69,8 +73,8 @@ RUN chmod 755 /opt/axway/APIGateway_Install_linux-x86-64.run && \
 		--changeCredentials 0 \
 		--firstInNewDomain 1 \
 		--nmHostnameOrIpChoice 127.0.0.1 \
-		--licenseFilePath /opt/axway/API.lic" && \
-	su theia -c "/opt/axway/APIGateway_Install_linux-x86-64.run \
+		--licenseFilePath /tmp/API.lic" && \
+	su theia -c "/tmp/APIGateway_Install_linux-x86-64.run \
 		--mode unattended \
 		--acceptGeneralConditions yes \
 		--setup_type advanced \
@@ -81,8 +85,8 @@ RUN chmod 755 /opt/axway/APIGateway_Install_linux-x86-64.run && \
 		--cassandraJDK /opt/axway/apigateway/Linux.x86_64/jre \
 		--startCassandra 0 " && \
 	su theia -c "/opt/axway/apigateway/posix/bin/managedomain --initialize --nm_name ANM-FDK --host 127.0.0.1 --port 8090 --domain_name Domain-FDK" && \
-	rm -f /opt/axway/APIGateway_Install_linux-x86-64.run && \
-	rm -f /opt/axway/API.lic && \
+	rm -f /tmp/APIGateway_Install_linux-x86-64.run && \
+	rm -f /tmp/API.lic && \
 	chmod 755 /home/project/filter-devkit/gradlew && \
 	su theia -c "cd /home/project/filter-devkit && ./gradlew clean cleanEclipse build jar copyArchives deployRuntime" && \
 	su theia -c "mkdir -p /opt/axway/apigateway/ext/dynamic"
