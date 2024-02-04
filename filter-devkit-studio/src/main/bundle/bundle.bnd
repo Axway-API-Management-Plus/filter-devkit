@@ -6,11 +6,13 @@ Require-Bundle: \
 	com.vordel.rcp.filterbase
 Bundle-ClassPath: .
 Export-Package: \
-	com.vordel.circuit.ext.filter.quick,\
-	com.vordel.client.manager.filter.legacy,\
-	com.vordel.client.manager.filter.assertion,\
-	com.vordel.client.manager.filter.quick,\
-	com.vordel.client.manager.filter.advancedscript
+	com.vordel.circuit.filter.devkit.quick.annotations,\
+	com.vordel.circuit.filter.devkit.context.annotations,\
+	com.vordel.client.manager.filter.devkit.studio,\
+	com.vordel.client.manager.filter.devkit.studio.assertion,\
+	com.vordel.client.manager.filter.devkit.studio.advanced,\
+	com.vordel.client.manager.filter.devkit.studio.quick,\
+	com.vordel.client.manager.filter.devkit.runtime
 Import-Package: \
 	com.vordel.circuit,\
 	com.vordel.config,\

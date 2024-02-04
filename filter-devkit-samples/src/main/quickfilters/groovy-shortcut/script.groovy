@@ -1,4 +1,4 @@
-package com.vordel.sdk.samples
+package com.vordel.circuit.filter.devkit.samples
 
 import com.vordel.circuit.CircuitAbortException
 import com.vordel.circuit.InvocationEngine

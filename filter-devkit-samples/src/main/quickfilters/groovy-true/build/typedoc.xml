@@ -1,6 +1,6 @@
 <entityStoreData>
 	<entityType extends="Filter" name="GroovyTrueTutorial">
-<constant name="class" type="string" value="com.vordel.circuit.ext.filter.quick.QuickScriptFilter"/>
+<constant name="class" type="string" value="com.vordel.circuit.filter.devkit.quick.annotations.QuickScriptFilter"/>
 <constant name="displayName" type="string" value="Tutorial Groovy True Filter"/>
 <constant name="description" type="string" value="A Groovy script which always returns true"/>
 <constant name="engineName" type="string" value="groovy"/>

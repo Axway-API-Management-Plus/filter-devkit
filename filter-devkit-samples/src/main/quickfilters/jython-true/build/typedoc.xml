@@ -1,6 +1,6 @@
 <entityStoreData>
 	<entityType extends="Filter" name="JythonTrueTutorial">
-<constant name="class" type="string" value="com.vordel.circuit.ext.filter.quick.QuickScriptFilter"/>
+<constant name="class" type="string" value="com.vordel.circuit.filter.devkit.quick.annotations.QuickScriptFilter"/>
 <constant name="displayName" type="string" value="Tutorial Jython True Filter"/>
 <constant name="description" type="string" value="A jython script which always returns true"/>
 <constant name="engineName" type="string" value="jython"/>

@@ -8,9 +8,13 @@ import javax.el.ELException;
 import javax.el.ELResolver;
 import javax.el.PropertyNotFoundException;
 
-import com.vordel.circuit.script.context.resources.ContextResourceProvider;
-import com.vordel.circuit.script.context.resources.SubstitutableResource;
-import com.vordel.circuit.script.context.resources.ViewableResource;
+import com.vordel.circuit.CircuitAbortException;
+import com.vordel.circuit.Message;
+import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
+import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
+import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
+import com.vordel.circuit.filter.devkit.context.resources.SubstitutableResource;
+import com.vordel.circuit.filter.devkit.context.resources.ViewableResource;
 import com.vordel.common.Dictionary;
 
 public class ContextResourceResolver extends ELResolver {
@@ -128,15 +132,21 @@ public class ContextResourceResolver extends ELResolver {
 		}
 
 		private Object substitute(Object result, String key) {
-			if (result instanceof ViewableResource) {
-				result = ((ViewableResource) result).getResourceView();
-			} else if (result instanceof SubstitutableResource) {
-				while (result instanceof SubstitutableResource) {
+			do {
+				if (result instanceof ViewableResource) {
+					result = ((ViewableResource) result).getResourceView();
+				} else if (result instanceof SubstitutableResource) {
 					result = ((SubstitutableResource<?>) result).substitute(dict);
+				} else if ((dict instanceof Message) && (result instanceof InvocableResource)) {
+					try {
+						result = ((InvocableResource) result).invoke((Message) dict);
+					} catch (CircuitAbortException e) {
+						throw new ELException("Got Exception during invoke", e);
+					}
+				} else if (result instanceof ContextResource) {
+					throw new PropertyNotFoundException(String.format("property '%' is not readable", key));
 				}
-			} else if (result != null) {
-				throw new PropertyNotFoundException(String.format("property '%' is not readable", key));
-			}
+			} while (result instanceof ContextResource);
 
 			return result;
 		}

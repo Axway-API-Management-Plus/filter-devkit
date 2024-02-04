@@ -1,6 +1,6 @@
 from com.vordel.trace import Trace
 from com.vordel.circuit import CircuitAbortException
-from com.vordel.circuit.script.context.resources import PolicyResource
+from com.vordel.circuit.filter.devkit.context.resources import PolicyResource
 
 def attach(ctx, entity):
     global shortcut

@@ -1,4 +1,4 @@
-package com.vordel.sdk.samples
+package com.vordel.circuit.filter.devkit.samples
 
 import java.nio.charset.Charset
 import java.security.KeyStore

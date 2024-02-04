@@ -1,0 +1,5 @@
+<entityStoreData>
+	<entity type="DevKitExtensionLoader">
+		<fval name="name"><value>Filter DevKit Extension Loader</value></fval>
+	</entity>
+</entityStoreData>

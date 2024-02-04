@@ -1,6 +1,6 @@
 <entityStoreData>
 	<entityType extends="Filter" name="JavascriptTrueTutorial">
-<constant name="class" type="string" value="com.vordel.circuit.ext.filter.quick.QuickScriptFilter"/>
+<constant name="class" type="string" value="com.vordel.circuit.filter.devkit.quick.annotations.QuickScriptFilter"/>
 <constant name="displayName" type="string" value="Tutorial Javascript True Filter"/>
 <constant name="description" type="string" value="A javascript which always returns true"/>
 <constant name="engineName" type="string" value="nashorn"/>

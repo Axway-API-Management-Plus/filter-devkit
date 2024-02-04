@@ -1,9 +1,9 @@
-package com.vordel.sdk.samples.quick
+package com.vordel.circuit.filter.devkit.samples.quick
 
 import com.vordel.circuit.Message
-import com.vordel.circuit.script.bind.ExtensionContext
-import com.vordel.circuit.script.context.MessageContextModule
-import com.vordel.circuit.script.context.MessageContextTracker
+import com.vordel.circuit.filter.devkit.context.ExtensionContext
+import com.vordel.circuit.filter.devkit.context.ExtensionLoader
+import com.vordel.circuit.filter.devkit.context.MessageContextTracker
 import com.vordel.config.Circuit
 
 import groovy.transform.Field
