@@ -27,9 +27,7 @@ ARG APIM_LIC_FILE
 
 RUN --mount=type=tmpfs,target=/tmp
 
-COPY ${APIM_RUN_FILE} /tmp/APIGateway_Install_linux-x86-64.run
-COPY ${APIM_LIC_FILE} /tmp/API.lic
-COPY . /home/project/filter-devkit
+COPY . /tmp/filter-devkit
 
 RUN apt update && \
 	apt install -y wget apt-transport-https && \
@@ -56,6 +54,9 @@ RUN adduser theia --shell /bin/bash && \
 	echo 'apigw_vdistdir=/opt/axway/apigateway' >> /home/theia/.gradle/gradle.properties && \
 	echo 'studio_vdistdir=/opt/axway/policystudio' >> /home/theia/.gradle/gradle.properties && \
 	mkdir -p /home/project && \
+	mv /tmp/filter-devkit/${APIM_RUN_FILE} /tmp/APIGateway_Install_linux-x86-64.run && \
+	mv /tmp/filter-devkit/${APIM_LIC_FILE} /tmp/API.lic && \
+	mv /tmp/filter-devkit /home/project/ &&\
 	chown -R theia:theia /home/theia && \
 	chown -R theia:theia /home/project && \
 	chown -R theia:theia /opt/axway
