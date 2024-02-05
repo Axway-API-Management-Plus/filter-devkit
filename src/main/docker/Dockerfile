@@ -90,6 +90,7 @@ RUN chmod 755 /tmp/APIGateway_Install_linux-x86-64.run && \
 	rm -f /tmp/API.lic && \
 	chmod 755 /home/project/filter-devkit/gradlew && \
 	su theia -c "cd /home/project/filter-devkit && ./gradlew clean cleanEclipse build jar copyArchives deployRuntime" && \
+	su theia -c "cd /home/project/filter-devkit && ./gradlew clean && rm -rf build" && \
 	su theia -c "mkdir -p /opt/axway/apigateway/ext/dynamic"
 
 ENV HOME /home/theia
