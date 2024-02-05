@@ -1,3 +1,5 @@
+apply plugin: 'base'
+
 subprojects {
 	apply plugin: 'eclipse'
 
@@ -8,4 +10,8 @@ subprojects {
 task copyArchives(type: Copy) {
 	from subprojects.collect { it.tasks.withType(AbstractArchiveTask) }
 	into "$buildDir/archives"
+}
+
+clean {
+	delete "${buildDir}"
 }
