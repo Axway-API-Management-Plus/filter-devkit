@@ -60,6 +60,7 @@ RUN --mount=type=tmpfs,target=/tmp \
 	cd /tmp && tar -cpf - export | tar -C /home/project -xpf - && \
 	mkdir -p /opt/axway && \
 	mv /home/project/export /home/project/filter-devkit && \
+	chmod 755 /home/project/filter-devkit/gradlew && \
 	chown -R theia:theia /opt/axway && \
 	chown -R theia:theia /home/project/filter-devkit && \
 	mv /home/project/filter-devkit/${APIM_RUN_FILE} /tmp/APIGateway_Install_linux-x86-64.run && \
@@ -104,7 +105,6 @@ RUN --mount=type=tmpfs,target=/tmp \
 	chown -R theia:theia /home/theia/.gradle && \
 	chown -R theia:theia /home/project/filter-devkit/.gradle && \
 	su theia -c "cd /home/project/filter-devkit && \
-		chmod 755 gradlew && \
 		./gradlew clean cleanEclipse build jar copyArchives deployRuntime && \
 		./gradlew clean && \
 		mkdir -p /opt/axway/apigateway/ext/dynamic"
