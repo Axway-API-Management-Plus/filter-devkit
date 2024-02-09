@@ -78,7 +78,6 @@ public class ContextResourceFactory {
 						Trace.error(String.format("Configured class '%s' does not exists", className), e);
 					}
 				} else if ("CONFIGURATION_RESOURCE".equals(resourceType)) {
-					// ,,,AuthzCodePersist,AccessTokenPersist,OAuthAppProfile,ApiKeyProfile,BasicProfile,KerberosProfile,ProxyServer,KPSReadWriteStore,KPSDatabaseReadStore,KPSCertStore
 					ESPK reference = resourceEntity.getReferenceValue("configurationReference");
 
 					/* just to be sure that reference is not delayed */

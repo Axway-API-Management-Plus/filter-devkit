@@ -29,7 +29,6 @@ public class AdvancedScriptResourceDialog extends EntityContextAdapterDialog {
 
 	@Override
 	public String getHelpID() {
-		// TODO Auto-generated method stub
-		return "";
+		return "advancedscriptresources.help";
 	}
 }

@@ -1,5 +1,8 @@
 package com.vordel.client.manager.filter.devkit.studio.script.advanced;
 
+import static com.vordel.client.manager.filter.devkit.studio.script.advanced.AdvancedScriptResources.ADVANCEDSCRIPT_PAGE_DESCRIPTION;
+import static com.vordel.client.manager.filter.devkit.studio.script.advanced.AdvancedScriptResources.ADVANCEDSCRIPT_PAGE_TITLE;
+
 import java.io.InputStream;
 
 import org.eclipse.swt.widgets.Composite;
@@ -8,10 +11,10 @@ import com.vordel.client.manager.filter.devkit.studio.VordelLegacyPage;
 
 public class AdvancedScriptPage extends VordelLegacyPage {
 	public AdvancedScriptPage() {
-		super("AdvancedScriptPage");
+		super("advancedscriptpage");
 
-		setTitle(resolve("ADVANCEDSCRIPT_PAGE_TITLE"));
-		setDescription(resolve("ADVANCEDSCRIPT_PAGE_DESCRIPTION"));
+		setTitle(ADVANCEDSCRIPT_PAGE_TITLE);
+		setDescription(ADVANCEDSCRIPT_PAGE_DESCRIPTION);
 		setPageComplete(true);
 	}
 
@@ -30,6 +33,6 @@ public class AdvancedScriptPage extends VordelLegacyPage {
 
 	@Override
 	public String getHelpID() {
-		return "";
+		return "advancedscriptpage.help";
 	}
 }
