@@ -121,7 +121,7 @@ public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 			TypeElement superElement = (TypeElement) superDeclaredType.asElement();
 			QuickFilterType annotation = superElement.getAnnotation(QuickFilterType.class);
 
-			result = annotation == null ? getSuperDefinition(superElement) : null;
+			result = annotation == null ? getSuperDefinition(superElement) : superElement;
 		}
 
 		return result;
