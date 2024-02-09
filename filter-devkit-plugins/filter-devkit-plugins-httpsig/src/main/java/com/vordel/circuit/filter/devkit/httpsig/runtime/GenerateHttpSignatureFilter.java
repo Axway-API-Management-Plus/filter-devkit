@@ -45,7 +45,7 @@ import com.vordel.security.cert.PersonalInfo;
 import com.vordel.store.cert.CertStore;
 import com.vordel.trace.Trace;
 
-@QuickFilterType(name = "HttpSignatureFilter", resources = "generate_signature.properties", ui = "generate_signature.xml")
+@QuickFilterType(name = "HttpSignatureFilter", icon = "xmlsig", category="Integrity", resources = "generate_signature.properties", page = "generate_signature.xml")
 public class GenerateHttpSignatureFilter extends GenerateHttpDigestFilter {
 	private static final HeaderDelegate<Date> DELEGATE = RuntimeDelegate.getInstance().createHeaderDelegate(Date.class);
 

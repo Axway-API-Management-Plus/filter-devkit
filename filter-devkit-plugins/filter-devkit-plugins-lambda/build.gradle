@@ -16,12 +16,10 @@ configurations {
 }
 
 dependencies {
-    annotationProcessor project(':filter-devkit-quickfilters')
-    implementation project(':filter-devkit-quickfilters')
+	annotationProcessor project(':filter-devkit-quickfilters')
+	implementation project(':filter-devkit-quickfilters')
 	implementation project(':filter-devkit-runtime')
-	
-	osgi project(':filter-devkit-quickfilters')
-	osgi project(':filter-devkit-runtime')
+
 	osgi project(':filter-devkit-studio')
 
 	implementation('com.amazonaws:aws-java-sdk-lambda:1.11.538')
@@ -30,8 +28,17 @@ dependencies {
 	osgi ('com.amazonaws:aws-java-sdk-sts:1.11.538')
 }
 
+tasks.withType(JavaCompile) {
+	classpath += configurations.osgi
+	options.sourcepath = sourceSets.main.resources.getSourceDirectories()
+	options.compilerArgs += [
+		"-AprojectName=${project.name}",
+		"-AprojectExportedPackage=com.vordel.client.manager.filter.devkit.aws.lambda"
+	]
+}
+
 tasks.withType(Zip) {
-	classpath = configurations.osgi
+	classpath += configurations.osgi
 }
 
 jar {

@@ -4,7 +4,7 @@ import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.filter.devkit.context.resources.PolicyResource;
-import com.vordel.circuit.filter.devkit.quick.QuickJavaFilterDefinition;
+import com.vordel.circuit.filter.devkit.quick.JavaQuickFilterDefinition;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterField;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterType;
 import com.vordel.config.Circuit;
@@ -13,8 +13,8 @@ import com.vordel.el.Selector;
 import com.vordel.es.Entity;
 import com.vordel.trace.Trace;
 
-@QuickFilterType(name = "JavaQuickFilter", resources = "shortcut.properties", ui = "shortcut.xml")
-public class QuickFilterJavaProto extends QuickJavaFilterDefinition {
+@QuickFilterType(name = "JavaQuickFilter", resources = "shortcut.properties", page = "shortcut.xml")
+public class QuickFilterJavaProto extends JavaQuickFilterDefinition {
 	private Selector<String> hello = null;
 
 	private PolicyResource policy = null;

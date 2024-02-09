@@ -3,8 +3,8 @@ plugins {
 }
 
 java {
-    sourceCompatibility = 'VERSION_1_8'
-    targetCompatibility = 'VERSION_1_8'
+	sourceCompatibility = 'VERSION_1_8'
+	targetCompatibility = 'VERSION_1_8'
 }
 
 apply from: rootProject.file('apigateway.gradle')
@@ -16,17 +16,24 @@ configurations {
 }
 
 dependencies {
-    annotationProcessor project(':filter-devkit-quickfilters')
-    implementation project(':filter-devkit-quickfilters')
+	annotationProcessor project(':filter-devkit-quickfilters')
+	implementation project(':filter-devkit-quickfilters')
 	implementation project(':filter-devkit-runtime')
 	
-	osgi project(':filter-devkit-quickfilters')
-	osgi project(':filter-devkit-runtime')
 	osgi project(':filter-devkit-studio')
 }
 
+tasks.withType(JavaCompile) {
+	classpath += configurations.osgi
+	options.sourcepath = sourceSets.main.resources.getSourceDirectories()
+	options.compilerArgs += [
+		"-AprojectName=${project.name}",
+		"-AprojectExportedPackage=com.vordel.client.manager.filter.devkit.httpsig"
+	]
+}
+
 tasks.withType(Zip) {
-	classpath = configurations.osgi
+	classpath += configurations.osgi
 }
 
 jar {

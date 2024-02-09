@@ -1,0 +1,19 @@
+package <packageName>;
+
+import org.eclipse.osgi.util.NLS;
+
+public class <resourcesSimpleName> extends NLS {
+	private static final String BUNDLE_NAME = "<packageName>.<resourcesFile>"; //$NON-NLS-1$
+
+	public static String FILTER_DISPLAYNAME;
+	public static String FILTER_DESCRIPTION;
+
+	static {
+		// initialize resource bundle
+		NLS.initializeMessages(BUNDLE_NAME, <resourcesSimpleName>.class);
+	}
+
+	private <resourcesSimpleName>() {
+		super();
+	}
+}

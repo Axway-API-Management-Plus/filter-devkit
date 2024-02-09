@@ -17,7 +17,7 @@ import com.vordel.trace.Trace;
  * Patch for the Evaluate Selector filter. It allows CircuitAbortException to be
  * thrown (So policies may be called using selector syntax). Implementation of
  * CircuitAbortException wrapping can be found in
- * {@link ContextResourceDictionary}
+ * {@link ContextResourceDictionary}. 
  * 
  * @author rdesaintleger@axway.com
  */

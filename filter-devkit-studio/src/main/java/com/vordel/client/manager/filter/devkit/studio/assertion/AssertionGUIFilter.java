@@ -16,22 +16,12 @@ public class AssertionGUIFilter extends VordelLegacyGUIFilter {
 		return "images/alert_icon.gif";
 	}
 
-	public Image getSmallImage() {
-		String id = getSmallIconId();
-
-		return Images.getImageRegistry().get(id);
-	}
-
-	public ImageDescriptor getSmallIcon() {
-		String id = getSmallIconId();
-
-		return Images.getImageDescriptor(id);
-	}
-
+	@Override
 	public String[] getCategories() {
 		return new String[] { resolve("FILTER_GROUP_ASSERTION") };
 	}
 
+	@Override
 	public String getTypeName() {
 		return resolve("ASSERTION_PALETTE_NAME");
 	}

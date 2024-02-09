@@ -23,7 +23,7 @@ import javax.annotation.Priority;
 
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModule;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionPlugin;
-import com.vordel.circuit.filter.devkit.quick.QuickJavaFilterDefinition;
+import com.vordel.circuit.filter.devkit.quick.JavaQuickFilterDefinition;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterType;
 import com.vordel.config.ConfigContext;
 import com.vordel.trace.Trace;
@@ -97,7 +97,7 @@ public class ExtensionScanner {
 		Set<String> clazzes = new HashSet<String>();
 
 		try {
-			ExtensionAcceptingListener listener = new ExtensionAcceptingListener(clazzes, ExtensionPlugin.class, ExtensionModule.class, QuickFilterType.class, QuickJavaFilterDefinition.class);
+			ExtensionAcceptingListener listener = new ExtensionAcceptingListener(clazzes, ExtensionPlugin.class, ExtensionModule.class, QuickFilterType.class, JavaQuickFilterDefinition.class);
 
 			/* scan current classpath for annotations and interfaces */
 			scanClasses(loader, listener);
@@ -142,7 +142,7 @@ public class ExtensionScanner {
 		boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
 		QuickFilterType filterType = clazz.getAnnotation(QuickFilterType.class);
 
-		return (filterType != null) && (!isAbstract) && QuickJavaFilterDefinition.class.isAssignableFrom(clazz);
+		return (filterType != null) && (!isAbstract) && JavaQuickFilterDefinition.class.isAssignableFrom(clazz);
 	}
 
 	public static void registerClasses(ConfigContext ctx, Iterable<Class<?>> clazzes) {

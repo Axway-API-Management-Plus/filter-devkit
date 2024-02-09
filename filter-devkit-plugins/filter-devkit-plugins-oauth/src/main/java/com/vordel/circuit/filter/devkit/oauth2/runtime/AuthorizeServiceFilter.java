@@ -14,7 +14,7 @@ import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
 import com.vordel.circuit.filter.devkit.oauth2.jaxrs.OAuthAccessTokenGenerator;
 import com.vordel.circuit.filter.devkit.oauth2.jaxrs.OAuthAuthorizeEndpoint;
 import com.vordel.circuit.filter.devkit.oauth2.runtime.TokenServiceFilter.OAuthTokenData;
-import com.vordel.circuit.filter.devkit.quick.QuickJavaFilterDefinition;
+import com.vordel.circuit.filter.devkit.quick.JavaQuickFilterDefinition;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterComponent;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterField;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterType;
@@ -32,8 +32,8 @@ import com.vordel.es.EntityStoreException;
 import com.vordel.mime.Body;
 import com.vordel.mime.HeaderSet;
 
-@QuickFilterType(name = "OAuthAuthorizeServiceFilter", resources = "authorizeservice.properties", ui = "authorizeservicepage.xml")
-public class AuthorizeServiceFilter extends QuickJavaFilterDefinition {
+@QuickFilterType(name = "OAuthAuthorizeServiceFilter", icon = "oauth2_img", category = "OAuth 2.0", resources = "authorizeservice.properties", page = "authorizeservicepage.xml")
+public class AuthorizeServiceFilter extends JavaQuickFilterDefinition {
 
 	private MessageProcessor serviceProcessor;
 	private ScriptWebComponent service;

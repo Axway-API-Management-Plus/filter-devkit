@@ -45,6 +45,9 @@ dependencies {
         include 'plugins/org.eclipse.jface*.jar'
         include 'plugins/org.eclipse.core*.jar'
         include 'plugins/org.eclipse.gef*.jar'
+        include 'plugins/org.eclipse.emf*.jar'
+        include 'plugins/org.eclipse.equinox*.jar'
+        include 'plugins/org.eclipse.osgi*.jar'
         include 'plugins/com.vordel.rcp.filterbase*/lib/apigw-libraries.jar'
     }
 }

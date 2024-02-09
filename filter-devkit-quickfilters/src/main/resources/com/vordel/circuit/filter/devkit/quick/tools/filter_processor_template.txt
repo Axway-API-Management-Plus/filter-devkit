@@ -1,0 +1,11 @@
+package <packageName>;
+
+import com.vordel.circuit.filter.devkit.quick.JavaQuickFilterDefinition;
+import com.vordel.circuit.filter.devkit.quick.JavaQuickFilterProcessor;
+
+public class <processorSimpleName> extends JavaQuickFilterProcessor {
+	@Override
+	public Class<? extends JavaQuickFilterDefinition> getQuickFilterDefinition() throws ClassNotFoundException {
+		return Class.forName("<definitionQualifiedName>").asSubclass(JavaQuickFilterDefinition.class);
+	}
+}

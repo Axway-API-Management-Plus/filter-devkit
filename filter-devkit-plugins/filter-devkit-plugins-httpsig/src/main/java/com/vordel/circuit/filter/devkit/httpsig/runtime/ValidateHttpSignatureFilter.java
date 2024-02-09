@@ -33,7 +33,7 @@ import com.vordel.security.cert.PersonalInfo;
 import com.vordel.store.cert.CertStore;
 import com.vordel.trace.Trace;
 
-@QuickFilterType(name = "ValidateHttpSignatureFilter", resources = "validate_signature.properties", ui = "validate_signature.xml")
+@QuickFilterType(name = "ValidateHttpSignatureFilter", category = "Integrity", icon = "integrity", resources = "validate_signature.properties", page = "validate_signature.xml")
 public class ValidateHttpSignatureFilter extends ValidateHttpDigestFilter {
 	private static final int SIGNATURE_HEADER = 0;
 	private static final int SIGNATURE_AUTHENTICATE = 1;
@@ -81,17 +81,17 @@ public class ValidateHttpSignatureFilter extends ValidateHttpDigestFilter {
 		signatureCircuit = new PolicyResource(ctx, entity, field);
 	}
 
-	@QuickFilterField(name = "signatureCircuitKeyId", cardinality = "?", type = "string", defaults="signer.keyid")
+	@QuickFilterField(name = "signatureCircuitKeyId", cardinality = "?", type = "string", defaults = "signer.keyid")
 	private void setSignatureCircuitKeyId(ConfigContext ctx, Entity entity, String field) {
 		signatureCircuitKeyId = SelectorResource.fromLiteral(entity.getStringValue(field), String.class, true);
 	}
 
-	@QuickFilterField(name = "signatureCircuitKey", cardinality = "?", type = "string", defaults="${signer.key}")
+	@QuickFilterField(name = "signatureCircuitKey", cardinality = "?", type = "string", defaults = "${signer.key}")
 	private void setSignatureCircuitKey(ConfigContext ctx, Entity entity, String field) {
 		signatureCircuitKey = SelectorResource.fromLiteral(entity.getStringValue(field), Object.class, true);
 	}
 
-	@QuickFilterField(name = "signatureKeySelector", cardinality = "?", type = "string", defaults="${signer.key}")
+	@QuickFilterField(name = "signatureKeySelector", cardinality = "?", type = "string", defaults = "${signer.key}")
 	private void setSignatureKeySelector(ConfigContext ctx, Entity entity, String field) {
 		signatureKeySelector = SelectorResource.fromLiteral(entity.getStringValue(field), Object.class, true);
 	}
@@ -188,7 +188,7 @@ public class ValidateHttpSignatureFilter extends ValidateHttpDigestFilter {
 					} else {
 						Trace.error("Unhandled signer key");
 					}
-					
+
 					if (verified) {
 						/* signature is now verified... check for required signed headers */
 						Set<String> required = new HashSet<String>();

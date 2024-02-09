@@ -7,7 +7,7 @@ import com.vordel.config.Circuit;
 import com.vordel.config.ConfigContext;
 import com.vordel.es.Entity;
 
-public abstract class QuickJavaFilterDefinition {
+public abstract class JavaQuickFilterDefinition {
 	public abstract boolean invokeFilter(Circuit c, Message m, MessageProcessor p) throws CircuitAbortException;
 	
 	public abstract void attachFilter(ConfigContext ctx, Entity entity);

@@ -1,0 +1,23 @@
+package <exportedPackageName>;
+
+import com.vordel.circuit.FilterContainerImpl;
+import com.vordel.circuit.MessageProcessor;
+import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterConsumed;
+import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterGenerated;
+import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterRequired;
+import com.vordel.client.manager.filter.devkit.runtime.JavaQuickFilter;
+
+@QuickFilterRequired(<requiredAttributes>)
+@QuickFilterGenerated(<generatedAttributes>)
+@QuickFilterConsumed(<consumedAttributes>)
+public class <filterSimpleName> extends JavaQuickFilter {
+	@Override
+	public Class<? extends MessageProcessor> getMessageProcessorClass() throws ClassNotFoundException {
+		return Class.forName("<processorQualifiedName>").asSubclass(MessageProcessor.class);
+	}
+
+	@Override
+	public Class<? extends FilterContainerImpl> getConfigPanelClass() throws ClassNotFoundException {
+		return Class.forName("<guiQualifiedName>").asSubclass(FilterContainerImpl.class);
+	}
+}

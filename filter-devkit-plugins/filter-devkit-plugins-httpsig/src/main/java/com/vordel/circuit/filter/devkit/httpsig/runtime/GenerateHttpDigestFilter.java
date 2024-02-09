@@ -13,8 +13,10 @@ import com.vordel.circuit.MessageProperties;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
 import com.vordel.circuit.filter.devkit.httpsig.DigestTemplate;
 import com.vordel.circuit.filter.devkit.httpsig.DigestValue;
-import com.vordel.circuit.filter.devkit.quick.QuickJavaFilterDefinition;
+import com.vordel.circuit.filter.devkit.quick.JavaQuickFilterDefinition;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterField;
+import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterGenerated;
+import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterRequired;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterType;
 import com.vordel.config.Circuit;
 import com.vordel.config.ConfigContext;
@@ -23,8 +25,10 @@ import com.vordel.es.Entity;
 import com.vordel.mime.Body;
 import com.vordel.mime.HeaderSet;
 
-@QuickFilterType(name = "HttpDigestFilter", resources = "generate_digest.properties", ui = "generate_digest.xml")
-public class GenerateHttpDigestFilter extends QuickJavaFilterDefinition {
+@QuickFilterRequired({ "http.headers", "content.body" })
+@QuickFilterGenerated("http.headers")
+@QuickFilterType(name = "HttpDigestFilter", icon = "xmlsig", category = "integrity", resources = "generate_digest.properties", page = "generate_digest.xml")
+public class GenerateHttpDigestFilter extends JavaQuickFilterDefinition {
 	protected static final Selector<Body> BODY_SELECTOR = SelectorResource.fromExpression(MessageProperties.CONTENT_BODY, Body.class);
 
 	private final List<Selector<String>> selectors = new ArrayList<Selector<String>>();
@@ -40,7 +44,7 @@ public class GenerateHttpDigestFilter extends QuickJavaFilterDefinition {
 		Collection<String> values = entity.getStringValues(field);
 
 		if (values != null) {
-			for(String value : values) {
+			for (String value : values) {
 				selectors.add(new Selector<String>(value, String.class));
 			}
 		}
@@ -51,13 +55,13 @@ public class GenerateHttpDigestFilter extends QuickJavaFilterDefinition {
 		List<String> resolved = new ArrayList<String>();
 		Body body = BODY_SELECTOR.substitute(m);
 
-		for(Selector<String> selector : selectors) {
+		for (Selector<String> selector : selectors) {
 			String value = selector.substitute(m);
 
 			if (value != null) {
 				value = value.trim();
 
-				if ((!value.isEmpty()) && (!resolved.contains(value)))  {
+				if ((!value.isEmpty()) && (!resolved.contains(value))) {
 					resolved.add(value);
 				}
 			}

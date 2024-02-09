@@ -14,7 +14,7 @@ import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
 import com.vordel.circuit.filter.devkit.httpsig.DigestAlgorithm;
 import com.vordel.circuit.filter.devkit.httpsig.DigestValue;
-import com.vordel.circuit.filter.devkit.quick.QuickJavaFilterDefinition;
+import com.vordel.circuit.filter.devkit.quick.JavaQuickFilterDefinition;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterField;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterType;
 import com.vordel.config.Circuit;
@@ -23,8 +23,8 @@ import com.vordel.el.Selector;
 import com.vordel.es.Entity;
 import com.vordel.trace.Trace;
 
-@QuickFilterType(name = "ValidateHttpDigestFilter", resources = "validate_digest.properties", ui = "validate_digest.xml")
-public class ValidateHttpDigestFilter extends QuickJavaFilterDefinition {
+@QuickFilterType(name = "ValidateHttpDigestFilter", category = "Integrity", icon = "integrity", resources = "validate_digest.properties", page = "validate_digest.xml")
+public class ValidateHttpDigestFilter extends JavaQuickFilterDefinition {
 	private final List<Selector<String>> requiredAlgorithms = new ArrayList<Selector<String>>();;
 	private Selector<Boolean> validateContentMD5 = null;
 

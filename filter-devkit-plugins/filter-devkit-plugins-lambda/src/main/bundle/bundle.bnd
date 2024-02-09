@@ -3,7 +3,7 @@ Bundle-Description: API Gateway implementation for AWS Lambda
 Bundle-Vendor: Axway
 Bundle-DocURL: https://github.com/Axway-API-Management-Plus/filter-devkit
 Bundle-ClassPath: .
-Export-Package: com.vordel.circuit.filter.devkit.aws.lambda
+Export-Package: com.vordel.client.manager.filter.devkit.aws.lambda
 Import-Package: \
 	com.vordel.circuit.filter.devkit.quick.annotations,\
 	com.vordel.circuit.filter.devkit.context.annotations,\

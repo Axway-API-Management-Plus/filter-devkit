@@ -461,7 +461,6 @@ public class ScriptHelper {
 		String result = null;
 
 		if (data != null) {
-			/* encode data as raw ISO 8859-1 (can encode any kind of binary data) */
 			char[] encoded = data.toCharArray();
 			int length = 0;
 

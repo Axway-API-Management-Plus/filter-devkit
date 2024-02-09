@@ -20,7 +20,7 @@ import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
 import com.vordel.circuit.filter.devkit.oauth2.jaxrs.OAuthAccessTokenGenerator;
 import com.vordel.circuit.filter.devkit.oauth2.jaxrs.OAuthServiceEndpoint;
 import com.vordel.circuit.filter.devkit.oauth2.jaxrs.OAuthTokenEndpoint;
-import com.vordel.circuit.filter.devkit.quick.QuickJavaFilterDefinition;
+import com.vordel.circuit.filter.devkit.quick.JavaQuickFilterDefinition;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterComponent;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterField;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterType;
@@ -43,8 +43,8 @@ import com.vordel.mime.Body;
 import com.vordel.mime.HeaderSet;
 import com.vordel.mime.Headers;
 
-@QuickFilterType(name = "OAuthTokenServiceFilter", resources = "tokenservice.properties", ui = "tokenservicepage.xml")
-public class TokenServiceFilter extends QuickJavaFilterDefinition {
+@QuickFilterType(name = "OAuthTokenServiceFilter", icon = "oauth2_img", category = "OAuth 2.0", resources = "tokenservice.properties", page = "tokenservicepage.xml")
+public class TokenServiceFilter extends JavaQuickFilterDefinition {
 	private final List<Selector<String>> extendedGrantNames = new ArrayList<Selector<String>>();
 
 	private MessageProcessor serviceProcessor;

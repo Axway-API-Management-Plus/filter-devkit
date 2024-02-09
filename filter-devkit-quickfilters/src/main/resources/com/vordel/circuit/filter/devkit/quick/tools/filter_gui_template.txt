@@ -1,0 +1,60 @@
+package <exportedPackageName>;
+
+import java.util.List;
+import java.util.Vector;
+
+import <resourcesQualifiedName>;
+import com.vordel.client.manager.filter.GUIFilter;
+import com.vordel.client.manager.filter.devkit.studio.VordelLegacyGUIFilter;
+import com.vordel.client.manager.wizard.VordelPage;
+import com.vordel.common.ResourceBase;
+
+public class <guiSimpleName> extends VordelLegacyGUIFilter {
+	private ResourceBase resourceBase = new ResourceBase(<resourcesSimpleName>.class, ".<resourcesFile>");
+	private ResourceBase resourceBaseLocal = new ResourceBase(GUIFilter.class);
+
+	@Override
+	public String getSmallIconId() {
+		return "<icon>";
+	}
+
+	@Override
+	public String[] getCategories() {
+		return new String[] { "<category>" };
+	}
+
+	@Override
+	public String getTypeName() {
+		return <resourcesSimpleName>.FILTER_DISPLAYNAME;
+	}
+
+	@Override
+	public List<VordelPage> getPropertyPages() {
+		Vector<VordelPage> pages = new Vector<VordelPage>();
+
+		pages.add(new <pageSimpleName>());
+		pages.add(createLogPage());
+
+		return pages;
+	}
+
+	@Override
+	@Deprecated
+	public String resolve(String name) {
+		try {
+			return this.resourceBase.getResourceString(name);
+		} catch (Exception e) {
+			return this.resourceBaseLocal.getResourceString(name);
+		}
+	}
+
+	@Override
+	@Deprecated
+	public String resolve(String name, Object... params) {
+		try {
+			return this.resourceBase.getResourceString(name, params);
+		} catch (Exception e) {
+			return this.resourceBaseLocal.getResourceString(name, params);
+		}
+	}
+}

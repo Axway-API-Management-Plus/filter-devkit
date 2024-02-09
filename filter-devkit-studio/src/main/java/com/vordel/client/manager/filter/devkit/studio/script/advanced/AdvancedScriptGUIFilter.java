@@ -3,10 +3,6 @@ package com.vordel.client.manager.filter.devkit.studio.script.advanced;
 import java.util.List;
 import java.util.Vector;
 
-import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.swt.graphics.Image;
-
-import com.vordel.client.manager.Images;
 import com.vordel.client.manager.Manager;
 import com.vordel.client.manager.filter.devkit.studio.VordelLegacyGUIFilter;
 import com.vordel.client.manager.wizard.VordelPage;
@@ -21,22 +17,12 @@ public class AdvancedScriptGUIFilter extends VordelLegacyGUIFilter {
 		return "images/javascript.gif";
 	}
 
-	public Image getSmallImage() {
-		String id = getSmallIconId();
-
-		return Images.getImageRegistry().get(id);
-	}
-
-	public ImageDescriptor getSmallIcon() {
-		String id = getSmallIconId();
-
-		return Images.getImageDescriptor(id);
-	}
-
+	@Override
 	public String[] getCategories() {
 		return new String[] { resolve("FILTER_GROUP_ADVANCEDSCRIPT") };
 	}
 
+	@Override
 	public String getTypeName() {
 		return resolve("ADVANCEDSCRIPT_PALETTE_NAME");
 	}

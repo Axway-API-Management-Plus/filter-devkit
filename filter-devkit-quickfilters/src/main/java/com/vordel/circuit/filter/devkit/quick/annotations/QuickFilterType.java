@@ -9,27 +9,32 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface QuickFilterType {
 	/**
-	 * @return filter type name in the entity store
-	 */
-	String name();
-
-	/**
 	 * @return filter version
 	 */
 	int version() default 1;
 
 	/**
-	 * @return name of java resource which contains the declarative ui file
+	 * @return filter type name in the entity store (defaults to definition class name)
 	 */
-	String ui();
+	String name() default "";
 
 	/**
-	 * @return name of java resource which contains the filter properties
+	 * @return policy studio category
+	 */
+	String category() default "";
+
+	/**
+	 * @return name of java resource which contains the palette icon
+	 */
+	String icon() default "";
+
+	/**
+	 * @return name of java resource which contains the declarative ui file
+	 */
+	String page();
+
+	/**
+	 * @return name of java resource which contains the filter resources
 	 */
 	String resources();
-	
-	/**
-	 * @return extends clause for entity type
-	 */
-	String extend() default "Filter";
 }

@@ -18,7 +18,7 @@ import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.MessageProperties;
 import com.vordel.circuit.aws.AWSFactory;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
-import com.vordel.circuit.filter.devkit.quick.QuickJavaFilterDefinition;
+import com.vordel.circuit.filter.devkit.quick.JavaQuickFilterDefinition;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterField;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterType;
 import com.vordel.circuit.filter.devkit.script.ScriptHelper;
@@ -35,8 +35,8 @@ import com.vordel.es.Field;
 import com.vordel.mime.Body;
 import com.vordel.trace.Trace;
 
-@QuickFilterType(name = "AWSLambdaQuickFilter", resources = "aws_lambda.properties", ui = "aws_lambda.xml")
-public class AWSLambdaQuickFilter extends QuickJavaFilterDefinition {
+@QuickFilterType(name = "AWSLambdaQuickFilter", icon = "amazon", category = "Amazon Web Services", resources = "aws_lambda.properties", page = "aws_lambda.xml")
+public class AWSLambdaQuickFilter extends JavaQuickFilterDefinition {
 	private final static Selector<String> PAYLOAD_SELECTOR = SelectorResource.fromExpression(MessageProperties.CONTENT_BODY, String.class);
 	private static final ClientConfiguration DEFAULT_CONFIGURATION = new ClientConfiguration();
 	private final static String ASSUME_ROLE_FALSE = "ASSUME_ROLE_FALSE";
