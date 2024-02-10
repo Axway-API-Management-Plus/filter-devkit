@@ -1,29 +1,27 @@
 package com.vordel.client.manager.filter.devkit.studio.assertion;
 
+import static com.vordel.client.manager.filter.devkit.studio.assertion.AssertionResources.ASSERTION_PALETTE_NAME;
+
 import java.util.List;
 import java.util.Vector;
 
-import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.swt.graphics.Image;
-
-import com.vordel.client.manager.Images;
 import com.vordel.client.manager.filter.devkit.studio.VordelLegacyGUIFilter;
 import com.vordel.client.manager.wizard.VordelPage;
 
 public class AssertionGUIFilter extends VordelLegacyGUIFilter {
 	@Override
 	public String getSmallIconId() {
-		return "images/alert_icon.gif";
+		return "has_cert_expired";
 	}
 
 	@Override
 	public String[] getCategories() {
-		return new String[] { resolve("FILTER_GROUP_ASSERTION") };
+		return new String[] { "Utility" };
 	}
 
 	@Override
 	public String getTypeName() {
-		return resolve("ASSERTION_PALETTE_NAME");
+		return ASSERTION_PALETTE_NAME;
 	}
 
 	@Override

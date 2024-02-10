@@ -8,9 +8,10 @@ public class AdvancedScriptResources extends NLS {
 	public static String ADVANCEDSCRIPT_PAGE_TITLE;
 	public static String ADVANCEDSCRIPT_PAGE_DESCRIPTION;
 
-	public static String FILTER_GROUP_ADVANCEDSCRIPT;
 	public static String ADVANCEDSCRIPT_PALETTE_NAME;
-	public static String ADVANCEDSCRIPT_PALETTE_ICON;
+
+	public static String ADD_SCRIPT_RESOURCE;
+	public static String EDIT_SCRIPT_RESOURCE;
 
 	static {
 		// initialize resource bundle

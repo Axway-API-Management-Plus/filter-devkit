@@ -5,11 +5,11 @@ import java.util.Vector;
 
 import <resourcesQualifiedName>;
 import com.vordel.client.manager.filter.GUIFilter;
-import com.vordel.client.manager.filter.devkit.studio.VordelLegacyGUIFilter;
+import com.vordel.client.manager.filter.devkit.studio.quick.QuickGUIFilter;
 import com.vordel.client.manager.wizard.VordelPage;
 import com.vordel.common.ResourceBase;
 
-public class <guiSimpleName> extends VordelLegacyGUIFilter {
+public class <guiSimpleName> extends QuickGUIFilter {
 	private ResourceBase resourceBase = new ResourceBase(<resourcesSimpleName>.class, ".<resourcesFile>");
 	private ResourceBase resourceBaseLocal = new ResourceBase(GUIFilter.class);
 

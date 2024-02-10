@@ -1,5 +1,7 @@
 package com.vordel.client.manager.filter.devkit.studio.script.advanced;
 
+import static com.vordel.client.manager.filter.devkit.studio.script.advanced.AdvancedScriptResources.ADVANCEDSCRIPT_PALETTE_NAME;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +22,6 @@ import com.vordel.client.circuit.model.Circuit;
 import com.vordel.client.circuit.model.CircuitStore;
 import com.vordel.client.manager.Manager;
 import com.vordel.client.manager.ManagerEntityStore;
-import com.vordel.client.manager.filter.GUIFilter;
 import com.vordel.client.manager.filter.devkit.studio.VordelLegacyGUIFilter;
 import com.vordel.client.manager.wizard.VordelPage;
 import com.vordel.common.Dictionary;
@@ -57,17 +58,17 @@ public class AdvancedScriptGUIFilter extends VordelLegacyGUIFilter {
 
 	@Override
 	public String getSmallIconId() {
-		return AdvancedScriptResources.ADVANCEDSCRIPT_PALETTE_ICON;
+		return "javascript";
 	}
 
 	@Override
 	public String[] getCategories() {
-		return new String[] { AdvancedScriptResources.FILTER_GROUP_ADVANCEDSCRIPT };
+		return new String[] { "Utility" };
 	}
 
 	@Override
 	public String getTypeName() {
-		return AdvancedScriptResources.ADVANCEDSCRIPT_PALETTE_NAME;
+		return ADVANCEDSCRIPT_PALETTE_NAME;
 	}
 
 	@Override
@@ -136,7 +137,9 @@ public class AdvancedScriptGUIFilter extends VordelLegacyGUIFilter {
 				String referenceType = referenceEntity.getType().getName();
 
 				if ("FilterCircuit".equals(referenceType)) {
-					ESPK circuitPK = referenceEntity.getPK();
+					ESPK delegatedPK = referenceEntity.getPK();
+					DelayedESPK delayedPK = delegatedPK instanceof DelayedESPK ? (DelayedESPK) delegatedPK: new DelayedESPK(delegatedPK);
+					ESPK circuitPK = delayedPK.substitute(Dictionary.empty);
 
 					if (!EntityStore.ES_NULL_PK.equals(circuitPK)) {
 						Circuit circuit = cs.getCircuit(circuitPK);
