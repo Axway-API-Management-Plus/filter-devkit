@@ -126,6 +126,8 @@ public abstract class AbstractJavaQuickFilterDefinition {
 
 		if (baseName.endsWith("Filter")) {
 			baseName = baseName.substring(0, baseName.lastIndexOf("Filter"));
+		} else if (baseName.endsWith("Definition")) {
+			baseName = baseName.substring(0, baseName.lastIndexOf("Definition"));
 		}
 
 		return baseName;

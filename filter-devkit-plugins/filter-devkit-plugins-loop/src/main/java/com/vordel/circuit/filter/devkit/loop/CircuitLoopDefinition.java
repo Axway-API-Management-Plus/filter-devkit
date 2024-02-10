@@ -19,7 +19,7 @@ import com.vordel.es.ESPK;
 import com.vordel.es.Entity;
 import com.vordel.es.EntityStore;
 
-@QuickFilterType(name = "CircuitLoopFilter", category = "Utility", resources = "circuit_loop.properties", page = "circuit_loop.xml")
+@QuickFilterType(name = "CircuitLoopFilter", category = "Utility", icon="circuit_shortcut", resources = "circuit_loop.properties", page = "circuit_loop.xml")
 public class CircuitLoopDefinition extends JavaQuickFilterDefinition {
 	public static final int LOOPTYPE_WHILE = 1;
 	public static final int LOOPTYPE_DOWHILE = 2;
