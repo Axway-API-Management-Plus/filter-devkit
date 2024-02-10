@@ -1,0 +1,30 @@
+<ui>
+	<panel columns="2">
+		<NameAttribute />
+
+		<group label="CIRCUITLOOP_TYPE" columns="2" span="2" fill="false">
+			<RadioGroupAttribute field="loopType">
+				<choice label="CIRCUITLOOP_TYPE_WHILE" value="1" />
+				<choice label="CIRCUITLOOP_TYPE_DOWHILE" value="2" />
+			</RadioGroupAttribute>
+		</group>
+
+		<group label="CIRCUITLOOP_CONDITIONS" columns="2" span="2" fill="false">
+			<TextAttribute field="loopCondition" label="CIRCUITLOOP_CONDITION_LABEL" displayName="CIRCUITLOOP_CONDITION_DESC" />
+			<TextAttribute field="loopMax" label="CIRCUITLOOP_MAX_LABEL" displayName="CIRCUITLOOP_MAX_DESC" />
+			<TextAttribute field="loopTimeout" label="CIRCUITLOOP_TIMEOUT_LABEL" displayName="CIRCUITLOOP_TIMEOUT_DESC" />
+		</group>
+
+		<group label="CIRCUITLOOP_ERRORS" columns="2" span="2" fill="false">
+			<ButtonAttribute field="loopErrorCircuit" label="CIRCUITLOOP_ERROR_POLICY" span="2"/>
+			<ButtonAttribute field="loopErrorCondition" label="CIRCUITLOOP_ERROR_CONDITION" span="2"/>
+			<ButtonAttribute field="loopErrorMax" label="CIRCUITLOOP_ERROR_MAX" span="2"/>
+			<ButtonAttribute field="loopErrorTimeout" label="CIRCUITLOOP_ERROR_TIMEOUT" span="2"/>
+			<ButtonAttribute field="loopErrorEmpty" label="CIRCUITLOOP_ERROR_EMPTY" span="2"/>
+		</group>
+
+		<group label="CIRCUITLOOP_DELEGATE" columns="2" span="2" fill="false">
+			<ReferenceSelector field="loopCircuit" label="CIRCUITLOOP_CIRCUIT_LABEL" title="CIRCUITLOOP_CIRCUIT_DESC" selectableTypes="FilterCircuit" searches="ROOT_CIRCUIT_CONTAINER,CircuitContainer"/>     
+		</group>
+	</panel>
+</ui>

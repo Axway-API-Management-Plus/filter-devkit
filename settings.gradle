@@ -8,9 +8,9 @@ include 'filter-devkit-samples'
 include 'filter-devkit-plugins-httpsig'
 include 'filter-devkit-plugins-lambda'
 include 'filter-devkit-plugins-oauth'
-//include 'filter-devkit-lambda'
-//include 'filter-devkit-oauth'
+include 'filter-devkit-plugins-loop'
 
 project(':filter-devkit-plugins-httpsig').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-httpsig')
 project(':filter-devkit-plugins-lambda').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-lambda')
 project(':filter-devkit-plugins-oauth').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-oauth')
+project(':filter-devkit-plugins-loop').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-loop')

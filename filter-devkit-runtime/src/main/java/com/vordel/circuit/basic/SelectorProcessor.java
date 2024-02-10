@@ -49,7 +49,9 @@ public class SelectorProcessor extends MessageProcessor {
 				throw (CircuitAbortException) cause;
 			}
 			
-			/* otherwise ignore exception and assume 'null' returned */
+			throw new CircuitAbortException(String.format("Could not evaluate boolean expression %s", selector.getLiteral()), e);
+		} catch (Exception e) {
+			throw new CircuitAbortException(String.format("Could not evaluate boolean expression %s", selector.getLiteral()), e);
 		}
 
 		if (null == rc) {

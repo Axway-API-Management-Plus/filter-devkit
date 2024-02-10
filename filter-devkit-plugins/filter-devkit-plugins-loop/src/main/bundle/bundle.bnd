@@ -1,0 +1,31 @@
+Bundle-Name: Filter-DevKit Circuit Loop Plugin
+Bundle-Description: API Gateway implementation for Circuit Loop
+Bundle-Vendor: Axway
+Bundle-DocURL: https://github.com/Axway-API-Management-Plus/filter-devkit
+Bundle-ClassPath: .
+Export-Package: com.vordel.client.manager.filter.devkit.loop
+Import-Package: \
+	com.vordel.circuit.filter.devkit.quick.annotations,\
+	com.vordel.circuit.filter.devkit.context.annotations,\
+	com.vordel.client.manager.filter.devkit.studio,\
+	com.vordel.client.manager.filter.devkit.studio.quick,\
+	com.vordel.client.manager.filter.devkit.runtime, \
+	com.vordel.client.manager.attr,\
+	com.vordel.client.manager.softref,\
+	com.vordel.client.manager.util,\
+	com.vordel.client.manager.wizard,\
+	com.vordel.client.ui.declarative,\
+	com.vordel.common,\
+	com.vordel.es,\
+	com.vordel.security.cert,\
+	com.vordel.security.openssl,\
+	com.vordel.trace,\
+	org.apache.commons.lang,\
+	org.eclipse.gef.commands,\
+	org.eclipse.jface.dialogs,\
+	org.eclipse.jface.wizard,\
+	org.eclipse.osgi.util,\
+	org.eclipse.swt.widgets,\
+	*;'resolution:'=optional
+
+-noee=true
