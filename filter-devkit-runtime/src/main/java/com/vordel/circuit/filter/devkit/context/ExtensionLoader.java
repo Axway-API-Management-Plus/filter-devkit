@@ -6,8 +6,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionProviderClasses;
-import com.vordel.circuit.filter.devkit.context.provider.ExtensionProvider;
 import com.vordel.common.Dictionary;
 import com.vordel.config.ConfigContext;
 import com.vordel.config.LoadableModule;
