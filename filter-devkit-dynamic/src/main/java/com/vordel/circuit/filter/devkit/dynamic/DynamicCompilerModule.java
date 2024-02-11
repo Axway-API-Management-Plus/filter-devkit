@@ -22,8 +22,9 @@ import javax.tools.StandardLocation;
 
 import org.eclipse.jdt.internal.compiler.tool.EclipseCompiler;
 
+import com.vordel.circuit.filter.devkit.context.ExtensionModule;
 import com.vordel.circuit.filter.devkit.context.ExtensionScanner;
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModule;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
 import com.vordel.circuit.filter.devkit.dynamic.compiler.CompilerClassLoader;
 import com.vordel.circuit.filter.devkit.dynamic.compiler.CompilerFileManager;
@@ -42,6 +43,7 @@ import com.vordel.trace.Trace;
  * @author rdesaintleger@axway.com
  */
 @Priority(Integer.MAX_VALUE)
+@ExtensionModulePlugin
 public class DynamicCompilerModule implements ExtensionModule {
 	private static final Selector<String> DIST_RESOURCES = SelectorResource.fromLiteral("${environment.VDISTDIR}/ext/dynamic", String.class, true);
 	private static final Selector<String> INST_RESOURCES = SelectorResource.fromLiteral("${environment.VINSTDIR}/ext/dynamic", String.class, true);

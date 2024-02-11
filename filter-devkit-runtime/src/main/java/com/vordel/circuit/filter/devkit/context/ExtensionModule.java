@@ -1,6 +1,5 @@
-package com.vordel.circuit.filter.devkit.context.annotations;
+package com.vordel.circuit.filter.devkit.context;
 
-import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
 import com.vordel.config.ConfigContext;
 import com.vordel.es.EntityStoreException;
 

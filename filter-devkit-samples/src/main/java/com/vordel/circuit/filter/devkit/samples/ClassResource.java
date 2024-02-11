@@ -5,13 +5,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProperties;
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionPlugin;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin;
 import com.vordel.circuit.filter.devkit.context.annotations.InvocableMethod;
 import com.vordel.circuit.filter.devkit.context.annotations.SelectorExpression;
 import com.vordel.circuit.filter.devkit.context.annotations.SubstitutableMethod;
 import com.vordel.circuit.filter.devkit.script.ScriptHelper;
 
-@ExtensionPlugin("hello.module")
+@ExtensionContextPlugin("hello.module")
 public class ClassResource {
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 

@@ -61,7 +61,7 @@ public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 		} else {
 			processAnnotations(annotations, roundEnv);
 		}
-		return false;
+		return true;
 	}
 
 	private void generateTypeSets(RoundEnvironment roundEnv) {

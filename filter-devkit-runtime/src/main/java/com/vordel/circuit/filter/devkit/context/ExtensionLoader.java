@@ -6,8 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModule;
-import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterType;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionProviderClasses;
+import com.vordel.circuit.filter.devkit.context.provider.ExtensionProvider;
 import com.vordel.common.Dictionary;
 import com.vordel.config.ConfigContext;
 import com.vordel.config.LoadableModule;
@@ -17,7 +17,6 @@ import com.vordel.es.EntityStoreException;
 import com.vordel.trace.Trace;
 
 public final class ExtensionLoader implements LoadableModule {
-	private static final Map<String, Class<?>> QUICKJAVAFILTERS = new HashMap<String, Class<?>>();
 	private static final Map<String, ExtensionContext> LOADED_PLUGINS = new HashMap<String, ExtensionContext>();
 	private static final List<ExtensionModule> LOADED_MODULES = new LinkedList<ExtensionModule>();
 	private static final List<Runnable> UNLOAD_CALLBACKS = new LinkedList<Runnable>();
@@ -44,12 +43,12 @@ public final class ExtensionLoader implements LoadableModule {
 		}
 
 		if (configure) {
-			Trace.info("scanning class path for Extensions");
+			Trace.info("scanning services for Extensions");
 
 			/* scan class path for invocable and subtituable methods */
 			ExtensionScanner.scanClasses(ctx, Thread.currentThread().getContextClassLoader());
 
-			Trace.info("class path scanned");
+			Trace.info("services scanned");
 		}
 	}
 
@@ -70,7 +69,6 @@ public final class ExtensionLoader implements LoadableModule {
 				Iterator<Runnable> callbacks = UNLOAD_CALLBACKS.iterator();
 
 				LOADED_PLUGINS.clear();
-				QUICKJAVAFILTERS.clear();
 
 				while (callbacks.hasNext()) {
 					try {
@@ -132,29 +130,6 @@ public final class ExtensionLoader implements LoadableModule {
 					LOADED_MODULES.add(0, module);
 				}
 			}
-		}
-	}
-
-	public static void registerQuickJavaFilter(Class<?> clazz) {
-		if (clazz != null) {
-			synchronized (SYNC) {
-				QuickFilterType filterType = clazz.getAnnotation(QuickFilterType.class);
-				String name = filterType == null ? null : filterType.name();
-
-				if ((name != null) && (!name.isEmpty())) {
-					Trace.info(String.format("registered class '%s' for EntityType '%s'", clazz.getName(), name));
-
-					QUICKJAVAFILTERS.put(name, clazz);
-				} else {
-					Trace.error(String.format("did not register class '%s' as EntityType (name is null of invalid)", clazz.getName()));
-				}
-			}
-		}
-	}
-
-	public static Class<?> getQuickJavaFilter(String name) {
-		synchronized (SYNC) {
-			return QUICKJAVAFILTERS.get(name);
 		}
 	}
 

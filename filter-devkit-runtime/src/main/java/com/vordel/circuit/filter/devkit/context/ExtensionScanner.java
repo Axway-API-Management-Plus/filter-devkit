@@ -1,14 +1,16 @@
 package com.vordel.circuit.filter.devkit.context;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -16,15 +18,10 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 import javax.annotation.Priority;
 
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModule;
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionPlugin;
-import com.vordel.circuit.filter.devkit.quick.JavaQuickFilterDefinition;
-import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterType;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin;
 import com.vordel.config.ConfigContext;
 import com.vordel.trace.Trace;
 
@@ -33,12 +30,8 @@ public class ExtensionScanner {
 	}
 
 	private static void fromClass(ConfigContext ctx, Class<?> clazz) {
-		ExtensionPlugin annotation = clazz.getAnnotation(ExtensionPlugin.class);
+		ExtensionContextPlugin annotation = clazz.getAnnotation(ExtensionContextPlugin.class);
 		Object instance = null;
-
-		if (isFilter(clazz)) {
-			ExtensionLoader.registerQuickJavaFilter(clazz);
-		}
 
 		if (isModule(clazz)) {
 			try {
@@ -92,20 +85,39 @@ public class ExtensionScanner {
 			return Integer.compare(i1, i2);
 		}
 	};
-	
-	public static List<Class<?>> scanClasses(ClassLoader loader) {
+
+	private static List<Class<?>> scanExtensions(ClassLoader loader) {
 		Set<String> clazzes = new HashSet<String>();
 
 		try {
-			ExtensionAcceptingListener listener = new ExtensionAcceptingListener(clazzes, ExtensionPlugin.class, ExtensionModule.class, QuickFilterType.class, JavaQuickFilterDefinition.class);
+			Enumeration<URL> configs = loader.getResources("META-INF/vordel/extensions");
 
-			/* scan current classpath for annotations and interfaces */
-			scanClasses(loader, listener);
+			while (configs.hasMoreElements()) {
+				URL config = configs.nextElement();
+				InputStream in = config.openStream();
 
-			/* apply inheritance to discover more modules */
-			listener.processInheritance();
+				try {
+					BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+
+					try {
+						String line = null;
+
+						while ((line = reader.readLine()) != null) {
+							line = line.trim();
+
+							if (!line.isEmpty()) {
+								clazzes.add(line);
+							}
+						}
+					} finally {
+						reader.close();
+					}
+				} finally {
+					in.close();
+				}
+			}
 		} catch (Exception e) {
-			Trace.error("Unable to scan class path", e);
+			Trace.error("Unable to scan extensions", e);
 		}
 
 		List<Class<?>> scanned = new ArrayList<Class<?>>();
@@ -113,7 +125,8 @@ public class ExtensionScanner {
 		for (String clazzName : clazzes) {
 			try {
 				/*
-				 * create classes which expose ExtensionPlugin annotation and implements ExtensionModule
+				 * create classes which expose ExtensionContextPlugin annotation and implements
+				 * ExtensionModulePlugin
 				 */
 				scanned.add(Class.forName(clazzName));
 			} catch (Exception e) {
@@ -122,12 +135,12 @@ public class ExtensionScanner {
 				Trace.error(String.format("Got error loading class '%s'", clazzName), e);
 			}
 		}
-		
+
 		return scanned;
 	}
 
 	public static void scanClasses(ConfigContext ctx, ClassLoader loader) {
-		List<Class<?>> scanned = scanClasses(loader);
+		List<Class<?>> scanned = scanExtensions(loader);
 
 		registerClasses(ctx, scanned);
 	}
@@ -138,21 +151,14 @@ public class ExtensionScanner {
 		return (!isAbstract) && ExtensionModule.class.isAssignableFrom(clazz);
 	}
 
-	public static boolean isFilter(Class<?> clazz) {
-		boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
-		QuickFilterType filterType = clazz.getAnnotation(QuickFilterType.class);
-
-		return (filterType != null) && (!isAbstract) && JavaQuickFilterDefinition.class.isAssignableFrom(clazz);
-	}
-
 	public static void registerClasses(ConfigContext ctx, Iterable<Class<?>> clazzes) {
 		if (clazzes != null) {
 			List<Class<?>> sorted = new ArrayList<Class<?>>();
 
 			for (Class<?> clazz : clazzes) {
-				ExtensionPlugin plugin = clazz.getAnnotation(ExtensionPlugin.class);
+				ExtensionContextPlugin plugin = clazz.getAnnotation(ExtensionContextPlugin.class);
 
-				if ((plugin != null) || isFilter(clazz) || isModule(clazz)) {
+				if ((plugin != null) || isModule(clazz)) {
 					sorted.add(clazz);
 				}
 			}
@@ -192,48 +198,11 @@ public class ExtensionScanner {
 		return jars;
 	}
 
-	public static void scanClasses(ClassLoader loader, ExtensionAcceptingListener listener) {
-		for (File file : getClassPath(loader, new ArrayList<File>())) {
-			try {
-				Trace.debug(String.format("scanning %s for ExtensionPlugin annotation and ExtensionModule interface", file.getAbsolutePath()));
-
-				JarFile jar = new JarFile(file);
-
-				try {
-					scanClasses(jar, listener);
-				} finally {
-					jar.close();
-				}
-			} catch (IOException e) {
-				Trace.error(String.format("got I/O exception scanning '%s'", file.getAbsolutePath()), e);
-			}
-		}
-	}
-
-	public static void scanClasses(JarFile jar, ExtensionAcceptingListener listener) throws IOException {
-		for (Enumeration<JarEntry> iterator = jar.entries(); iterator.hasMoreElements();) {
-			JarEntry item = iterator.nextElement();
-			String name = item.getName();
-
-			if (name.endsWith(".class")) {
-				InputStream is = jar.getInputStream(item);
-
-				try {
-					listener.process(is);
-				} catch(RuntimeException e) {
-					Trace.debug(String.format("skipping class '%s'", name));
-				} finally {
-					is.close();
-				}
-			}
-		}
-	}
-
 	private static <T> ExtensionContext register(T script, Class<? extends T> clazz) {
 		ExtensionContext resources = ExtensionContext.create(script, clazz);
 
 		if (resources != null) {
-			ExtensionPlugin annotation = clazz.getAnnotation(ExtensionPlugin.class);
+			ExtensionContextPlugin annotation = clazz.getAnnotation(ExtensionContextPlugin.class);
 
 			if (annotation != null) {
 				String name = annotation.value();
