@@ -8,15 +8,6 @@ java {
 	withSourcesJar()
 }
 
-apply from: rootProject.file("apigateway.gradle")
-
-deployRuntime.enabled = true
-
-configurations {
-	compileOnly.extendsFrom(apigw_central)
-}
-
 dependencies {
-	annotationProcessor project(':filter-devkit-tools')
 	implementation project(':filter-devkit-annotations')
 }

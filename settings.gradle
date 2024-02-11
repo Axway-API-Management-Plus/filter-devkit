@@ -1,6 +1,6 @@
 rootProject.name = 'filter-devkit'
-//include 'filter-devkit-runtime','filter-devkit-samples','filter-devkit-studio'
-include 'filter-devkit-quickfilters'
+include 'filter-devkit-annotations'
+include 'filter-devkit-tools'
 include 'filter-devkit-runtime'
 include 'filter-devkit-studio'
 include 'filter-devkit-dynamic'

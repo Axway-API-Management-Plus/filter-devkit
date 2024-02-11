@@ -16,8 +16,8 @@ configurations {
 }
 
 dependencies {
-    annotationProcessor project(':filter-devkit-quickfilters')
-    implementation project(':filter-devkit-quickfilters')
+	annotationProcessor project(':filter-devkit-tools')
+	implementation project(':filter-devkit-annotations')
 	implementation project(':filter-devkit-runtime')
 
 	osgi project(':filter-devkit-studio')

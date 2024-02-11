@@ -28,6 +28,6 @@ dependencies {
 		include 'plugins/com.vordel.filter.script.*.jar'
 	}
 
-	implementation project(':filter-devkit-quickfilters')
+	implementation project(':filter-devkit-annotations')
 	implementation project(':filter-devkit-runtime')
 }

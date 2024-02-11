@@ -40,7 +40,7 @@ Import-Package: \
 	*;'resolution:'=optional
 
 -includeresource: \
-META-INF/lib/filter-devkit-quickfilters.jar=filter-devkit-quickfilters-*.jar;lib:=true,\
+META-INF/lib/filter-devkit-annotations.jar=filter-devkit-annotations-*.jar;lib:=true,\
 META-INF/lib/filter-devkit-runtime.jar=filter-devkit-runtime-*.jar;lib:=true
 
 -noee=true

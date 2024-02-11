@@ -8,9 +8,11 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Set;
 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -53,11 +55,12 @@ public class SignatureTemplate<H> {
 		}
 
 		ListIterator<String> iterator = headers.listIterator();
+		Set<String> seen = new HashSet<String>();
 
 		while (iterator.hasNext()) {
 			String value = nonEmpty(iterator.next(), true);
 
-			if ((value == null) || (headers.indexOf(value) < iterator.previousIndex())) {
+			if ((value == null) || (!seen.add(value))) {
 				iterator.remove();
 			} else {
 				iterator.set(value);

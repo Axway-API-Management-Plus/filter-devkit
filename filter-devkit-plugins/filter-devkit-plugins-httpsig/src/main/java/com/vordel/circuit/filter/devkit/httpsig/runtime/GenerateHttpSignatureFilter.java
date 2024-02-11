@@ -289,6 +289,8 @@ public class GenerateHttpSignatureFilter extends GenerateHttpDigestFilter {
 
 				headers.addHeader("Date", DELEGATE.toString(new Date()));
 			}
+			
+			Trace.debug(String.format("Signature template is %s", template.toString()));
 
 			String verb = REQUEST_VERB.substitute(msg);
 			URI uri = REQUEST_URI.substitute(msg);
