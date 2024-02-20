@@ -112,7 +112,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 					String name = null;
 
 					if (hasMultipleAnnotations(invocable, function, substitutable)) {
-						Trace.error(String.format("method '%s' can only be one of Invocable or Substitutable or Function", method.getName()));
+						Trace.error(String.format("method '%s' can only be one of Invocable or Substitutable or ExtensionFunction", method.getName()));
 					} else if (invocable != null) {
 						Class<?> returnType = method.getReturnType();
 
@@ -373,7 +373,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 
 		Class<?> dictionaryType = parameterTypes[0];
 
-		return dictionaryType.isAssignableFrom(dictionaryType) ? dictionaryType : null;
+		return Dictionary.class.isAssignableFrom(dictionaryType) ? dictionaryType : null;
 	}
 
 	private static Object[] setupParams(Message msg, Dictionary dict, Class<?> dictType, Object[] args) {
