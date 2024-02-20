@@ -4,7 +4,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -15,7 +14,6 @@ import com.vordel.dwe.DelayedESPK;
 import com.vordel.es.ESPK;
 import com.vordel.es.Entity;
 import com.vordel.es.EntityStore;
-import com.vordel.es.EntityStoreException;
 import com.vordel.trace.Trace;
 
 public class ContextResourceFactory {
@@ -39,25 +37,6 @@ public class ContextResourceFactory {
 			resourceList = Collections.emptyList();
 		}
 
-		Map<String, String> expressions = new HashMap<String, String>();
-
-		/* first round, accumulate selector expressions */
-		for (ESPK resourcePK : resourceList) {
-			Entity resourceEntity = es.getEntity(resourcePK);
-			String resourceType = resourceEntity.getStringValue("resourceType");
-			String resourceName = resourceEntity.getStringValue("name");
-
-			if (resourceName == null) {
-				throw new EntityStoreException("Resource name can't be null");
-			}
-
-			if ("SELECTOR_RESOURCE".equals(resourceType)) {
-				String expression = resourceEntity.getStringValue("selectorExpression");
-
-				expressions.put(resourceName, expression);
-			}
-		}
-
 		for (ESPK resourcePK : resourceList) {
 			ContextResource resource = null;
 
@@ -70,12 +49,17 @@ public class ContextResourceFactory {
 					String expression = resourceEntity.getStringValue("selectorExpression");
 					String className = resourceEntity.getStringValue("selectorClazz");
 
-					try {
-						Class<?> clazz = Class.forName(className);
+					if ("java.lang.Boolean".equals(className)) {
+						/* special case, handle boolean expressions as invocables */
+						resource = new InvocableExpressionResource(expression);
+					} else {
+						try {
+							Class<?> clazz = Class.forName(className);
 
-						resource = createSelectorResource(expression, clazz);
-					} catch (ClassNotFoundException e) {
-						Trace.error(String.format("Configured class '%s' does not exists", className), e);
+							resource = createSelectorResource(expression, clazz);
+						} catch (ClassNotFoundException e) {
+							Trace.error(String.format("Configured class '%s' does not exists", className), e);
+						}
 					}
 				} else if ("CONFIGURATION_RESOURCE".equals(resourceType)) {
 					ESPK reference = resourceEntity.getReferenceValue("configurationReference");

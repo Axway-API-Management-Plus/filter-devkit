@@ -15,16 +15,19 @@ import java.util.Set;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.filter.devkit.context.annotations.DictionaryAttribute;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionFunction;
 import com.vordel.circuit.filter.devkit.context.annotations.InvocableMethod;
 import com.vordel.circuit.filter.devkit.context.annotations.SelectorExpression;
 import com.vordel.circuit.filter.devkit.context.annotations.SubstitutableMethod;
 import com.vordel.circuit.filter.devkit.context.resources.AbstractContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
+import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
 import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
 import com.vordel.circuit.filter.devkit.context.resources.SubstitutableResource;
 import com.vordel.circuit.filter.devkit.script.ScriptHelper;
 import com.vordel.common.Dictionary;
+import com.vordel.el.ContextResourceResolver;
 import com.vordel.el.Selector;
 import com.vordel.trace.Trace;
 
@@ -44,6 +47,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 
 		if (clazz != null) {
 			Map<Method, InvocableMethod> invocables = new HashMap<Method, InvocableMethod>();
+			Map<Method, ExtensionFunction> functions = new HashMap<Method, ExtensionFunction>();
 			Map<Method, SubstitutableMethod> substitutables = new HashMap<Method, SubstitutableMethod>();
 			Set<Method> methods = new HashSet<Method>();
 
@@ -52,6 +56,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 
 			for (Method method : scanMethods(clazz, new ArrayList<Method>())) {
 				InvocableMethod invocable = method.getAnnotation(InvocableMethod.class);
+				ExtensionFunction function = method.getAnnotation(ExtensionFunction.class);
 				SubstitutableMethod substitutable = method.getAnnotation(SubstitutableMethod.class);
 
 				try {
@@ -64,6 +69,17 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 					String name = name(method, invocable);
 
 					invocables.put(method, invocable);
+					methods.add(method);
+
+					if (!exported.add(name)) {
+						duplicates.add(name);
+					}
+				}
+
+				if (function != null) {
+					String name = name(method, function);
+
+					functions.put(method, function);
 					methods.add(method);
 
 					if (!exported.add(name)) {
@@ -90,12 +106,13 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 					Trace.error(String.format("method '%s' must be public", method.getName()));
 				} else if ((script != null) || Modifier.isStatic(modifiers)) {
 					InvocableMethod invocable = invocables.get(method);
+					ExtensionFunction function = functions.get(method);
 					SubstitutableMethod substitutable = substitutables.get(method);
 					ContextResource resource = null;
 					String name = null;
 
-					if ((invocable != null) && (substitutable != null)) {
-						Trace.error(String.format("method '%s' can't be Invocable and Substitutable", method.getName()));
+					if (hasMultipleAnnotations(invocable, function, substitutable)) {
+						Trace.error(String.format("method '%s' can only be one of Invocable or Substitutable or Function", method.getName()));
 					} else if (invocable != null) {
 						Class<?> returnType = method.getReturnType();
 
@@ -105,6 +122,9 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 						} else {
 							Trace.error(String.format("method '%s' must return a boolean to be invocable", method.getName()));
 						}
+					} else if (function != null) {
+						name = name(method, function);
+						resource = createFunctionResource(script, method, name);
 					} else if (substitutable != null) {
 						name = name(method, substitutable);
 						resource = createSubstitutableResource(script, method, method.getReturnType(), name);
@@ -126,8 +146,28 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		return new ExtensionContext(clazz, Collections.unmodifiableMap(resources));
 	}
 
+	private static boolean hasMultipleAnnotations(InvocableMethod invocable, ExtensionFunction function, SubstitutableMethod substitutable) {
+		int count = 0;
+
+		count += invocable == null ? 0 : 1;
+		count += function == null ? 0 : 1;
+		count += substitutable == null ? 0 : 1;
+
+		return count > 1;
+	}
+
 	private static final String name(Method method, InvocableMethod invocable) {
 		String name = invocable.value();
+
+		if ((name == null) || name.isEmpty()) {
+			name = method.getName();
+		}
+
+		return name;
+	}
+
+	private static final String name(Method method, ExtensionFunction function) {
+		String name = function.value();
 
 		if ((name == null) || name.isEmpty()) {
 			name = method.getName();
@@ -160,9 +200,10 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 
 		for (Method method : clazz.getDeclaredMethods()) {
 			InvocableMethod invocable = method.getAnnotation(InvocableMethod.class);
+			ExtensionFunction function = method.getAnnotation(ExtensionFunction.class);
 			SubstitutableMethod substitutable = method.getAnnotation(SubstitutableMethod.class);
 
-			if ((invocable != null) || (substitutable != null)) {
+			if ((invocable != null) || (function != null) || (substitutable != null)) {
 				annotated.add(method);
 			}
 		}
@@ -173,7 +214,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	/**
 	 * register groovy script methods as api gateway resources. invocable methods
 	 * can be invoked like policies. method parameters are injected from current
-	 * context. substituable methods are used to return arbitrary values from an
+	 * context. substitutable methods are used to return arbitrary values from an
 	 * injected context. Invocable methods must return boolean and may throw
 	 * CirtuitAbortException. Substituable cannot throw any exception. In such case
 	 * null is returned and the exception is dropped.
@@ -205,8 +246,8 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		return create(instance, clazz);
 	}
 
-	private static InvocableResource createInvocableResource(final Object script, Method method, String name) {
-		final MethodParameter<?>[] parameters = processMethodParameters(method);
+	private static InvocableResource createInvocableResource(final Object script, final Method method, final String name) {
+		final InjectableParameter<?>[] parameters = processInjectableParameters(method);
 
 		return new InvocableResource() {
 			@Override
@@ -219,7 +260,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 					String[] debug = new String[parameters.length];
 
 					for (int index = 0; index < parameters.length; index++) {
-						MethodParameter<?> resolver = parameters[index];
+						InjectableParameter<?> resolver = parameters[index];
 
 						if (resolver != null) {
 							resolver.resolve(dictionary, index, resolved, debug);
@@ -231,7 +272,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 
 					if (Trace.isDebugEnabled()) {
 						Trace.debug(String.format("invoke '%s' (bound as '%s')", method, name));
-						Trace.debug(String.format("provided parameters : '%s'", debugMethodParameters(debug)));
+						Trace.debug(String.format("provided parameters : '%s'", debugInjectableParameters(debug)));
 					}
 
 					Object value = method.invoke(script, resolved);
@@ -266,8 +307,93 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		};
 	}
 
+	private static FunctionResource createFunctionResource(final Object script, final Method method, final String name) {
+		/* first argument of functions is the context dictionary, can be a Message */
+		final Class<?> dictionaryType = getFunctionDictionaryType(method);
+
+		return new FunctionResource() {
+			@Override
+			public Object invoke(Dictionary dict, Object... args) throws CircuitAbortException {
+				try {
+					Object[] params = null;
+
+					if (dictionaryType != null) {
+						/* update arguments and prepend message/dictionary */
+						Message msg = dict instanceof Message ? (Message) dict : null;
+
+						params = ContextResourceResolver.coerceFunctionArguments(method, setupParams(msg, dict, dictionaryType, args));
+					} else {
+						params = ContextResourceResolver.coerceFunctionArguments(method, args);
+					}
+
+					if (Trace.isDebugEnabled()) {
+						Trace.debug(String.format("substitute '%s' (bound as '%s')", method, name));
+					}
+
+					Object result = method.invoke(script, params);
+
+					if (Trace.isDebugEnabled()) {
+						if (result instanceof String) {
+							Trace.debug(String.format("method '%s' returned \"%s\"", method.getName(), ScriptHelper.encodeLiteral((String) result)));
+						} else if ((result instanceof Boolean) || (result instanceof Number)) {
+							Trace.debug(String.format("method '%s' returned '%s'", method.getName(), result.toString()));
+						} else if (result != null) {
+							Trace.debug(String.format("method '%s' returned a value of type '%s'", method.getName(), result.getClass().getName()));
+						} else {
+							Trace.debug(String.format("method '%s' returned null", method.getName()));
+						}
+					}
+
+					return result;
+				} catch (IllegalAccessException e) {
+					throw new CircuitAbortException("method is not accessible", e);
+				} catch (IllegalArgumentException e) {
+					throw new CircuitAbortException("can't invoke method", e);
+				} catch (InvocationTargetException e) {
+					Throwable cause = e.getCause();
+
+					if (cause instanceof CircuitAbortException) {
+						throw (CircuitAbortException) cause;
+					}
+
+					throw new CircuitAbortException("got error when invoking method", cause);
+				} catch (RuntimeException e) {
+					throw new CircuitAbortException("unexpected exception", e);
+				}
+			}
+		};
+	}
+
+	private static Class<?> getFunctionDictionaryType(Method method) {
+		Class<?>[] parameterTypes = method.getParameterTypes();
+
+		if (parameterTypes.length < 1) {
+			return null;
+		}
+
+		Class<?> dictionaryType = parameterTypes[0];
+
+		return dictionaryType.isAssignableFrom(dictionaryType) ? dictionaryType : null;
+	}
+
+	private static Object[] setupParams(Message msg, Dictionary dict, Class<?> dictType, Object[] args) {
+		List<Object> params = new ArrayList<Object>(args.length + 1);
+
+		if (Message.class.isAssignableFrom(dictType)) {
+			params.add(msg);
+		} else {
+			params.add(dict);
+		}
+
+		for (Object arg : args) {
+			params.add(arg);
+		}
+
+		return params.toArray();
+	}
+
 	private static <T> SubstitutableResource<T> createSubstitutableResource(final Object script, final Method method, final Class<T> returnType, String name) {
-		final MethodParameter<?>[] parameters = processMethodParameters(method);
+		final InjectableParameter<?>[] parameters = processInjectableParameters(method);
 
 		return new SubstitutableResource<T>() {
 			@Override
@@ -280,7 +406,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 					String[] debug = new String[parameters.length];
 
 					for (int index = 0; index < parameters.length; index++) {
-						MethodParameter<?> resolver = parameters[index];
+						InjectableParameter<?> resolver = parameters[index];
 
 						if (resolver != null) {
 							resolver.resolve(dictionary, index, resolved, debug);
@@ -292,7 +418,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 
 					if (Trace.isDebugEnabled()) {
 						Trace.debug(String.format("substitute '%s' (bound as '%s')", method, name));
-						Trace.debug(String.format("provided parameters : '%s'", debugMethodParameters(debug)));
+						Trace.debug(String.format("provided parameters : '%s'", debugInjectableParameters(debug)));
 					}
 
 					Object value = method.invoke(script, resolved);
@@ -329,8 +455,8 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		};
 	}
 
-	private static MethodParameter<?>[] processMethodParameters(Method method) {
-		List<MethodParameter<?>> parameters = new ArrayList<MethodParameter<?>>();
+	private static InjectableParameter<?>[] processInjectableParameters(Method method) {
+		List<InjectableParameter<?>> parameters = new ArrayList<InjectableParameter<?>>();
 		Annotation[][] annotations = method.getParameterAnnotations();
 		Class<?>[] parameterTypes = method.getParameterTypes();
 
@@ -354,16 +480,16 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 				type = Double.class;
 			}
 
-			processMethodParameter(parameters, type, annotations[index]);
+			processInjectableParameter(parameters, type, annotations[index]);
 		}
 
-		return parameters.toArray(new MethodParameter<?>[0]);
+		return parameters.toArray(new InjectableParameter<?>[0]);
 	}
 
-	private static <T> void processMethodParameter(List<MethodParameter<?>> parameters, Class<T> type, Annotation[] annotations) {
+	private static <T> void processInjectableParameter(List<InjectableParameter<?>> parameters, Class<T> type, Annotation[] annotations) {
 		DictionaryAttribute attribute = null;
 		SelectorExpression selector = null;
-		MethodParameter<?> parameter = null;
+		InjectableParameter<?> parameter = null;
 
 		if (annotations != null) {
 			for (Annotation annotation : annotations) {
@@ -404,7 +530,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		parameters.add(parameter);
 	}
 
-	private static String debugMethodParameters(String[] debug) {
+	private static String debugInjectableParameters(String[] debug) {
 		StringBuilder builder = new StringBuilder();
 		builder.append('[');
 
@@ -467,7 +593,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		}
 	}
 
-	private static abstract class MethodParameter<T> {
+	private static abstract class InjectableParameter<T> {
 		protected abstract T resolve(MethodDictionary dictionary);
 
 		protected abstract String debug(T resolved);
@@ -480,7 +606,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		}
 	}
 
-	private static class DictionaryParameter extends MethodParameter<Dictionary> {
+	private static class DictionaryParameter extends InjectableParameter<Dictionary> {
 		@Override
 		protected Dictionary resolve(MethodDictionary dictionary) {
 			return dictionary.getDictionary();
@@ -492,7 +618,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		}
 	}
 
-	private static class MessageParameter extends MethodParameter<Message> {
+	private static class MessageParameter extends InjectableParameter<Message> {
 		@Override
 		protected Message resolve(MethodDictionary dictionary) {
 			return dictionary.getMessage();
@@ -504,7 +630,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		}
 	}
 
-	private static class AttributeParameter<T> extends MethodParameter<T> {
+	private static class AttributeParameter<T> extends InjectableParameter<T> {
 		private final Selector<T> selector;
 		private final String attributeName;
 
@@ -539,7 +665,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		}
 	}
 
-	private static class SelectorParameter<T> extends MethodParameter<T> {
+	private static class SelectorParameter<T> extends InjectableParameter<T> {
 		private final Selector<T> selector;
 		private final String expression;
 

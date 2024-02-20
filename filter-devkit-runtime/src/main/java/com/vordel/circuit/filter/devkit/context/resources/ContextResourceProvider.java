@@ -16,6 +16,15 @@ public interface ContextResourceProvider {
 	public InvocableResource getInvocableResource(String name);
 
 	/**
+	 * Retrieve a reference to a Function
+	 * 
+	 * @param name name of function resource
+	 * 
+	 * @return function resource or null if none (if not function)
+	 */
+	public FunctionResource getFunctionResource(String name);
+
+	/**
 	 * retrieve a reference to a Substituable object
 	 * 
 	 * @param name name of substituable resource

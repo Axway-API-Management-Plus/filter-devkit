@@ -1,15 +1,12 @@
 package com.vordel.circuit.filter.devkit.context;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -170,32 +167,6 @@ public class ExtensionScanner {
 				fromClass(ctx, clazz);
 			}
 		}
-	}
-
-	public static List<File> getClassPath(ClassLoader loader, List<File> jars) {
-		if (loader != null) {
-			jars = getClassPath(loader.getParent(), jars);
-		}
-
-		if (loader instanceof URLClassLoader) {
-			for (URL url : ((URLClassLoader) loader).getURLs()) {
-				String protocol = url.getProtocol();
-
-				if ("file".equals(protocol)) {
-					try {
-						File file = new File(url.toURI());
-
-						if (file.isFile() && file.getName().endsWith(".jar") && (!jars.contains(file))) {
-							jars.add(file);
-						}
-					} catch (URISyntaxException e) {
-						Trace.error(String.format("URL '%s' can't be translated into a local file", url), e);
-					}
-				}
-			}
-		}
-
-		return jars;
 	}
 
 	private static <T> ExtensionContext register(T script, Class<? extends T> clazz) {

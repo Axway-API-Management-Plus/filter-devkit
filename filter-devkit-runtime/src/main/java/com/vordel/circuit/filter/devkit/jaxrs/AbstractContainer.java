@@ -168,6 +168,10 @@ public abstract class AbstractContainer<T extends AbstractWebComponent> implemen
 	}
 
 	public static class MessageSecurityContext implements SecurityContext {
+		private static final Selector<String> AUTHN_SUBJECT = SelectorResource.fromExpression(MessageProperties.AUTHN_SUBJECT_ID, String.class);
+		private static final Selector<String> AUTHN_SCHEME = SelectorResource.fromExpression("authentication.subject.scheme", String.class);
+		private static final Selector<String> PROTOCOL = SelectorResource.fromExpression(MessageProperties.HTTP_REQ_PROTOCOL, String.class);
+
 		private final Message msg;
 
 		private MessagePrincipal principal = null;
@@ -178,8 +182,21 @@ public abstract class AbstractContainer<T extends AbstractWebComponent> implemen
 
 		@Override
 		public Principal getUserPrincipal() {
-			// XXX find a new way
-			return null;
+			/*
+			 * resolve the selector ${authentication.subject.id} and generate a principal if
+			 * not null
+			 */
+			String subject = AUTHN_SUBJECT.substitute(msg);
+
+			if (subject != null) {
+				if ((principal == null) || (!subject.equals(principal.getName()))) {
+					principal = new MessagePrincipal(subject);
+				}
+			} else {
+				principal = null;
+			}
+
+			return principal;
 		}
 
 		@Override
@@ -189,14 +206,26 @@ public abstract class AbstractContainer<T extends AbstractWebComponent> implemen
 
 		@Override
 		public boolean isSecure() {
-			// XXX find a new way
-			return false;
+			/* resolve the selector ${http.request.protocol} and compare against 'https' */
+			return "https".equalsIgnoreCase(PROTOCOL.substitute(msg));
 		}
 
 		@Override
 		public String getAuthenticationScheme() {
-			// XXX find a new way
-			return null;
+			Principal principal = getUserPrincipal();
+			String scheme = null;
+
+			if (principal != null) {
+				/* if we do have a principal, try to resolve ${authentication.subject.scheme} */
+				scheme = AUTHN_SCHEME.substitute(msg);
+
+				if (scheme == null) {
+					/* if no scheme available, use BASIC_AUTH as default */
+					scheme = SecurityContext.BASIC_AUTH;
+				}
+			}
+
+			return scheme;
 		}
 	}
 }

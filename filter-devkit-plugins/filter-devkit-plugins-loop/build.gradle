@@ -10,6 +10,8 @@ java {
 apply from: rootProject.file('apigateway.gradle')
 apply from: rootProject.file('policystudio.gradle')
 
+deployRuntime.enabled = true
+
 configurations {
 	compileOnly.extendsFrom(apigw_central)
 	osgi.extendsFrom(studio_dist);

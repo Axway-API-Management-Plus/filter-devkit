@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,7 +39,7 @@ import com.vordel.es.EntityStoreException;
 import com.vordel.trace.Trace;
 
 /**
- * Deploy time compiler module. This module MUST NOT be used in production. its
+ * Deploy time compiler module. This module should not be used in production. its
  * purpose is to make fast tests on a local gateway. Compilation is
  * automatically activated if class files are detected in the right directory.
  * 
@@ -120,12 +123,12 @@ public class DynamicCompilerModule implements ExtensionModule {
 
 		/* keep line numbers and variables names for debug */
 		options.add("-g");
-		
+
 		/* set target to java 8 */
 		options.add("-target");
 		options.add("1.8");
 
-		sjfm.setLocation(StandardLocation.CLASS_PATH, ExtensionScanner.getClassPath(loader, new ArrayList<File>()));
+		sjfm.setLocation(StandardLocation.CLASS_PATH, getClassPath(loader, new ArrayList<File>()));
 
 		List<SimpleJavaFileObject> compilationUnits = scanFiles(new ArrayList<SimpleJavaFileObject>(), root, Collections.singleton("java"));
 
@@ -168,6 +171,32 @@ public class DynamicCompilerModule implements ExtensionModule {
 		}
 
 		return output;
+	}
+
+	public static List<File> getClassPath(ClassLoader loader, List<File> jars) {
+		if (loader != null) {
+			jars = getClassPath(loader.getParent(), jars);
+		}
+
+		if (loader instanceof URLClassLoader) {
+			for (URL url : ((URLClassLoader) loader).getURLs()) {
+				String protocol = url.getProtocol();
+
+				if ("file".equals(protocol)) {
+					try {
+						File file = new File(url.toURI());
+
+						if (file.isFile() && file.getName().endsWith(".jar") && (!jars.contains(file))) {
+							jars.add(file);
+						}
+					} catch (URISyntaxException e) {
+						Trace.error(String.format("URL '%s' can't be translated into a local file", url), e);
+					}
+				}
+			}
+		}
+
+		return jars;
 	}
 
 	public static class CompilerListener implements DiagnosticListener<JavaFileObject> {

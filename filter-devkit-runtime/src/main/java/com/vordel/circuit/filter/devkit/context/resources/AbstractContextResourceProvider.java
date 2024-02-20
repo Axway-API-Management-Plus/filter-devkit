@@ -11,7 +11,7 @@ public abstract class AbstractContextResourceProvider implements ContextResource
 	static {
 		Selector.addResolver(ContextResourceResolver.getInstance());
 	}
-	
+
 	@Override
 	public abstract ContextResource getContextResource(String name);
 
@@ -20,6 +20,13 @@ public abstract class AbstractContextResourceProvider implements ContextResource
 		ContextResource resource = getContextResource(name);
 
 		return resource instanceof InvocableResource ? (InvocableResource) resource : null;
+	}
+
+	@Override
+	public final FunctionResource getFunctionResource(String name) {
+		ContextResource resource = getContextResource(name);
+
+		return resource instanceof FunctionResource ? (FunctionResource) resource : null;
 	}
 
 	@Override
@@ -40,7 +47,7 @@ public abstract class AbstractContextResourceProvider implements ContextResource
 	public final Boolean invoke(Message m, String name) throws CircuitAbortException {
 		ContextResource resource = getContextResource(name);
 		Boolean result = null;
-		
+
 		if (resource != null) {
 			if (!(resource instanceof InvocableResource)) {
 				throw new CircuitAbortException(String.format("resource '%s' is not invocable", name));
