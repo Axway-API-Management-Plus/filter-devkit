@@ -303,9 +303,9 @@ public class ContextResourceResolver extends ELResolver {
 					/* got a selector special view, return it */
 					result = ((ViewableResource) result).getResourceView();
 					break;
-				} else if (result instanceof SubstitutableResource) {
-					/* allow chaining substitutions */
-					result = ((SubstitutableResource<?>) result).substitute(dict);
+				} else if (result instanceof FunctionResource) {
+					/* special case for function resources, return it */
+					break;
 				} else if ((dict instanceof Message) && (result instanceof InvocableResource)) {
 					try {
 						/* allow chaining invocations */
@@ -313,9 +313,9 @@ public class ContextResourceResolver extends ELResolver {
 					} catch (CircuitAbortException e) {
 						throw new ELException("Got Exception during invoke", e);
 					}
-				} else if (result instanceof FunctionResource) {
-					/* special case for function resources, return it */
-					break;
+				} else if (result instanceof SubstitutableResource) {
+					/* allow chaining substitutions */
+					result = ((SubstitutableResource<?>) result).substitute(dict);
 				} else if (result instanceof ContextResource) {
 					throw new PropertyNotFoundException(String.format("property '%' is not readable", key));
 				}
