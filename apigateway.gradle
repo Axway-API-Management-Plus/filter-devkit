@@ -1,4 +1,4 @@
-// List of Apigateway dependencies (20220530)
+// List of Apigateway dependencies (7.7.0.20220530-2)
 
 repositories {
     // include your repositories here
@@ -994,6 +994,7 @@ dependencies {
         exclude 'system/lib/plugins/rhino-*.jar'
         include 'system/lib/**/*.jar'
     }
+
     apigw_dist fileTree("${apigw_vdistdir}").matching {
         include 'system/lib/**/*.jar'
     }

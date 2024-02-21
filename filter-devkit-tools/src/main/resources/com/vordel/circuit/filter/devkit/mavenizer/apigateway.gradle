@@ -1,0 +1,36 @@
+// List of Apigateway dependencies (<apigwVersion>)
+
+repositories {
+    // include your repositories here
+    // maven { url "https://internal.central.mirror/"; }
+    // maven { url "http://internal.central.mirror/";setAllowInsecureProtocol(true); }
+    mavenCentral()
+}
+
+def checkAPIGatewayProperties() {
+    if (!project.hasProperty('apigw_vdistdir')) {
+        throw new RuntimeException("Could not find 'apigw_vdistdir'. Did you forget to specify it in ~/.gradle/gradle.properties ?")
+    }
+}
+
+checkAPIGatewayProperties()
+
+configurations {
+	apigw_deploy
+	apigw_central
+	apigw_dist
+}
+
+task deployRuntime(type: Copy) {
+	from jar, configurations.apigw_deploy
+    into file("${apigw_vdistdir}/ext/lib")
+}
+
+deployRuntime.enabled = false
+
+dependencies {
+<apigwCentralDependencies>
+    apigw_dist fileTree("${apigw_vdistdir}").matching {
+        include 'system/lib/**/*.jar'
+    }
+}
