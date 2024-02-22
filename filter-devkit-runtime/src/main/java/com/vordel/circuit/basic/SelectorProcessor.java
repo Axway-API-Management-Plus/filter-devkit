@@ -1,9 +1,11 @@
 package com.vordel.circuit.basic;
 
+import javax.el.ELException;
+
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProcessor;
-import com.vordel.circuit.filter.devkit.context.resources.InvocableExpressionResource;
+import com.vordel.common.Dictionary;
 import com.vordel.config.Circuit;
 import com.vordel.config.ConfigContext;
 import com.vordel.el.ContextResourceResolver.ContextResourceDictionary;
@@ -34,10 +36,38 @@ public class SelectorProcessor extends MessageProcessor {
 	}
 
 	public boolean invoke(Circuit p, Message m) throws CircuitAbortException {
-		Boolean rc = InvocableExpressionResource.invoke(m, selector);
+		Boolean rc = invoke(m, selector);
 
 		if (Trace.isDebugEnabled()) {
 			Trace.debug(String.format("evaluate %s = %s", selector, rc));
+		}
+
+		return rc;
+	}
+
+	public static final Boolean invoke(Dictionary dict, Selector<Boolean> selector) throws CircuitAbortException {
+		Boolean rc = null;
+
+		try {
+			/* try to retrieve selector value, but keep exception */
+			rc = selector.substitute(dict, true);
+		} catch (Exception e) {
+			if (e instanceof ELException) {
+				/* examine cause */
+				Throwable cause = e.getCause();
+
+				if (cause instanceof CircuitAbortException) {
+					/* This is a CircuitAbortException, relay it */
+					throw (CircuitAbortException) cause;
+				}
+			}
+
+			throw new CircuitAbortException(String.format("Could not evaluate boolean expression %s", selector.getLiteral()), e);
+		}
+
+		if (null == rc) {
+			/* keep regular eval selector behavior */
+			throw new CircuitAbortException(String.format("Could not evaluate boolean expression %s", selector.getLiteral()));
 		}
 
 		return rc;

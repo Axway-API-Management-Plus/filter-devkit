@@ -58,7 +58,11 @@ public class SelectorResource<T> implements SubstitutableResource<T> {
 	 * @return selector for the given attribute.
 	 */
 	public static <T> Selector<T> fromExpression(String expression, Class<T> clazz) {
-		return SelectorResource.fromLiteral(String.format("${commons:value(%s)}", expression), clazz, true);
+		/*
+		 * use the devkit:value() function to avoid the missing property behavior
+		 * ("[invalid field]" instead of null for strings).
+		 */
+		return SelectorResource.fromLiteral(String.format("${devkit:value(%s)}", expression), clazz, true);
 	}
 
 	/**
@@ -82,8 +86,8 @@ public class SelectorResource<T> implements SubstitutableResource<T> {
 		 * resolution is really null. It's mainly used for String coercion. It avoids to
 		 * have "[invalid field]" instead of null for reflective calls.
 		 */
-		registerFunction("commons", "value", "value", Object.class);
-		registerFunction("commons", "isNull", "isNull", Object.class);
+		registerFunction("devkit", "value", "value", Object.class);
+		registerFunction("devkit", "isNull", "isNull", Object.class);
 
 		/* register additional register conversions */
 
