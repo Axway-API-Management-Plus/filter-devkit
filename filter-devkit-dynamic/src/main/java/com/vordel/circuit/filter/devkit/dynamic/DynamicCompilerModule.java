@@ -39,8 +39,8 @@ import com.vordel.es.EntityStoreException;
 import com.vordel.trace.Trace;
 
 /**
- * Deploy time compiler module. This module should not be used in production. its
- * purpose is to make fast tests on a local gateway. Compilation is
+ * Deploy time compiler module. This module should not be used in production.
+ * its purpose is to make fast tests on a local gateway. Compilation is
  * automatically activated if class files are detected in the right directory.
  * 
  * @author rdesaintleger@axway.com
@@ -76,7 +76,11 @@ public class DynamicCompilerModule implements ExtensionModule {
 		File inst = new File(INST_RESOURCES.substitute(Dictionary.empty));
 		List<Class<?>> clazzes = new ArrayList<Class<?>>();
 
-		if (compile(loader, dist, clazzes)) {
+		ClassLoader compiled = compile(loader, dist, clazzes);
+
+		if (compiled != null) {
+			loader = compiled;
+
 			Trace.info("Global dynamic classes compiled");
 		} else {
 			Trace.info("Global dynamic compiler disabled");
@@ -84,18 +88,20 @@ public class DynamicCompilerModule implements ExtensionModule {
 
 		if (dist.equals(inst)) {
 			Trace.info("Instance dynamic compiler running on Node Manager");
-		} else if (compile(loader, inst, clazzes)) {
-			Trace.info("Instance dynamic classes compiled");
 		} else {
-			Trace.info("Instance dynamic compiler disabled");
+			compiled = compile(loader, inst, clazzes);
+
+			if (compiled != null) {
+				Trace.info("Instance dynamic classes compiled");
+			} else {
+				Trace.info("Instance dynamic compiler disabled");
+			}
 		}
 
 		return clazzes;
 	}
 
-	public static boolean compile(ClassLoader loader, File root, List<Class<?>> clazzes) {
-		boolean success = false;
-
+	public static ClassLoader compile(ClassLoader loader, File root, List<Class<?>> clazzes) {
 		if ((clazzes != null) && (root != null) && root.exists() && root.isDirectory()) {
 			Trace.info(String.format("compile classes from directory %s", root.getAbsolutePath()));
 
@@ -104,20 +110,20 @@ public class DynamicCompilerModule implements ExtensionModule {
 				CompilerClassLoader compiled = compile(loader, root);
 
 				clazzes = compiled.loadClasses(clazzes);
-				success = true;
+				return compiled;
 			} catch (IOException e) {
 				Trace.error(String.format("can't compile classes from directory %s", root.getAbsolutePath()), e);
 			}
 		}
 
-		return success;
+		return null;
 	}
 
 	public static CompilerClassLoader compile(ClassLoader parent, File root) throws IOException {
 		JavaCompiler javac = new EclipseCompiler();
 		CompilerListener diagnostic = new CompilerListener();
 		StandardJavaFileManager sjfm = javac.getStandardFileManager(diagnostic, null, null);
-		CompilerClassLoader loader = new CompilerClassLoader(parent, root);
+		CompilerClassLoader loader = new CompilerClassLoader(root, parent);
 		CompilerFileManager fileManager = new CompilerFileManager(sjfm, loader);
 		List<String> options = new ArrayList<String>();
 

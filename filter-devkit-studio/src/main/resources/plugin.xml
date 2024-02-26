@@ -6,14 +6,6 @@
          name="Filter-DevKit Filters"
          point="com.vordel.rcp.filterbase.filterGUI">
       <filter
-            class="com.vordel.client.manager.filter.devkit.runtime.AssertionFilter"
-            icon="has_cert_expired"
-            name="Assertion Filter"
-            page="com.vordel.client.manager.filter.devkit.studio.assertion.AssertionPage">
-         <category
-               id="com.vordel.ui.filter.category.utility" />
-      </filter>
-      <filter
             class="com.vordel.client.manager.filter.devkit.runtime.AdvancedScriptFilter"
             icon="javascript"
             name="Advanced Script Filter"

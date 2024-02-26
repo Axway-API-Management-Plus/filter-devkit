@@ -17,6 +17,7 @@ import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionLibraries;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin;
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
@@ -60,11 +61,34 @@ public class ExtensionProviderGenerator extends AbstractProcessor {
 
 			try {
 				for (TypeElement element : extensions) {
+					/*
+					 * If we do have an extension library, create a library file as well. This will
+					 * trigger a specific classloader for this module
+					 */
+					ExtensionLibraries libraries = element.getAnnotation(ExtensionLibraries.class);
+
+					if (libraries != null) {
+						writeLibrariesFile(filer, element, libraries.value());
+					}
+
 					services.append(String.format("%s\n", element.getQualifiedName().toString()));
 				}
 			} finally {
 				services.close();
 			}
+		}
+	}
+
+	private void writeLibrariesFile(Filer filer, TypeElement element, String[] entries) throws IOException {
+		FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "", String.format("META-INF/vordel/libraries/%s", element.getQualifiedName().toString()));
+		Writer libraries = file.openWriter();
+
+		try {
+			for (String entry : entries) {
+				libraries.append(String.format("%s\n", entry));
+			}
+		} finally {
+			libraries.close();
 		}
 	}
 }

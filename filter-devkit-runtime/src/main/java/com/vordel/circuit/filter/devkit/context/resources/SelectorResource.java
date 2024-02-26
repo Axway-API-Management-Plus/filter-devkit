@@ -9,6 +9,7 @@ import javax.el.ELException;
 import org.w3c.dom.Document;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.filter.devkit.script.ScriptHelper;
 import com.vordel.common.Dictionary;
 import com.vordel.el.DictionaryResolver;
@@ -33,6 +34,34 @@ public class SelectorResource<T> implements SubstitutableResource<T> {
 	@Override
 	public T substitute(Dictionary dict) {
 		return selector == null ? null : selector.substitute(dict);
+	}
+
+	public static final Boolean invoke(Dictionary dict, Selector<Boolean> selector) throws CircuitAbortException {
+		Boolean rc = null;
+
+		try {
+			/* try to retrieve selector value, but keep exception */
+			rc = selector.substitute(dict, true);
+		} catch (Exception e) {
+			if (e instanceof ELException) {
+				/* examine cause */
+				Throwable cause = e.getCause();
+
+				if (cause instanceof CircuitAbortException) {
+					/* This is a CircuitAbortException, relay it */
+					throw (CircuitAbortException) cause;
+				}
+			}
+
+			throw new CircuitAbortException(String.format("Could not evaluate boolean expression %s", selector.getLiteral()), e);
+		}
+
+		if (null == rc) {
+			/* keep regular eval selector behavior */
+			throw new CircuitAbortException(String.format("Could not evaluate boolean expression %s", selector.getLiteral()));
+		}
+
+		return rc;
 	}
 
 	public final static <T> Selector<T> fromLiteral(String literal, Class<T> clazz, boolean trim) {

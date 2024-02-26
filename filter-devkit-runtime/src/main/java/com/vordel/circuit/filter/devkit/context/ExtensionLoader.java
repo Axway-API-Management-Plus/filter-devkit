@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin;
 import com.vordel.common.Dictionary;
 import com.vordel.config.ConfigContext;
 import com.vordel.config.LoadableModule;
@@ -16,6 +17,8 @@ import com.vordel.trace.Trace;
 
 public final class ExtensionLoader implements LoadableModule {
 	private static final Map<String, ExtensionContext> LOADED_PLUGINS = new HashMap<String, ExtensionContext>();
+	private static final Map<Class<?>,Object> LOADED_INTERFACES = new HashMap<Class<?>,Object>();
+
 	private static final List<ExtensionModule> LOADED_MODULES = new LinkedList<ExtensionModule>();
 	private static final List<Runnable> UNLOAD_CALLBACKS = new LinkedList<Runnable>();
 	private static final Object SYNC = new Object();
@@ -66,8 +69,6 @@ public final class ExtensionLoader implements LoadableModule {
 				Iterator<ExtensionModule> modules = LOADED_MODULES.iterator();
 				Iterator<Runnable> callbacks = UNLOAD_CALLBACKS.iterator();
 
-				LOADED_PLUGINS.clear();
-
 				while (callbacks.hasNext()) {
 					try {
 						callbacks.next().run();
@@ -89,6 +90,9 @@ public final class ExtensionLoader implements LoadableModule {
 						Trace.error("got error calling detach", e);
 					}
 				}
+
+				LOADED_PLUGINS.clear();
+				LOADED_INTERFACES.clear();
 			}
 		}
 	}
@@ -110,28 +114,50 @@ public final class ExtensionLoader implements LoadableModule {
 		}
 	}
 
-	public static void registerModule(ConfigContext ctx, ExtensionModule module) {
+	public static void registerExtensionInstance(ConfigContext ctx, Object module) {
 		if (module != null) {
+			ExtensionModulePlugin annotation = module.getClass().getAnnotation(ExtensionModulePlugin.class);
+
 			synchronized (SYNC) {
-				Iterator<ExtensionModule> iterator = LOADED_MODULES.iterator();
-				boolean contained = false;
-
-				while ((!contained) && iterator.hasNext()) {
-					contained = iterator.next() == module;
+				if (module instanceof ExtensionModule) {
+					registerExtensionModule(ctx, (ExtensionModule) module);
 				}
-
-				if (!contained) {
-					Trace.info(String.format("initializing class '%s'", module.getClass().getName()));
-
-					module.attachModule(ctx);
-
-					LOADED_MODULES.add(0, module);
+				
+				if (annotation != null) {
+					for(Class<?> clazz : annotation.value()) {
+						if (clazz.isInterface()) {
+							Object pred = LOADED_INTERFACES.get(clazz);
+							
+							if (pred != null) {
+								Trace.error(String.format("Duplicate instance for interface '%s'", clazz.getName()));
+							} else {
+								LOADED_INTERFACES.put(clazz, module);
+							}
+						}
+					}
 				}
 			}
 		}
 	}
 
-	public static void registerGlobalResources(String name, ExtensionContext resources) {
+	private static void registerExtensionModule(ConfigContext ctx, ExtensionModule module) {
+		Iterator<ExtensionModule> iterator = LOADED_MODULES.iterator();
+		boolean contained = false;
+
+		while ((!contained) && iterator.hasNext()) {
+			contained = iterator.next() == module;
+		}
+
+		if (!contained) {
+			Trace.info(String.format("initializing class '%s'", module.getClass().getName()));
+
+			module.attachModule(ctx);
+
+			LOADED_MODULES.add(0, module);
+		}
+	}
+
+	public static void registerExtensionContext(String name, ExtensionContext resources) {
 		if ((name != null) && (resources != null)) {
 			synchronized (SYNC) {
 				LOADED_PLUGINS.put(name, resources);
@@ -139,7 +165,7 @@ public final class ExtensionLoader implements LoadableModule {
 		}
 	}
 
-	public static ExtensionContext getGlobalResources(String name) {
+	public static ExtensionContext getExtensionContext(String name) {
 		synchronized (SYNC) {
 			return LOADED_PLUGINS.get(name);
 		}
@@ -149,7 +175,7 @@ public final class ExtensionLoader implements LoadableModule {
 		return new Dictionary() {
 			@Override
 			public Object get(String name) {
-				return getGlobalResources(name);
+				return getExtensionContext(name);
 			}
 		};
 	}

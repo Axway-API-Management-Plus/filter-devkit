@@ -1,0 +1,6 @@
+<ui>
+	<panel columns="2">
+		<NameAttribute />
+			<TextAttribute field="expression" label="EXPRESSION_LABEL" displayName="CIRCUITLOOP_CONDITION_DESC" />
+	</panel>
+</ui>

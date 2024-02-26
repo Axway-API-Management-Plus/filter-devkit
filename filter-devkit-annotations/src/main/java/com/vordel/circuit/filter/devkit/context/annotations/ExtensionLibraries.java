@@ -6,13 +6,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marker annotation for automatic registration of extension loadable modules
- * and interfaces.
+ * Marker annotation for class loading 'child first' of extensions modules and
+ * contexts. values provided can include directories.
  * 
  * @author rdesaintleger@axway.com
  */
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ExtensionModulePlugin {
-	Class<?>[] value() default {};
+public @interface ExtensionLibraries {
+	/**
+	 * @return list of jar files or directories containing jars
+	 */
+	String[] value() default {};
 }

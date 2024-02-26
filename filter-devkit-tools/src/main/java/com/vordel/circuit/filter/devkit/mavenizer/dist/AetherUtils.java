@@ -166,6 +166,5 @@ public class AetherUtils {
 		String name = root.getName();
 
 		return root.isFile() && (name.endsWith(".jar") || name.endsWith(".zip"));
-
 	}
 }

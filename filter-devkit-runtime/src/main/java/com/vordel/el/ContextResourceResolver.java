@@ -40,6 +40,7 @@ public class ContextResourceResolver extends ELResolver {
 	private static final Dictionary getDictionary(ELContext context) {
 		SelectorContext selector = context instanceof SelectorContext ? (SelectorContext) context : null;
 
+		/* XXX no better way of retrieving context dictionary */
 		return selector == null ? null : selector.dict;
 	}
 
@@ -244,12 +245,38 @@ public class ContextResourceResolver extends ELResolver {
 				param = Short.valueOf(((Number) value).shortValue());
 			} else if (type.equals(int.class) || type.isAssignableFrom(Integer.class)) {
 				param = Integer.valueOf(((Number) value).intValue());
+			} else if (type.equals(char.class) || type.isAssignableFrom(Character.class)) {
+				param = Character.valueOf((char) ((Number) value).intValue());
 			} else if (type.equals(float.class) || type.isAssignableFrom(Float.class)) {
 				param = Float.valueOf(((Number) value).floatValue());
 			} else if (type.equals(long.class) || type.isAssignableFrom(Long.class)) {
 				param = Long.valueOf(((Number) value).longValue());
 			} else if (type.equals(double.class) || type.isAssignableFrom(Double.class)) {
 				param = Double.valueOf(((Number) value).doubleValue());
+			} else {
+				return false;
+			}
+
+			Array.set(array, index, param);
+
+			return true;
+		} else if (value instanceof Character){
+			Object param = null;
+
+			if (type.equals(byte.class) || type.isAssignableFrom(Byte.class)) {
+				param = Byte.valueOf((byte) ((Character) value).charValue());
+			} else if (type.equals(short.class) || type.isAssignableFrom(Short.class)) {
+				param = Short.valueOf((short) ((Character) value).charValue());
+			} else if (type.equals(int.class) || type.isAssignableFrom(Integer.class)) {
+				param = Integer.valueOf(((Character) value).charValue());
+			} else if (type.equals(char.class) || type.isAssignableFrom(Character.class)) {
+				param = value;
+			} else if (type.equals(float.class) || type.isAssignableFrom(Float.class)) {
+				param = Float.valueOf(((Character) value).charValue());
+			} else if (type.equals(long.class) || type.isAssignableFrom(Long.class)) {
+				param = Long.valueOf(((Character) value).charValue());
+			} else if (type.equals(double.class) || type.isAssignableFrom(Double.class)) {
+				param = Double.valueOf(((Character) value).charValue());
 			} else {
 				return false;
 			}
@@ -317,7 +344,7 @@ public class ContextResourceResolver extends ELResolver {
 					/* allow chaining substitutions */
 					result = ((SubstitutableResource<?>) result).substitute(dict);
 				} else if (result instanceof ContextResource) {
-					throw new PropertyNotFoundException(String.format("property '%' is not readable", key));
+					throw new PropertyNotFoundException(String.format("property '%s' is not readable", key));
 				}
 			} while (result instanceof ContextResource);
 
