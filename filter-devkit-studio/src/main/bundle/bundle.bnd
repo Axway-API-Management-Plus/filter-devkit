@@ -9,7 +9,6 @@ Export-Package: \
 	com.vordel.circuit.filter.devkit.quick.annotations,\
 	com.vordel.circuit.filter.devkit.context.annotations,\
 	com.vordel.client.manager.filter.devkit.studio,\
-	com.vordel.client.manager.filter.devkit.studio.assertion,\
 	com.vordel.client.manager.filter.devkit.studio.advanced,\
 	com.vordel.client.manager.filter.devkit.studio.quick,\
 	com.vordel.client.manager.filter.devkit.runtime
@@ -18,10 +17,6 @@ Import-Package: \
 	com.vordel.config,\
 	com.vordel.el,\
 	com.vordel.es,\
-	com.vordel.common;'resolution:'=optional,\
-	com.axway.gw.es.yaml.model;'resolution:'=optional,\
-	javax.script;'resolution:'=optional,\
-	com.vordel.es.xes;'resolution:'=optional,\
 	com.vordel.client.manager.filter,\
 	com.vordel.client.manager.attr,\
 	com.vordel.client.manager.softref,\
@@ -30,7 +25,6 @@ Import-Package: \
 	com.vordel.client.ui.declarative,\
 	com.vordel.security.cert,\
 	com.vordel.security.openssl,\
-	com.vordel.trace;'resolution:'=optional,\
 	org.apache.commons.lang,\
 	org.eclipse.gef.commands,\
 	org.eclipse.jface.dialogs,\
