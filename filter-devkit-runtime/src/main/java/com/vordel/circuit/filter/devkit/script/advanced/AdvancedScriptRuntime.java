@@ -9,7 +9,6 @@ import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
 import com.vordel.circuit.filter.devkit.context.resources.KPSResource;
-import com.vordel.circuit.filter.devkit.script.jaxrs.ScriptWebComponent;
 import com.vordel.common.Dictionary;
 import com.vordel.config.Circuit;
 
@@ -117,17 +116,6 @@ public interface AdvancedScriptRuntime {
 	 *                         phase
 	 */
 	void reflectEntryPoints(Script script) throws ScriptException;
-
-	/**
-	 * disable the invoke method and replace if by a JAXRS service invocation.
-	 * 
-	 * @param jaxrs         service reflected from current groovy script
-	 * @param reportNoMatch if {@code true}, the service will return {@code false}
-	 *                      if the JAXRS service fails
-	 * @throws ScriptException if this method is called outside script attachment
-	 *                         phase
-	 */
-	void setScriptWebComponent(ScriptWebComponent jaxrs, boolean reportNoMatch) throws ScriptException;
 
 	/**
 	 * retrieve the script {@link ContextResourceProvider} for export to

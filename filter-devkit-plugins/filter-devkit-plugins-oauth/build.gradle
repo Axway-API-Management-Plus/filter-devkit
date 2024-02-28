@@ -19,6 +19,7 @@ dependencies {
 	annotationProcessor project(':filter-devkit-tools')
 	implementation project(':filter-devkit-annotations')
 	implementation project(':filter-devkit-runtime')
+	implementation project(':filter-devkit-plugins-jaxrs')
 
 	osgi project(':filter-devkit-studio')
 }

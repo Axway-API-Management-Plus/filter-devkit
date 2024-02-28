@@ -48,6 +48,8 @@ public class SelectorResource<T> implements SubstitutableResource<T> {
 				Throwable cause = e.getCause();
 
 				if (cause instanceof CircuitAbortException) {
+					Trace.debug("Relaying CircuitAbortException", cause);
+
 					/* This is a CircuitAbortException, relay it */
 					throw (CircuitAbortException) cause;
 				}

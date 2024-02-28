@@ -328,11 +328,10 @@ public class ContextResourceResolver extends ELResolver {
 			do {
 				if (result instanceof ViewableResource) {
 					/* got a selector special view, return it */
-					result = ((ViewableResource) result).getResourceView();
-					break;
+					return ((ViewableResource) result).getResourceView();
 				} else if (result instanceof FunctionResource) {
 					/* special case for function resources, return it */
-					break;
+					return result;
 				} else if ((dict instanceof Message) && (result instanceof InvocableResource)) {
 					try {
 						/* allow chaining invocations */

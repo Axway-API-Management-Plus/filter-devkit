@@ -22,7 +22,6 @@ import com.vordel.circuit.filter.devkit.context.resources.ContextResourceFactory
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
 import com.vordel.circuit.filter.devkit.context.resources.KPSResource;
-import com.vordel.circuit.filter.devkit.script.jaxrs.ScriptWebComponent;
 import com.vordel.common.Dictionary;
 import com.vordel.config.Circuit;
 import com.vordel.config.ConfigContext;
@@ -57,17 +56,6 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	private boolean unwrapCircuitAbortException = false;
 
 	/**
-	 * if not null, the service will replace the invoke() script call (Groovy
-	 * scripts only)
-	 */
-	private ScriptWebComponent jaxrsService = null;
-	/**
-	 * if the JAXRS service does not match any of its configured resources, return
-	 * false instead of creating a 404 response (with the filter returning success)
-	 */
-	private boolean jaxrsReportNoMatch = false;
-
-	/**
 	 * Resources reflected from groovy scripts
 	 */
 	private ExtensionContext exports = null;
@@ -84,6 +72,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	 * Invoke method of groovy script (if compatible with argument injection)
 	 */
 	private Method groovyInvoke = null;
+	
 	/**
 	 * exportable resource provider
 	 */
@@ -104,25 +93,6 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		} finally {
 			attached = true;
 		}
-	}
-
-	@Override
-	public boolean invoke(Circuit c, Message m) throws CircuitAbortException {
-		boolean result = false;
-
-		if (jaxrsService != null) {
-			if (jaxrsReportNoMatch) {
-				result = jaxrsService.filter(m);
-			} else {
-				result = jaxrsService.service(m);
-			}
-
-			return result;
-		} else {
-			result = super.invoke(c, m);
-		}
-
-		return result;
 	}
 
 	@Override
@@ -321,7 +291,6 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		public void setExtendedInvoke(boolean extended) throws ScriptException {
 			checkState();
 
-			jaxrsService = null;
 			groovyInstance = null;
 			groovyInvoke = null;
 			groovyDetach = null;
@@ -374,8 +343,6 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		public void reflectEntryPoints(Script script) throws ScriptException {
 			checkState();
 
-			jaxrsService = null;
-
 			Method detach = getGroovyMethod(script, "detach");
 			Method invoke = getGroovyMethod(script, "invoke");
 
@@ -392,14 +359,6 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 				groovyDetach = detach;
 				groovyInvoke = invoke;
 			}
-		}
-
-		@Override
-		public void setScriptWebComponent(ScriptWebComponent jaxrs, boolean reportNoMatch) throws ScriptException {
-			checkState();
-
-			jaxrsService = jaxrs;
-			jaxrsReportNoMatch = reportNoMatch;
 		}
 
 		@Override
