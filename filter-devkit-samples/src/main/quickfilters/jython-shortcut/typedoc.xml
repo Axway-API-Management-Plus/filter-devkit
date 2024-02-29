@@ -1,7 +1,0 @@
-<entityStoreData>
-	<entityType extends="Filter" name="JythonShortcutFilter">
-		<constant name="_version" type="integer" value="1" />
-		
-		<field cardinality="?" name="circuitPK" type="^FilterCircuit"/>
-	</entityType>
-</entityStoreData>

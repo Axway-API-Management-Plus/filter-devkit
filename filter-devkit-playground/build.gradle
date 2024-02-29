@@ -1,0 +1,27 @@
+apply plugin: 'java'
+
+java {
+	sourceCompatibility = 'VERSION_1_8'
+	targetCompatibility = 'VERSION_1_8'
+}
+
+apply from: rootProject.file("apigateway.gradle")
+
+deployRuntime.enabled = false
+jar.enabled = false
+
+sourceSets.main.java.srcDirs += ['src/main/groovy']
+sourceSets.main.java.srcDirs += ["${apigw_vdistdir}/ext/dynamic"]
+
+configurations {
+	compileOnly.extendsFrom(apigw_central)
+}
+
+dependencies {
+	annotationProcessor project(':filter-devkit-tools')
+	implementation project(':filter-devkit-annotations')
+	implementation project(':filter-devkit-runtime')
+	
+	implementation project(':filter-devkit-plugins-jaxrs')
+	implementation project(':filter-devkit-plugins-httpsig')
+}

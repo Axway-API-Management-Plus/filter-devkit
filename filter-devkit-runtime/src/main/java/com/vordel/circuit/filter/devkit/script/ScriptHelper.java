@@ -53,7 +53,7 @@ public class ScriptHelper {
 	/**
 	 * create a selector from the given expression (without juel start/end
 	 * delimiters). purpose of this method is to create usable selectors from
-	 * scripts. It's equivalent of SelectorExpression parameter injection. this
+	 * scripts. It's equivalent of SelectorExpression parameter injection. This
 	 * method is mis-named, use
 	 * {@link SelectorResource#fromExpression(String, Class)} instead.
 	 * 

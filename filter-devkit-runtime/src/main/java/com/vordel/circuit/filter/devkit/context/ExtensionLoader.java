@@ -114,7 +114,7 @@ public final class ExtensionLoader implements LoadableModule {
 		}
 	}
 
-	public static void registerExtensionInstance(ConfigContext ctx, Object module) {
+	static void registerExtensionInstance(ConfigContext ctx, Object module) {
 		if (module != null) {
 			ExtensionModulePlugin annotation = module.getClass().getAnnotation(ExtensionModulePlugin.class);
 
@@ -157,7 +157,7 @@ public final class ExtensionLoader implements LoadableModule {
 		}
 	}
 
-	public static void registerExtensionContext(String name, ExtensionContext resources) {
+	static void registerExtensionContext(String name, ExtensionContext resources) {
 		if ((name != null) && (resources != null)) {
 			synchronized (SYNC) {
 				LOADED_PLUGINS.put(name, resources);
@@ -168,6 +168,14 @@ public final class ExtensionLoader implements LoadableModule {
 	public static ExtensionContext getExtensionContext(String name) {
 		synchronized (SYNC) {
 			return LOADED_PLUGINS.get(name);
+		}
+	}
+
+	public static <T> T getExtensionInstance(Class<T> clazz) {
+		synchronized (SYNC) {
+			Object instance = LOADED_INTERFACES.get(clazz);
+			
+			return instance == null ? null : clazz.cast(instance);
 		}
 	}
 

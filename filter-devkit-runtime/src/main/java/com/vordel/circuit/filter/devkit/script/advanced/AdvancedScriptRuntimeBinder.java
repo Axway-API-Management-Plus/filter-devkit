@@ -65,7 +65,6 @@ public abstract class AdvancedScriptRuntimeBinder {
 
 		exports.add("reflectResources");
 		exports.add("reflectEntryPoints");
-		exports.add("setScriptWebComponent");
 
 		return Collections.unmodifiableSet(exports);
 	}

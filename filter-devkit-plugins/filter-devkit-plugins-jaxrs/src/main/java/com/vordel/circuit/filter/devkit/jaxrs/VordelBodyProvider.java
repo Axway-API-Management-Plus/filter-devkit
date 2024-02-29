@@ -15,6 +15,8 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
@@ -195,5 +197,12 @@ public class VordelBodyProvider implements MessageBodyReader<Body>, MessageBodyW
 		}
 
 		return mediaType;
+	}
+	
+	public static ResponseBuilder asResponseBuilder(int status, Body body) {
+		ResponseBuilder builder = Response.status(status);
+		String mimeType = body.getHeaders().getHeader(HttpHeaders.CONTENT_TYPE);
+		
+		return builder.entity(body).type(mimeType);
 	}
 }

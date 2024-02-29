@@ -1,0 +1,14 @@
+.DS_Store
+/.gradle
+/.mvn
+/.project
+/.settings
+/bin
+/build
+/.classpath
+/src/main/java/*
+/src/main/groovy/*
+/src/main/resources/*
+!/src/main/java/.keep
+!/src/main/groovy/.keep
+!/src/main/resources/.keep
