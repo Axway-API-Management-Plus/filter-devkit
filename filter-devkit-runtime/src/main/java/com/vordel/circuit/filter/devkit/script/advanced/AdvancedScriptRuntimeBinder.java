@@ -8,13 +8,18 @@ import java.util.Set;
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.python.core.Py;
 import org.python.core.PyObject;
 
-public abstract class AdvancedScriptRuntimeBinder {
+import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
+import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
+import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionBinder;
+
+public abstract class AdvancedScriptRuntimeBinder implements ScriptExtensionBinder {
 	private AdvancedScriptRuntimeBinder() {
 	}
 
@@ -69,6 +74,27 @@ public abstract class AdvancedScriptRuntimeBinder {
 		return Collections.unmodifiableSet(exports);
 	}
 
+	public static AdvancedScriptRuntimeBinder getScriptBinder(ScriptEngine engine) throws ScriptException {
+		/*
+		 * singe engine may be registered under multiple names, retrieve language name
+		 * from factory
+		 */
+		ScriptEngineFactory factory = engine.getFactory();
+		String language = factory.getLanguageName();
+
+		AdvancedScriptRuntimeBinder binder = null;
+
+		if ("Groovy".equals(language)) {
+			binder = AdvancedScriptRuntimeBinder.getGroovyBinder();
+		} else if ("ECMAScript".equals(language) || "EmbeddedECMAScript".equals(language)) {
+			binder = AdvancedScriptRuntimeBinder.getJavascriptBinder();
+		} else if ("python".equals(language)) {
+			binder = AdvancedScriptRuntimeBinder.getPythonBinder();
+		}
+
+		return binder;
+	}
+
 	public abstract void bindRuntime(ScriptEngine engine, AdvancedScriptRuntime runtime) throws ScriptException;
 
 	public static AdvancedScriptRuntimeBinder getJavascriptBinder() {
@@ -90,8 +116,35 @@ public abstract class AdvancedScriptRuntimeBinder {
 
 				/* sets script runtime */
 				bindings.put("exportedRuntime", runtime);
-				engine.eval(builder.toString());
-				bindings.remove("exportedRuntime");
+				try {
+					engine.eval(builder.toString());
+				} finally {
+					bindings.remove("exportedRuntime");
+				}
+
+				ExtensionLoader.bindScriptExtensions(engine, this);
+			}
+
+			@Override
+			public void bindRuntime(ScriptEngine engine, ScriptExtension runtime, Class<?> clazz) throws ScriptException {
+				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+				StringBuilder builder = new StringBuilder();
+
+				for (Method method : clazz.getDeclaredMethods()) {
+					String name = method.getName();
+					String template = getJavascriptClosureTemplate(method.getParameterCount());
+
+					builder.append(String.format(template, name, name));
+				}
+
+				/* sets script runtime */
+				bindings.put("exportedRuntime", runtime);
+
+				try {
+					engine.eval(builder.toString());
+				} finally {
+					bindings.remove("exportedRuntime");
+				}
 			}
 		};
 	}
@@ -106,6 +159,20 @@ public abstract class AdvancedScriptRuntimeBinder {
 				for (String method : EXPORTED_CLOSURES) {
 					/* sets script runtime */
 					bindings.put(method, pyobj.__findattr__(method));
+				}
+
+				ExtensionLoader.bindScriptExtensions(engine, this);
+			}
+
+			@Override
+			public void bindRuntime(ScriptEngine engine, ScriptExtension runtime, Class<?> clazz) throws ScriptException {
+				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+				PyObject pyobj = Py.java2py(runtime);
+
+				for (Method method : clazz.getDeclaredMethods()) {
+					String name = method.getName();
+					/* sets script runtime */
+					bindings.put(name, pyobj.__findattr__(name));
 				}
 			}
 		};
@@ -135,6 +202,20 @@ public abstract class AdvancedScriptRuntimeBinder {
 
 						bindings.put(name, closure);
 					}
+				}
+
+				ExtensionLoader.bindScriptExtensions(engine, this);
+			}
+
+			@Override
+			public void bindRuntime(ScriptEngine engine, ScriptExtension runtime, Class<?> clazz) throws ScriptException {
+				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+
+				for (Method method : clazz.getDeclaredMethods()) {
+					String name = method.getName();
+					MethodClosure closure = new MethodClosure(runtime, name);
+
+					bindings.put(name, closure);
 				}
 			}
 		};

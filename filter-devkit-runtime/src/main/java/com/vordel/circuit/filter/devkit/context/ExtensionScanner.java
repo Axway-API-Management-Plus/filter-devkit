@@ -21,7 +21,7 @@ import java.util.Set;
 
 import javax.annotation.Priority;
 
-import com.vordel.circuit.devkit.context.resources.SelectorResource;
+import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin;
 import com.vordel.common.Dictionary;

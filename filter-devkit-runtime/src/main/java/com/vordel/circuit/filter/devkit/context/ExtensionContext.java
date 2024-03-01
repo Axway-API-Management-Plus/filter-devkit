@@ -43,6 +43,10 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	}
 
 	static <T> ExtensionContext create(T script, Class<? extends T> clazz) {
+		return create(script, clazz, null);
+	}
+
+	private static <T> ExtensionContext create(T script, Class<? extends T> clazz, String filterName) {
 		Map<String, ContextResource> resources = new HashMap<String, ContextResource>();
 
 		if (clazz != null) {
@@ -60,42 +64,43 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 				SubstitutableMethod substitutable = method.getAnnotation(SubstitutableMethod.class);
 
 				try {
-					/* find a better method if possible */
+					/* find the best method according to parameters (must be public) */
 					method = clazz.getMethod(method.getName(), method.getParameterTypes());
+
+					if (invocable != null) {
+						String name = name(method, invocable);
+
+						invocables.put(method, invocable);
+						methods.add(method);
+
+						if (!exported.add(name)) {
+							duplicates.add(name);
+						}
+					}
+
+					if (function != null) {
+						String name = name(method, function);
+
+						functions.put(method, function);
+						methods.add(method);
+
+						if (!exported.add(name)) {
+							duplicates.add(name);
+						}
+					}
+
+					if (substitutable != null) {
+						String name = name(method, substitutable);
+
+						substitutables.put(method, substitutable);
+						methods.add(method);
+
+						if (!exported.add(name)) {
+							duplicates.add(name);
+						}
+					}
 				} catch (NoSuchMethodException e) {
-				}
-
-				if (invocable != null) {
-					String name = name(method, invocable);
-
-					invocables.put(method, invocable);
-					methods.add(method);
-
-					if (!exported.add(name)) {
-						duplicates.add(name);
-					}
-				}
-
-				if (function != null) {
-					String name = name(method, function);
-
-					functions.put(method, function);
-					methods.add(method);
-
-					if (!exported.add(name)) {
-						duplicates.add(name);
-					}
-				}
-
-				if (substitutable != null) {
-					String name = name(method, substitutable);
-
-					substitutables.put(method, substitutable);
-					methods.add(method);
-
-					if (!exported.add(name)) {
-						duplicates.add(name);
-					}
+					/* ignore exception and continue processing */
 				}
 			}
 
@@ -109,7 +114,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 					ExtensionFunction function = functions.get(method);
 					SubstitutableMethod substitutable = substitutables.get(method);
 					ContextResource resource = null;
-					String name = null;
+					String resourceName = null;
 
 					if (hasMultipleAnnotations(invocable, function, substitutable)) {
 						Trace.error(String.format("method '%s' can only be one of Invocable or Substitutable or ExtensionFunction", method.getName()));
@@ -117,24 +122,24 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 						Class<?> returnType = method.getReturnType();
 
 						if (boolean.class.equals(returnType) || Boolean.class.equals(returnType)) {
-							name = name(method, invocable);
-							resource = createInvocableResource(script, method, name);
+							resourceName = name(method, invocable);
+							resource = createInvocableResource(script, method, resourceName, filterName);
 						} else {
 							Trace.error(String.format("method '%s' must return a boolean to be invocable", method.getName()));
 						}
 					} else if (function != null) {
-						name = name(method, function);
-						resource = createFunctionResource(script, method, name);
+						resourceName = name(method, function);
+						resource = createFunctionResource(script, method, resourceName, filterName);
 					} else if (substitutable != null) {
-						name = name(method, substitutable);
-						resource = createSubstitutableResource(script, method, method.getReturnType(), name);
+						resourceName = name(method, substitutable);
+						resource = createSubstitutableResource(script, method, method.getReturnType(), resourceName, filterName);
 					}
 
 					if (resource != null) {
-						if (duplicates.contains(name)) {
-							Trace.error(String.format("resource '%s' is declared more than once", name));
+						if (duplicates.contains(resourceName)) {
+							Trace.error(String.format("resource '%s' is declared more than once", resourceName));
 						} else {
-							resources.put(name, resource);
+							resources.put(resourceName, resource);
 						}
 					}
 				} else {
@@ -220,13 +225,14 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	 * null is returned and the exception is dropped.
 	 * 
 	 * @param script script to be bound
+	 * @param filterName name of filter hosting the script
 	 * @return an ExtensionContext which reflects exported methods of the given
 	 *         script.
 	 */
-	public static ExtensionContext bind(Script script) {
+	public static ExtensionContext bind(Script script, String filterName) {
 		Class<? extends Script> clazz = script.getClass();
 
-		return create(script, clazz);
+		return create(script, clazz, filterName);
 	}
 
 	public static ExtensionContext bind(Class<?> clazz) {
@@ -246,7 +252,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		return create(instance, clazz);
 	}
 
-	private static InvocableResource createInvocableResource(final Object script, final Method method, final String name) {
+	private static InvocableResource createInvocableResource(final Object script, final Method method, final String name, final String filterName) {
 		final InjectableParameter<?>[] parameters = processInjectableParameters(method);
 
 		return new InvocableResource() {
@@ -271,7 +277,12 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 					}
 
 					if (Trace.isDebugEnabled()) {
-						Trace.debug(String.format("invoke '%s' (bound as '%s')", method, name));
+						if (filterName != null) {
+							Trace.debug(String.format("invoke '%s' from script '%s' (bound as '%s')", method.getName(), filterName, name));
+						} else {
+							Trace.debug(String.format("invoke '%s' (bound as '%s')", method, name));
+						}
+
 						Trace.debug(String.format("provided parameters : '%s'", debugInjectableParameters(debug)));
 					}
 
@@ -307,7 +318,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		};
 	}
 
-	private static FunctionResource createFunctionResource(final Object script, final Method method, final String name) {
+	private static FunctionResource createFunctionResource(final Object script, final Method method, final String name, final String filterName) {
 		/* first argument of functions is the context dictionary, can be a Message */
 		final Class<?> dictionaryType = getFunctionDictionaryType(method);
 
@@ -327,7 +338,11 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 					}
 
 					if (Trace.isDebugEnabled()) {
-						Trace.debug(String.format("substitute '%s' (bound as '%s')", method, name));
+						if (filterName != null) {
+							Trace.debug(String.format("call '%s' from script '%s' (bound as '%s')", method.getName(), filterName, name));
+						} else {
+							Trace.debug(String.format("call '%s' (bound as '%s')", method, name));
+						}
 					}
 
 					Object result = method.invoke(script, params);
@@ -392,7 +407,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		return params.toArray();
 	}
 
-	private static <T> SubstitutableResource<T> createSubstitutableResource(final Object script, final Method method, final Class<T> returnType, String name) {
+	private static <T> SubstitutableResource<T> createSubstitutableResource(final Object script, final Method method, final Class<T> returnType, String name, final String filterName) {
 		final InjectableParameter<?>[] parameters = processInjectableParameters(method);
 
 		return new SubstitutableResource<T>() {
@@ -417,7 +432,12 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 					}
 
 					if (Trace.isDebugEnabled()) {
-						Trace.debug(String.format("substitute '%s' (bound as '%s')", method, name));
+						if (filterName != null) {
+							Trace.debug(String.format("substitute '%s' from script '%s' (bound as '%s')", method.getName(), filterName, name));
+						} else {
+							Trace.debug(String.format("substitute '%s' (bound as '%s')", method, name));
+						}
+
 						Trace.debug(String.format("provided parameters : '%s'", debugInjectableParameters(debug)));
 					}
 

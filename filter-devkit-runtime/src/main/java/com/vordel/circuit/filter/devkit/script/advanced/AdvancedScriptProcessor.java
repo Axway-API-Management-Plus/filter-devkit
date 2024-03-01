@@ -8,13 +8,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.filter.devkit.context.ExtensionContext;
+import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
 import com.vordel.circuit.filter.devkit.context.resources.AbstractContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.CacheResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
@@ -72,7 +72,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	 * Invoke method of groovy script (if compatible with argument injection)
 	 */
 	private Method groovyInvoke = null;
-	
+
 	/**
 	 * exportable resource provider
 	 */
@@ -150,22 +150,15 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	protected void evaluateScript(ConfigContext ctx, Entity entity, String script) throws ScriptException {
 		/* retrieve resources */
 		attachResources(ctx, entity, resources = new HashMap<String, ContextResource>());
-		/*
-		 * singe engine may be registered under multiple names, retrieve language name
-		 * from factory
-		 */
-		ScriptEngineFactory factory = engine.getFactory();
-		String language = factory.getLanguageName();
 
 		/* create the runtime object used to create function closures */
 		ExportedRuntime runtime = new ExportedRuntime();
+		AdvancedScriptRuntimeBinder binder = AdvancedScriptRuntimeBinder.getScriptBinder(engine);
 
-		if ("Groovy".equals(language)) {
-			AdvancedScriptRuntimeBinder.getGroovyBinder().bindRuntime(engine, runtime);
-		} else if ("ECMAScript".equals(language) || "EmbeddedECMAScript".equals(language)) {
-			AdvancedScriptRuntimeBinder.getJavascriptBinder().bindRuntime(engine, runtime);
-		} else if ("python".equals(language)) {
-			AdvancedScriptRuntimeBinder.getPythonBinder().bindRuntime(engine, runtime);
+		if (binder != null) {
+			binder.bindRuntime(engine, runtime);
+
+			ExtensionLoader.bindScriptExtensions(engine, binder);
 		}
 
 		super.evaluateScript(ctx, entity, script);
@@ -335,8 +328,11 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 			if (exports != null) {
 				throw new ScriptException("This function can only be called once");
 			}
+			
+			/* retrieve filter name for debug */
+			String filterName = getFilter().getName();
 
-			exports = ExtensionContext.bind(script);
+			exports = ExtensionContext.bind(script, filterName);
 		}
 
 		@Override
