@@ -1,8 +1,8 @@
 apply plugin: 'java-library'
 
 java {
-    sourceCompatibility = 'VERSION_1_8'
-    targetCompatibility = 'VERSION_1_8'
+    sourceCompatibility = '11'
+    targetCompatibility = '11'
 
 	withJavadocJar()
 	withSourcesJar()

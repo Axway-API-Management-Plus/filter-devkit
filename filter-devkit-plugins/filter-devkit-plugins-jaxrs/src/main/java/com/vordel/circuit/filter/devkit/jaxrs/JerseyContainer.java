@@ -25,7 +25,7 @@ public abstract class JerseyContainer {
 			} catch (ClassNotFoundException e) {
 			}
 			
-			return (JerseyContainer) clazz.newInstance();
+			return (JerseyContainer) clazz.getDeclaredConstructor().newInstance();
 		} catch (Exception fatal) {
 			Trace.error("No Suitable Jersey runtime", fatal);
 			

@@ -45,7 +45,7 @@ import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterRequired;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterType;
 
 @SupportedOptions({ "projectName", "projectExportedPackage" })
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedSourceVersion(SourceVersion.RELEASE_11)
 @SupportedAnnotationTypes({ "com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterType" })
 public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 	private final Map<String, AnnotatedQuickFilter> filters = new HashMap<String, AnnotatedQuickFilter>();
@@ -315,7 +315,6 @@ public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 	}
 
 	public static class AnnotatedTypeDoc extends AbstractAnnotatedTypeDoc {
-		private final AnnotatedTypeDoc superDefinition;
 		private final TypeElement filterDefinition;
 
 		private final Map<String, QuickFilterComponent> components = new HashMap<String, QuickFilterComponent>();
@@ -323,7 +322,6 @@ public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 
 		private AnnotatedTypeDoc(TypeElement filterDefinition, AnnotatedTypeDoc superDefinition) {
 			this.filterDefinition = filterDefinition;
-			this.superDefinition = superDefinition;
 
 			/* scan for components */
 			for (ExecutableElement method : scanMethods(filterDefinition, new ArrayList<ExecutableElement>(), QuickFilterComponent.class)) {
@@ -339,11 +337,7 @@ public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 				fields.put(field.name(), field);
 			}
 
-			if (superDefinition != null) {
-				/* exclude inherited components and fields */
-				components.keySet().removeAll(superDefinition.components.keySet());
-				fields.keySet().removeAll(superDefinition.fields.keySet());
-			}
+			/* drop java inheritance mirror, does not work in 20231130 */
 		}
 
 		private List<ExecutableElement> scanMethods(TypeElement typeElement, List<ExecutableElement> annotatedMethods, Class<? extends Annotation> annotationClass) {
@@ -382,7 +376,8 @@ public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 
 		@Override
 		protected String getSuperEntityTypeName() {
-			return superDefinition == null ? "Filter" : superDefinition.getEntityTypeName();
+			/* drop java inheritance mirror, does not work in 20231130 */
+			return "Filter";
 		}
 
 		@Override

@@ -20,7 +20,7 @@ import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlug
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionLibraries;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin;
 
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedSourceVersion(SourceVersion.RELEASE_11)
 @SupportedAnnotationTypes({ "com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin",
 		"com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin", })
 public class ExtensionProviderGenerator extends AbstractProcessor {

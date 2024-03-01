@@ -26,14 +26,14 @@ FROM node:16-bookworm
 ARG APIM_RUN_FILE
 ARG APIM_LIC_FILE
 
-# install jdk 8 and 17 (for Java Language Server)
+# install jdk 11 and 17 (for Java Language Server)
 RUN apt update && \
 	apt install -y wget apt-transport-https && \
 	wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /usr/share/keyrings/adoptium.asc && \
 	echo "deb [signed-by=/usr/share/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list && \
 	apt update && \
 	apt upgrade -y && \
-	apt install -y git openssh-client bash libsecret-1-0 temurin-8-jdk temurin-17-jdk && \
+	apt install -y git openssh-client bash libsecret-1-0 temurin-11-jdk temurin-17-jdk && \
 	apt --no-install-recommends install -y build-essential libx11-dev libxkbfile-dev sudo && \
 	apt clean autoclean && apt autoremove --yes && rm -rf /var/lib/apt/lists/*
 
@@ -89,7 +89,7 @@ RUN --mount=type=tmpfs,target=/tmp \
 		--startCassandra 0 " && \
 	su theia -c "/opt/axway/apigateway/posix/bin/managedomain --initialize --nm_name anm-fdk --host 127.0.0.1 --port 8090 --domain_name domain-fdk" && \
 	mkdir -p /home/theia/.gradle && \
-	echo 'org.gradle.java.home=/usr/lib/jvm/temurin-8-jdk-amd64' >> /home/theia/.gradle/gradle.properties && \
+	echo 'org.gradle.java.home=/usr/lib/jvm/temurin-11-jdk-amd64' >> /home/theia/.gradle/gradle.properties && \
 	echo 'apigw_vdistdir=/opt/axway/apigateway' >> /home/theia/.gradle/gradle.properties && \
 	echo 'studio_vdistdir=/opt/axway/policystudio' >> /home/theia/.gradle/gradle.properties && \
 	chown -R theia:theia /home/theia/.gradle
@@ -99,7 +99,7 @@ RUN --mount=type=tmpfs,target=/tmp \
 RUN --mount=type=tmpfs,target=/tmp \
 	--mount=type=tmpfs,target=/home/theia/.gradle \
 	--mount=type=tmpfs,target=/home/project/filter-devkit/.gradle \
-	echo 'org.gradle.java.home=/usr/lib/jvm/temurin-8-jdk-amd64' >> /home/theia/.gradle/gradle.properties && \
+	echo 'org.gradle.java.home=/usr/lib/jvm/temurin-11-jdk-amd64' >> /home/theia/.gradle/gradle.properties && \
 	echo 'apigw_vdistdir=/opt/axway/apigateway' >> /home/theia/.gradle/gradle.properties && \
 	echo 'studio_vdistdir=/opt/axway/policystudio' >> /home/theia/.gradle/gradle.properties && \
 	chown -R theia:theia /home/theia/.gradle && \
