@@ -266,7 +266,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		return args;
 	}
 
-	private class ExportedRuntime implements AdvancedScriptRuntime {
+	private class ExportedRuntime implements GroovyScriptRuntime {
 		private void checkState() throws ScriptException {
 			if (attached) {
 				throw new ScriptException("This function can only be used during filter attachment");
@@ -360,6 +360,11 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		@Override
 		public ContextResourceProvider getExportedResources() {
 			return context;
+		}
+
+		@Override
+		public String getFilterName() {
+			return getFilter().getName();
 		}
 	}
 

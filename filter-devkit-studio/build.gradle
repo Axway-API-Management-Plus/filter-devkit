@@ -18,6 +18,8 @@ jar {
 
 apply from: rootProject.file('policystudio.gradle')
 
+deployPlugin.enabled = true
+
 configurations {
 	implementation.extendsFrom(studio_dist)
 }

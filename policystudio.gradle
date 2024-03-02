@@ -16,8 +16,16 @@ def checkPolicyStudioProperties() {
 checkPolicyStudioProperties()
 
 configurations {
+	studio_deploy
 	studio_dist
 }
+
+task deployPlugin(type: Copy) {
+	from jar, configurations.studio_deploy
+    into file("${studio_vdistdir}/plugins")
+}
+
+deployPlugin.enabled = false
 
 def rcpClasses(prefix) {
     def matchingDirs = []

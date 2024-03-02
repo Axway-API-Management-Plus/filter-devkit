@@ -197,11 +197,13 @@ public abstract class AbstractWebComponent {
 		private final Set<Object> singletons;
 		private final Map<String, Object> properties;
 
-		public VordelApplication(Set<Class<?>> classes, Set<Object> singletons, Map<String, Object> properties) {
+		public VordelApplication(Set<Class<?>> classes, Set<Object> singletons, Map<String, Object> properties, String filterName) {
 			singletons = new HashSet<Object>(singletons);
 			classes = new HashSet<Class<?>>(classes);
 
 			singletons.add(VordelBodyProvider.getInstance());
+			singletons.add(new JerseyLoggingListener(filterName));
+
 			classes.add(JerseyExecutorFeature.class);
 			classes.add(JerseyMethodMatchListener.class);
 			classes.add(JerseyLoggingListener.class);

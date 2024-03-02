@@ -1,6 +1,7 @@
 package com.vordel.circuit.filter.devkit.jaxrs;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 
 import javax.annotation.Priority;
 import javax.ws.rs.WebApplicationException;
@@ -24,6 +25,12 @@ import com.vordel.trace.Trace;
 @PreMatching
 @Priority(Integer.MIN_VALUE)
 public class JerseyLoggingListener implements RequestEventListener, ApplicationEventListener, ContainerRequestFilter, ContainerResponseFilter, WriterInterceptor {
+	private final String filterName;
+
+	public JerseyLoggingListener(String filterName) {
+		this.filterName = filterName;
+	}
+
 	@Override
 	public void onEvent(ApplicationEvent event) {
 		Trace.debug(String.format("jax-rs application event : %s", event.getType()));
@@ -46,7 +53,15 @@ public class JerseyLoggingListener implements RequestEventListener, ApplicationE
 			case RESOURCE_METHOD_START:
 				uriInfo = event.getUriInfo();
 
-				Trace.debug(String.format("invoke '%s'", uriInfo.getMatchedResourceMethod().getInvocable().getDefinitionMethod()));
+				if (Trace.isDebugEnabled()) {
+					Method method = uriInfo.getMatchedResourceMethod().getInvocable().getDefinitionMethod();
+					
+					if (filterName != null) {
+						Trace.debug(String.format("invoke '%s' from script '%s'", method.getName(), filterName));
+					} else {
+						Trace.debug(String.format("invoke '%s'", method));
+					}
+				}
 				break;
 			case EXCEPTION_MAPPER_FOUND:
 			case EXCEPTION_MAPPING_FINISHED:

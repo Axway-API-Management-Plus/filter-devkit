@@ -130,9 +130,9 @@ public class DynamicCompilerModule implements ExtensionModule {
 		/* keep line numbers and variables names for debug */
 		options.add("-g");
 
-		/* set target to java 8 */
+		/* set target to java 11 */
 		options.add("-target");
-		options.add("1.8");
+		options.add("11");
 
 		sjfm.setLocation(StandardLocation.CLASS_PATH, getClassPath(loader, new ArrayList<File>()));
 
