@@ -1,9 +1,6 @@
 package com.vordel.circuit.filter.devkit.script.advanced;
 
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
@@ -22,9 +19,6 @@ import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionBinder;
 public abstract class AdvancedScriptRuntimeBinder implements ScriptExtensionBinder {
 	private AdvancedScriptRuntimeBinder() {
 	}
-
-	private static final Set<String> EXPORTED_CLOSURES = getExportedMethods();
-	private static final Set<String> REFLECTIVE_CLOSURES = getReflectiveMethods();
 
 	private static final String getJavascriptClosureTemplate(int argc) {
 		StringBuilder body = new StringBuilder();
@@ -47,31 +41,6 @@ public abstract class AdvancedScriptRuntimeBinder implements ScriptExtensionBind
 		body.append("}(exportedRuntime));\n");
 
 		return body.toString();
-	}
-
-	private static final Set<String> getExportedMethods() {
-		Set<String> exports = new HashSet<String>();
-
-		exports.add("setUnwrapCircuitAbortException");
-		exports.add("setExtendedInvoke");
-		exports.add("getContextResource");
-		exports.add("getInvocableResource");
-		exports.add("getKPSResource");
-		exports.add("getCacheResource");
-		exports.add("invokeResource");
-		exports.add("substituteResource");
-		exports.add("getExportedResources");
-
-		return Collections.unmodifiableSet(exports);
-	}
-
-	private static final Set<String> getReflectiveMethods() {
-		Set<String> exports = new HashSet<String>();
-
-		exports.add("reflectResources");
-		exports.add("reflectEntryPoints");
-
-		return Collections.unmodifiableSet(exports);
 	}
 
 	public static AdvancedScriptRuntimeBinder getScriptBinder(ScriptEngine engine) throws ScriptException {
@@ -106,12 +75,9 @@ public abstract class AdvancedScriptRuntimeBinder implements ScriptExtensionBind
 
 				for (Method method : AdvancedScriptRuntime.class.getDeclaredMethods()) {
 					String name = method.getName();
+					String template = getJavascriptClosureTemplate(method.getParameterCount());
 
-					if (EXPORTED_CLOSURES.contains(name)) {
-						String template = getJavascriptClosureTemplate(method.getParameterCount());
-
-						builder.append(String.format(template, name, name));
-					}
+					builder.append(String.format(template, name, name));
 				}
 
 				/* sets script runtime */
@@ -156,9 +122,11 @@ public abstract class AdvancedScriptRuntimeBinder implements ScriptExtensionBind
 				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
 				PyObject pyobj = Py.java2py(runtime);
 
-				for (String method : EXPORTED_CLOSURES) {
+				for (Method method : AdvancedScriptRuntime.class.getDeclaredMethods()) {
+					String name = method.getName();
+
 					/* sets script runtime */
-					bindings.put(method, pyobj.__findattr__(method));
+					bindings.put(name, pyobj.__findattr__(name));
 				}
 
 				ExtensionLoader.bindScriptExtensions(engine, this);
@@ -184,24 +152,20 @@ public abstract class AdvancedScriptRuntimeBinder implements ScriptExtensionBind
 			public void bindRuntime(ScriptEngine engine, AdvancedScriptRuntime runtime) throws ScriptException {
 				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
 
-				for (Method method : AdvancedScriptRuntime.class.getDeclaredMethods()) {
-					String name = method.getName();
-
-					if (EXPORTED_CLOSURES.contains(name)) {
+				if (runtime instanceof GroovyScriptRuntime) {
+					for (Method method : GroovyScriptRuntime.class.getDeclaredMethods()) {
+						String name = method.getName();
 						MethodClosure closure = new MethodClosure(runtime, name);
 
 						bindings.put(name, closure);
 					}
 				}
-
+				
 				for (Method method : AdvancedScriptRuntime.class.getDeclaredMethods()) {
 					String name = method.getName();
+					MethodClosure closure = new MethodClosure(runtime, name);
 
-					if (REFLECTIVE_CLOSURES.contains(name)) {
-						MethodClosure closure = new MethodClosure(runtime, name);
-
-						bindings.put(name, closure);
-					}
+					bindings.put(name, closure);
 				}
 
 				ExtensionLoader.bindScriptExtensions(engine, this);

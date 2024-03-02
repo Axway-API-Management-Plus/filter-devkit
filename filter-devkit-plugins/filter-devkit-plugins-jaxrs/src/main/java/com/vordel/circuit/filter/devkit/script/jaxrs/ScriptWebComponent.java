@@ -34,14 +34,18 @@ public class ScriptWebComponent extends AbstractWebComponent {
 	public static final class Builder extends AbstractWebComponent.Builder {
 		protected Builder() {
 		}
-
+		
 		public <T> ScriptWebComponent build(T script) {
+			return build(script, null);
+		}
+
+		public <T> ScriptWebComponent build(T script, String filterName) {
 			ScriptWebComponent component = null;
 
 			/* check if we are called from policy studio */
 			if ((script != null) && buildable()) {
 				ScriptContainer<T> container = new ScriptContainer<T>(script);
-				Application application = new VordelApplication(classes, singletons, properties);
+				Application application = new VordelApplication(classes, singletons, properties, filterName);
 
 				container.reload(application);
 				component = container.getWebComponent();
