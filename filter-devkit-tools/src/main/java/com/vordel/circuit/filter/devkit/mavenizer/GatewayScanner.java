@@ -78,6 +78,7 @@ public class GatewayScanner {
 			result.addMetaDependencies(session);
 
 			result.addProbableArtifact("com.amazonaws", "aws-java-sdk");
+			result.addProbableArtifact("org.ow2.asm", "asm-all");
 
 			/* collect dependency graph (first time for probable dependencies) */
 			result.collectDependencies(mavenizer, session);
