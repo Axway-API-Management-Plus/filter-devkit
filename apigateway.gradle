@@ -1,4 +1,4 @@
-// List of Apigateway dependencies (7.7.0.20220530-2)
+// List of Apigateway dependencies (7.7.0.20230228-1)
 
 repositories {
     // include your repositories here
@@ -29,19 +29,19 @@ task deployRuntime(type: Copy) {
 deployRuntime.enabled = false
 
 dependencies {
-    apigw_central('org.apache.activemq:activemq-broker:5.16.0') {
+    apigw_central('org.apache.activemq:activemq-broker:5.16.5') {
         transitive = false
     }
-    apigw_central('org.apache.activemq:activemq-client:5.16.0') {
+    apigw_central('org.apache.activemq:activemq-client:5.16.5') {
         transitive = false
     }
-    apigw_central('org.apache.activemq:activemq-kahadb-store:5.16.0') {
+    apigw_central('org.apache.activemq:activemq-kahadb-store:5.16.5') {
         transitive = false
     }
-    apigw_central('org.apache.activemq:activemq-leveldb-store:5.16.0') {
+    apigw_central('org.apache.activemq:activemq-leveldb-store:5.16.5') {
         transitive = false
     }
-    apigw_central('org.apache.activemq:activemq-openwire-legacy:5.16.0') {
+    apigw_central('org.apache.activemq:activemq-openwire-legacy:5.16.5') {
         transitive = false
     }
     apigw_central('org.apache.activemq.protobuf:activemq-protobuf:1.1') {
@@ -98,37 +98,34 @@ dependencies {
     apigw_central('org.ow2.asm:asm-util:5.0.3') {
         transitive = false
     }
-    apigw_central('com.amazonaws:aws-java-sdk-core:1.11.564') {
+    apigw_central('com.amazonaws:aws-java-sdk-core:1.12.314') {
         transitive = false
     }
-    apigw_central('com.amazonaws:aws-java-sdk-kms:1.11.564') {
+    apigw_central('com.amazonaws:aws-java-sdk-kms:1.12.314') {
         transitive = false
     }
-    apigw_central('com.amazonaws:aws-java-sdk-s3:1.11.564') {
+    apigw_central('com.amazonaws:aws-java-sdk-s3:1.12.314') {
         transitive = false
     }
-    apigw_central('com.amazonaws:aws-java-sdk-simpledb:1.11.564') {
+    apigw_central('com.amazonaws:aws-java-sdk-simpledb:1.12.314') {
         transitive = false
     }
-    apigw_central('com.amazonaws:aws-java-sdk-sns:1.11.564') {
+    apigw_central('com.amazonaws:aws-java-sdk-sns:1.12.314') {
         transitive = false
     }
-    apigw_central('com.amazonaws:aws-java-sdk-sqs:1.11.564') {
+    apigw_central('com.amazonaws:aws-java-sdk-sqs:1.12.314') {
         transitive = false
     }
-    apigw_central('backport-util-concurrent:backport-util-concurrent-java12:3.1') {
+    apigw_central('org.bouncycastle:bcpg-jdk15on:1.70') {
         transitive = false
     }
-    apigw_central('org.bouncycastle:bcpg-jdk15on:1.66') {
+    apigw_central('org.bouncycastle:bcpkix-jdk15on:1.70') {
         transitive = false
     }
-    apigw_central('org.bouncycastle:bcpkix-jdk15on:1.66') {
+    apigw_central('org.bouncycastle:bcprov-ext-jdk15on:1.70') {
         transitive = false
     }
-    apigw_central('org.bouncycastle:bcprov-ext-jdk15on:1.66') {
-        transitive = false
-    }
-    apigw_central('org.bouncycastle:bcprov-jdk15on:1.66') {
+    apigw_central('org.bouncycastle:bcprov-jdk15on:1.70') {
         transitive = false
     }
     apigw_central('com.github.java-json-tools:btf:1.3') {
@@ -147,9 +144,6 @@ dependencies {
         transitive = false
     }
     apigw_central('org.apache.cayenne:cayenne-velocity:4.1') {
-        transitive = false
-    }
-    apigw_central('com.fasterxml:classmate:1.0.0') {
         transitive = false
     }
     apigw_central('org.eclipse.persistence:commonj.sdo:2.1.1') {
@@ -173,7 +167,7 @@ dependencies {
     apigw_central('org.apache.commons:commons-compress:1.21') {
         transitive = false
     }
-    apigw_central('org.apache.commons:commons-configuration2:2.7') {
+    apigw_central('org.apache.commons:commons-configuration2:2.8.0') {
         transitive = false
     }
     apigw_central('commons-dbcp:commons-dbcp:1.4') {
@@ -194,9 +188,6 @@ dependencies {
     apigw_central('org.apache.commons:commons-exec:1.3') {
         transitive = false
     }
-    apigw_central('commons-httpclient:commons-httpclient:3.1') {
-        transitive = false
-    }
     apigw_central('commons-io:commons-io:2.11.0') {
         transitive = false
     }
@@ -209,16 +200,16 @@ dependencies {
     apigw_central('commons-logging:commons-logging:1.2') {
         transitive = false
     }
-    apigw_central('commons-net:commons-net:3.6') {
+    apigw_central('commons-net:commons-net:3.9.0') {
         transitive = false
     }
     apigw_central('commons-pool:commons-pool:1.6') {
         transitive = false
     }
-    apigw_central('org.apache.commons:commons-text:1.9') {
+    apigw_central('org.apache.commons:commons-text:1.10.0') {
         transitive = false
     }
-    apigw_central('commons-validator:commons-validator:1.6') {
+    apigw_central('commons-validator:commons-validator:1.7') {
         transitive = false
     }
     apigw_central('org.cryptacular:cryptacular:1.1.4') {
@@ -233,16 +224,19 @@ dependencies {
     apigw_central('org.eclipse.persistence:eclipselink:2.6.0') {
         transitive = false
     }
-    apigw_central('net.sf.ehcache:ehcache:2.10.6') {
+    apigw_central('net.sf.ehcache:ehcache:2.10.9.2') {
+        transitive = false
+    }
+    apigw_central('dev.failsafe:failsafe:3.3.0') {
         transitive = false
     }
     apigw_central('com.google.guava:failureaccess:1.0.1') {
         transitive = false
     }
-    apigw_central('org.apache.ftpserver:ftplet-api:1.0.6') {
+    apigw_central('org.apache.ftpserver:ftplet-api:1.2.0') {
         transitive = false
     }
-    apigw_central('org.apache.ftpserver:ftpserver-core:1.0.6') {
+    apigw_central('org.apache.ftpserver:ftpserver-core:1.2.0') {
         transitive = false
     }
     apigw_central('org.apache.geronimo.specs:geronimo-j2ee-management_1.1_spec:1.0.1') {
@@ -305,7 +299,13 @@ dependencies {
     apigw_central('com.google.guava:guava:30.0-jre') {
         transitive = false
     }
-    apigw_central('com.github.jknack:handlebars:4.2.1') {
+    apigw_central('org.apache.hadoop:hadoop-annotations:3.3.3') {
+        transitive = false
+    }
+    apigw_central('org.apache.hadoop:hadoop-common:3.3.3') {
+        transitive = false
+    }
+    apigw_central('com.github.jknack:handlebars:4.3.1') {
         transitive = false
     }
     apigw_central('org.fusesource.hawtbuf:hawtbuf:1.11') {
@@ -323,16 +323,10 @@ dependencies {
     apigw_central('org.fusesource.hawtdispatch:hawtdispatch-transport:1.22') {
         transitive = false
     }
-    apigw_central('org.fusesource.hawtjni:hawtjni-runtime:1.9') {
+    apigw_central('org.fusesource.hawtjni:hawtjni-runtime:1.18') {
         transitive = false
     }
     apigw_central('org.hectorclient:hector-core:2.0-0') {
-        transitive = false
-    }
-    apigw_central('org.hibernate.validator:hibernate-validator:6.1.5.Final') {
-        transitive = false
-    }
-    apigw_central('org.hibernate.validator:hibernate-validator-annotation-processor:6.1.5.Final') {
         transitive = false
     }
     apigw_central('org.glassfish.hk2:hk2-api:2.6.1') {
@@ -356,49 +350,43 @@ dependencies {
     apigw_central('org.apache.httpcomponents:httpmime:4.5.13') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.core:jackson-annotations:2.13.2') {
+    apigw_central('com.fasterxml.jackson.core:jackson-annotations:2.14.0') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.core:jackson-core:2.13.2') {
+    apigw_central('com.fasterxml.jackson.core:jackson-core:2.14.0') {
         transitive = false
     }
     apigw_central('com.github.java-json-tools:jackson-coreutils:1.12') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.core:jackson-databind:2.13.2.2') {
+    apigw_central('com.fasterxml.jackson.core:jackson-databind:2.14.0') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.2') {
+    apigw_central('com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.14.0') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.2') {
+    apigw_central('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.0') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.2') {
+    apigw_central('com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.0') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:2.13.2') {
+    apigw_central('com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:2.14.0') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.13.2') {
+    apigw_central('com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.14.0') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.13.2') {
+    apigw_central('com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.14.0') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.module:jackson-module-jsonSchema:2.13.2') {
+    apigw_central('com.fasterxml.jackson.module:jackson-module-jsonSchema:2.14.0') {
         transitive = false
     }
     apigw_central('jakarta.activation:jakarta.activation-api:2.0.1') {
         transitive = false
     }
     apigw_central('jakarta.annotation:jakarta.annotation-api:1.3.5') {
-        transitive = false
-    }
-    apigw_central('org.glassfish:jakarta.el:3.0.4') {
-        transitive = false
-    }
-    apigw_central('jakarta.el:jakarta.el-api:3.0.3') {
         transitive = false
     }
     apigw_central('org.glassfish.hk2.external:jakarta.inject:2.6.1') {
@@ -434,13 +422,10 @@ dependencies {
     apigw_central('javax.xml:jaxr-api:1.0_04') {
         transitive = false
     }
-    apigw_central('com.sun.xml.registry:jaxr-impl:1.0.6') {
+    apigw_central('com.sun.xml.registry:jaxr-impl:1.0.9') {
         transitive = false
     }
     apigw_central('javax.xml:jaxrpc-api:1.1') {
-        transitive = false
-    }
-    apigw_central('org.jboss.logging:jboss-logging:3.2.1.Final') {
         transitive = false
     }
     apigw_central('org.slf4j:jcl-over-slf4j:1.7.31') {
@@ -450,9 +435,6 @@ dependencies {
         transitive = false
     }
     apigw_central('org.glassfish.jersey.connectors:jersey-apache-connector:2.31') {
-        transitive = false
-    }
-    apigw_central('org.glassfish.jersey.ext:jersey-bean-validation:2.31') {
         transitive = false
     }
     apigw_central('org.glassfish.jersey.core:jersey-client:2.31') {
@@ -479,7 +461,7 @@ dependencies {
     apigw_central('org.glassfish.jersey.core:jersey-server:2.31') {
         transitive = false
     }
-    apigw_central('org.codehaus.jettison:jettison:1.3.3') {
+    apigw_central('org.codehaus.jettison:jettison:1.5.3') {
         transitive = false
     }
     apigw_central('com.floreysoft:jmte:3.1.1') {
@@ -488,22 +470,19 @@ dependencies {
     apigw_central('net.java.dev.jna:jna:4.1.0') {
         transitive = false
     }
-    apigw_central('net.java.dev.jna:jna-platform:4.1.0') {
-        transitive = false
-    }
     apigw_central('joda-time:joda-time:2.10.3') {
         transitive = false
     }
-    apigw_central('com.jcraft:jsch:0.1.54') {
+    apigw_central('com.jcraft:jsch:0.1.55') {
         transitive = false
     }
-    apigw_central('org.json:json:20140107') {
+    apigw_central('org.json:json:20220320') {
         transitive = false
     }
     apigw_central('com.github.java-json-tools:json-patch:1.12') {
         transitive = false
     }
-    apigw_central('com.jayway.jsonpath:json-path:2.2.0') {
+    apigw_central('com.jayway.jsonpath:json-path:2.7.0') {
         transitive = false
     }
     apigw_central('com.github.java-json-tools:json-schema-core:1.2.13') {
@@ -569,10 +548,10 @@ dependencies {
     apigw_central('io.dropwizard.metrics:metrics-core:3.1.2') {
         transitive = false
     }
-    apigw_central('org.jvnet.mimepull:mimepull:1.9.6') {
+    apigw_central('org.jvnet.mimepull:mimepull:1.9.15') {
         transitive = false
     }
-    apigw_central('org.apache.mina:mina-core:2.0.2') {
+    apigw_central('org.apache.mina:mina-core:2.1.6') {
         transitive = false
     }
     apigw_central('com.github.java-json-tools:msg-simple:1.2') {
@@ -596,10 +575,10 @@ dependencies {
     apigw_central('io.netty:netty-transport:4.1.66.Final') {
         transitive = false
     }
-    apigw_central('com.nimbusds:nimbus-jose-jwt:9.5') {
+    apigw_central('com.nimbusds:nimbus-jose-jwt:9.23') {
         transitive = false
     }
-    apigw_central('com.narupley:not-going-to-be-commons-ssl:0.3.18') {
+    apigw_central('com.narupley:not-going-to-be-commons-ssl:0.3.20') {
         transitive = false
     }
     apigw_central('com.oracle.database.jdbc:ojdbc8:21.1.0.0') {
@@ -662,7 +641,10 @@ dependencies {
     apigw_central('com.sun.xml.ws:policy:2.5') {
         transitive = false
     }
-    apigw_central('org.quartz-scheduler:quartz:1.8.4') {
+    apigw_central('org.quartz-scheduler:quartz:2.3.2') {
+        transitive = false
+    }
+    apigw_central('com.google.re2j:re2j:1.6') {
         transitive = false
     }
     apigw_central('org.mozilla:rhino:1.7R5') {
@@ -675,9 +657,6 @@ dependencies {
         transitive = false
     }
     apigw_central('net.sourceforge.saxon:saxon:9.1.0.8') {
-        transitive = false
-    }
-    apigw_central('org.scala-lang:scala-library:2.11.12') {
         transitive = false
     }
     apigw_central('xalan:serializer:2.7.2') {
@@ -695,19 +674,19 @@ dependencies {
     apigw_central('org.slf4j:slf4j-api:1.7.31') {
         transitive = false
     }
-    apigw_central('org.yaml:snakeyaml:1.29') {
+    apigw_central('org.yaml:snakeyaml:1.32') {
         transitive = false
     }
     apigw_central('com.ecyrd.speed4j:speed4j:0.9') {
         transitive = false
     }
-    apigw_central('org.apache.sshd:sshd-common:2.7.0') {
+    apigw_central('org.apache.sshd:sshd-common:2.9.2') {
         transitive = false
     }
-    apigw_central('org.apache.sshd:sshd-core:2.7.0') {
+    apigw_central('org.apache.sshd:sshd-core:2.9.2') {
         transitive = false
     }
-    apigw_central('org.apache.sshd:sshd-sftp:2.7.0') {
+    apigw_central('org.apache.sshd:sshd-sftp:2.9.2') {
         transitive = false
     }
     apigw_central('org.codehaus.woodstox:stax2-api:4.2.1') {
@@ -716,7 +695,7 @@ dependencies {
     apigw_central('io.swagger:swagger-annotations:1.6.3') {
         transitive = false
     }
-    apigw_central('io.swagger.core.v3:swagger-annotations:2.1.11') {
+    apigw_central('io.swagger.core.v3:swagger-annotations:2.1.13') {
         transitive = false
     }
     apigw_central('io.swagger:swagger-compat-spec-parser:1.0.56') {
@@ -725,7 +704,7 @@ dependencies {
     apigw_central('io.swagger:swagger-core:1.6.3') {
         transitive = false
     }
-    apigw_central('io.swagger.core.v3:swagger-core:2.1.11') {
+    apigw_central('io.swagger.core.v3:swagger-core:2.1.13') {
         transitive = false
     }
     apigw_central('io.swagger:swagger-jaxrs:1.6.3') {
@@ -734,7 +713,7 @@ dependencies {
     apigw_central('io.swagger:swagger-models:1.6.3') {
         transitive = false
     }
-    apigw_central('io.swagger.core.v3:swagger-models:2.1.11') {
+    apigw_central('io.swagger.core.v3:swagger-models:2.1.13') {
         transitive = false
     }
     apigw_central('io.swagger:swagger-parser:1.0.56') {
@@ -761,13 +740,10 @@ dependencies {
     apigw_central('org.apache.velocity:velocity-engine-core:2.3') {
         transitive = false
     }
-    apigw_central('com.fasterxml.woodstox:woodstox-core:6.2.8') {
+    apigw_central('com.fasterxml.woodstox:woodstox-core:6.4.0') {
         transitive = false
     }
     apigw_central('wsdl4j:wsdl4j:1.6.2') {
-        transitive = false
-    }
-    apigw_central('xalan:xalan:2.7.2') {
         transitive = false
     }
     apigw_central('org.apache.xbean:xbean-asm5-shaded:3.17') {
@@ -779,7 +755,7 @@ dependencies {
     apigw_central('xml-apis:xml-apis:1.4.01') {
         transitive = false
     }
-    apigw_central('org.apache.santuario:xmlsec:1.5.8') {
+    apigw_central('org.apache.santuario:xmlsec:2.1.8') {
         transitive = false
     }
     apigw_central fileTree("${apigw_vdistdir}").matching {
@@ -796,7 +772,6 @@ dependencies {
         exclude 'system/lib/embeddedAMQ/hawtjni-runtime-*.jar'
         exclude 'system/lib/embeddedAMQ/leveldb-*.jar'
         exclude 'system/lib/embeddedAMQ/leveldbjni-*.jar'
-        exclude 'system/lib/embeddedAMQ/scala-library-*.jar'
         exclude 'system/lib/mapper/commonj.sdo-*.jar'
         exclude 'system/lib/mapper/commons-digester3-*.jar'
         exclude 'system/lib/mapper/eclipselink-*.jar'
@@ -819,7 +794,6 @@ dependencies {
         exclude 'system/lib/modules/aws/aws-java-sdk-sns-*.jar'
         exclude 'system/lib/modules/aws/aws-java-sdk-sqs-*.jar'
         exclude 'system/lib/modules/aws/joda-time-*.jar'
-        exclude 'system/lib/modules/backport-util-concurrent-java12-*.jar'
         exclude 'system/lib/modules/bcpg-jdk15on-*.jar'
         exclude 'system/lib/modules/bcpkix-jdk15on-*.jar'
         exclude 'system/lib/modules/bcprov-ext-jdk15on-*.jar'
@@ -832,7 +806,6 @@ dependencies {
         exclude 'system/lib/modules/cayenne/cayenne-di-*.jar'
         exclude 'system/lib/modules/cayenne/cayenne-server-*.jar'
         exclude 'system/lib/modules/cayenne/cayenne-velocity-*.jar'
-        exclude 'system/lib/modules/classmate-*.jar'
         exclude 'system/lib/modules/commons-beanutils-*.jar'
         exclude 'system/lib/modules/commons-cli-*.jar'
         exclude 'system/lib/modules/commons-codec-*.jar'
@@ -844,7 +817,6 @@ dependencies {
         exclude 'system/lib/modules/commons-discovery-*.jar'
         exclude 'system/lib/modules/commons-email-*.jar'
         exclude 'system/lib/modules/commons-exec-*.jar'
-        exclude 'system/lib/modules/commons-httpclient-*.jar'
         exclude 'system/lib/modules/commons-io-*.jar'
         exclude 'system/lib/modules/commons-lang-*.jar'
         exclude 'system/lib/modules/commons-lang3-*.jar'
@@ -857,6 +829,7 @@ dependencies {
         exclude 'system/lib/modules/disruptor-*.jar'
         exclude 'system/lib/modules/dom4j-*.jar'
         exclude 'system/lib/modules/ehcache-*.jar'
+        exclude 'system/lib/modules/failsafe-*.jar'
         exclude 'system/lib/modules/failureaccess-*.jar'
         exclude 'system/lib/modules/ftplet-api-*.jar'
         exclude 'system/lib/modules/ftpserver-core-*.jar'
@@ -864,7 +837,8 @@ dependencies {
         exclude 'system/lib/modules/geronimo-jta_1.1_spec-*.jar'
         exclude 'system/lib/modules/groovy-*.jar'
         exclude 'system/lib/modules/guava-*.jar'
-        exclude 'system/lib/modules/hibernate-validator-*.jar'
+        exclude 'system/lib/modules/hadoop-annotations-*.jar'
+        exclude 'system/lib/modules/hadoop-common-*.jar'
         exclude 'system/lib/modules/hk2-api-*.jar'
         exclude 'system/lib/modules/hk2-locator-*.jar'
         exclude 'system/lib/modules/hk2-utils-*.jar'
@@ -884,7 +858,6 @@ dependencies {
         exclude 'system/lib/modules/jackson-module-jsonSchema-*.jar'
         exclude 'system/lib/modules/jakarta.activation-api-*.jar'
         exclude 'system/lib/modules/jakarta.annotation-api-*.jar'
-        exclude 'system/lib/modules/jakarta.el-*.jar'
         exclude 'system/lib/modules/jakarta.inject-*.jar'
         exclude 'system/lib/modules/jakarta.validation-api-*.jar'
         exclude 'system/lib/modules/jakarta.ws.rs-api-*.jar'
@@ -897,10 +870,8 @@ dependencies {
         exclude 'system/lib/modules/jaxr-api-*.jar'
         exclude 'system/lib/modules/jaxr-impl-*.jar'
         exclude 'system/lib/modules/jaxrpc-api-*.jar'
-        exclude 'system/lib/modules/jboss-logging-*.jar'
         exclude 'system/lib/modules/jcl-over-slf4j-*.jar'
         exclude 'system/lib/modules/jersey-apache-connector-*.jar'
-        exclude 'system/lib/modules/jersey-bean-validation-*.jar'
         exclude 'system/lib/modules/jersey-client-*.jar'
         exclude 'system/lib/modules/jersey-common-*.jar'
         exclude 'system/lib/modules/jersey-container-servlet-core-*.jar'
@@ -956,6 +927,7 @@ dependencies {
         exclude 'system/lib/modules/osgi-resource-locator-*.jar'
         exclude 'system/lib/modules/policy-*.jar'
         exclude 'system/lib/modules/quartz-*.jar'
+        exclude 'system/lib/modules/re2j-*.jar'
         exclude 'system/lib/modules/saaj-api-*.jar'
         exclude 'system/lib/modules/saxon-*.jar'
         exclude 'system/lib/modules/sentinel/axway-sentinel-ua-3.0.52_R2266.jar'
@@ -983,7 +955,6 @@ dependencies {
         exclude 'system/lib/modules/woodstox-core-*.jar'
         exclude 'system/lib/modules/wsdl4j-*.jar'
         exclude 'system/lib/modules/xalan-j/serializer-*.jar'
-        exclude 'system/lib/modules/xalan-j/xalan-*.jar'
         exclude 'system/lib/modules/xalan-j/xercesImpl-*.jar'
         exclude 'system/lib/modules/xalan-j/xml-apis-*.jar'
         exclude 'system/lib/modules/xbean-asm5-shaded-*.jar'
