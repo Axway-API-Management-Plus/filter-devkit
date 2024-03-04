@@ -1,10 +1,13 @@
 apply plugin: 'base'
 
+group = 'com.axway.apigw'
+version = '7.7.0.20231130-2'
+
 subprojects {
 	apply plugin: 'eclipse'
 
 	group = 'com.axway.apigw'
-	version = "1.0-SNAPSHOT"
+	version = '7.7.0.20231130-2'
 }
 
 task copyArchives(type: Copy) {

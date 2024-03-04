@@ -1,7 +1,7 @@
 apply plugin: 'java'
 
 java {
-	sourceCompatibility = '11'
+	sourceCompatibility = '8'
 	targetCompatibility = '11'
 
 	withJavadocJar()

@@ -86,6 +86,9 @@ dependencies {
     apigw_central('org.objectstyle.ashwood:ashwood:2.0') {
         transitive = false
     }
+    apigw_central('org.ow2.asm:asm:9.6') {
+        transitive = false
+    }
     apigw_central('org.ow2.asm:asm-all:4.0') {
         transitive = false
     }
