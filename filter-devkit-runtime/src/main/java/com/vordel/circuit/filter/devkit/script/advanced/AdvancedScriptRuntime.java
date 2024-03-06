@@ -12,6 +12,11 @@ import com.vordel.circuit.filter.devkit.context.resources.KPSResource;
 import com.vordel.common.Dictionary;
 import com.vordel.config.Circuit;
 
+/**
+ * Base top level functions exported to all scripts runtime.
+ * 
+ * @author rdesaintleger@axway.com
+ */
 public interface AdvancedScriptRuntime {
 	/**
 	 * By default, exceptions thrown by script filter will be enclosed in

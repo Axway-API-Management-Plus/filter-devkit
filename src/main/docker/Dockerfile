@@ -1,33 +1,25 @@
 # Cache stage
 FROM node:16-bookworm as stage_cache
 
-### configure apt for stage_cache
-RUN rm -f /etc/apt/apt.conf.d/docker-clean ; \
-	echo 'Binary::apt::APT::Keep-Downloaded-Packages "true" ;' > /etc/apt/apt.conf.d/keep-cache
-
 ### refresh the 'apt' cache and download debian packages
 RUN --mount=type=tmpfs,target=/tmp \
-	apt update && \
+	apt update
+
+FROM node:16-bookworm as base_image
+
+RUN --mount=type=tmpfs,target=/tmp \
+	--mount=type=cache,from=stage_cache,sharing=locked,source=/var/cache/apt,target=/var/cache/apt \
+	--mount=type=cache,from=stage_cache,sharing=locked,source=/var/lib/apt,target=/var/lib/apt \
 	apt install -y wget apt-transport-https && \
 	wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /usr/share/keyrings/adoptium.asc && \
 	echo "deb [signed-by=/usr/share/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list && \
 	apt update && \
-	apt --download-only install -y libxkbfile-dev libsecret-1-dev git && \
-	apt --download-only install -y git openssh-client bash libsecret-1-0 temurin-11-jdk temurin-17-jdk && \
-	apt --download-only install -y novnc websockify && \
-	apt --download-only install -y --no-install-recommends openbox tint2 xdg-utils lxterminal hsetroot tigervnc-standalone-server supervisor && \
-	apt --download-only --no-install-recommends install -y build-essential libx11-dev libxkbfile-dev sudo && \
-	apt upgrade -y
+	apt install -y libxkbfile-dev libsecret-1-dev git && \
+	apt upgrade -y && \
+	apt autoremove --yes
 
 # Builder stage
-FROM node:16-bookworm as build_stage
-
-# install required tools to build the application
-RUN --mount=type=tmpfs,target=/tmp \
-	--mount=type=cache,from=stage_cache,sharing=locked,source=/var/cache/apt,target=/var/cache/apt \
-	--mount=type=cache,from=stage_cache,sharing=locked,source=/var/lib/apt,target=/var/lib/apt \
-	apt upgrade -y && \
-	apt install -y libxkbfile-dev libsecret-1-dev git
+FROM base_image as build_stage
 
 WORKDIR /home/theia
 
@@ -45,13 +37,10 @@ RUN git clone https://github.com/eclipse-theia/theia-blueprint.git . && \
 	yarn cache clean && \
 	rm -r .git applications/electron theia-extensions/launcher theia-extensions/updater node_modules
 
-FROM node:16-bookworm
+FROM base_image
 
 ARG APIM_RUN_FILE
 ARG APIM_LIC_FILE
-
-COPY --from=stage_cache /usr/share/keyrings/adoptium.asc /usr/share/keyrings/adoptium.asc
-COPY --from=stage_cache /etc/apt/sources.list.d/adoptium.list /etc/apt/sources.list.d/adoptium.list
 
 # Create theia user and directories with sudo configuration
 # Application will be copied to /home/theia
@@ -131,7 +120,8 @@ RUN --mount=type=tmpfs,target=/tmp \
 	chown -R theia:theia /home/project/filter-devkit/.gradle && \
 	su theia -c "cd /opt/axway/apigateway && \
 		posix/bin/nodemanager -d && \
-		posix/bin/managedomain --username admin --password changeme --create_instance --name fdk-instance --group fdk-group" && \
+		posix/bin/managedomain --username admin --password changeme --create_instance --name fdk-instance --group fdk-group && \
+		posix/bin/nodemanager -k" && \
 	su theia -c "cd /home/project/filter-devkit && \
 		./gradlew clean cleanEclipse build jar copyArchives deployRuntime deployPlugin && \
 		./gradlew clean && \
