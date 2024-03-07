@@ -14,7 +14,7 @@ deployRuntime.enabled = true
 deployPlugin.enabled = true
 
 configurations {
-	compileOnly.extendsFrom(apigw_central, studio_dist)
+	compileOnly.extendsFrom(apigw_central, studio_plugins)
 	osgi.extendsFrom(studio_dist);
 }
 
