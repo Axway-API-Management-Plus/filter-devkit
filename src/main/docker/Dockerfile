@@ -142,7 +142,8 @@ RUN echo 'hsetroot -solid "#123456" &' >> /etc/xdg/openbox/autostart && \
 		mkdir -p /home/theia/.local/share/icons/dist && \
 		mkdir -p /home/theia/.local/share/applications && \
 		cp /home/project/filter-devkit/src/main/playground/policystudio.png /home/theia/.local/share/icons/dist && \
-		cp /home/project/filter-devkit/src/main/playground/policystudio.desktop /home/theia/.local/share/applications"
+		cp /home/project/filter-devkit/src/main/playground/policystudio.desktop /home/theia/.local/share/applications && \
+		cp /home/project/filter-devkit/src/main/playground/eclipse.desktop /home/theia/.local/share/applications"
 
 # expose theia port and ANM port
 EXPOSE 3000

@@ -11,7 +11,7 @@ apply from: rootProject.file('apigateway.gradle')
 apply from: rootProject.file('policystudio.gradle')
 
 configurations {
-	compileOnly.extendsFrom(apigw_central)
+	compileOnly.extendsFrom(apigw_central, studio_dist)
 	osgi.extendsFrom(studio_dist);
 }
 
@@ -19,17 +19,15 @@ dependencies {
 	annotationProcessor project(':filter-devkit-tools')
 	implementation project(':filter-devkit-annotations')
 	implementation project(':filter-devkit-runtime')
-
+	implementation project(':filter-devkit-studio')
+	
 	osgi project(':filter-devkit-studio')
 
-	implementation('com.amazonaws:aws-java-sdk-lambda:1.11.538')
-	implementation('com.amazonaws:aws-java-sdk-sts:1.11.538')
-	osgi ('com.amazonaws:aws-java-sdk-lambda:1.11.538')
-	osgi ('com.amazonaws:aws-java-sdk-sts:1.11.538')
+	implementation('com.amazonaws:aws-java-sdk-lambda:1.12.314')
+	implementation('com.amazonaws:aws-java-sdk-sts:1.12.314')
 }
 
 tasks.withType(JavaCompile) {
-	classpath += configurations.osgi
 	options.sourcepath = sourceSets.main.resources.getSourceDirectories()
 	options.compilerArgs += [
 		"-AprojectName=${project.name}",

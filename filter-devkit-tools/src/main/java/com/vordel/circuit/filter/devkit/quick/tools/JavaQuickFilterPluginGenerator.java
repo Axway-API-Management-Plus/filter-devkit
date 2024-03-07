@@ -503,7 +503,7 @@ public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 
 		@Override
 		public String getDefinitionPackageName() {
-			return packageElement.toString();
+			return packageElement.getQualifiedName().toString();
 		}
 
 		@Override

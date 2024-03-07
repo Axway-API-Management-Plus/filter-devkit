@@ -25,10 +25,10 @@ configurations {
 }
 
 dependencies {
-	implementation fileTree("${studio_vdistdir}").matching {
-		include 'plugins/com.vordel.filter.jwt.*.jar'
-		include 'plugins/com.vordel.filter.script.*.jar'
-	}
+	//implementation fileTree("${studio_vdistdir}").matching {
+	//	include 'plugins/com.vordel.filter.jwt.*.jar'
+	//	include 'plugins/com.vordel.filter.script.*.jar'
+	//}
 
 	implementation project(':filter-devkit-annotations')
 	implementation project(':filter-devkit-runtime')

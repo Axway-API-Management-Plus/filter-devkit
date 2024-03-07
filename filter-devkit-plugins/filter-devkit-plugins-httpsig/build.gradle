@@ -14,7 +14,7 @@ deployRuntime.enabled = true
 deployPlugin.enabled = true
 
 configurations {
-	compileOnly.extendsFrom(apigw_central)
+	compileOnly.extendsFrom(apigw_central, studio_dist)
 	osgi.extendsFrom(studio_dist);
 }
 
@@ -22,12 +22,12 @@ dependencies {
 	annotationProcessor project(':filter-devkit-tools')
 	implementation project(':filter-devkit-annotations')
 	implementation project(':filter-devkit-runtime')
-	
+	implementation project(':filter-devkit-studio')
+
 	osgi project(':filter-devkit-studio')
 }
 
 tasks.withType(JavaCompile) {
-	classpath += configurations.osgi
 	options.sourcepath = sourceSets.main.resources.getSourceDirectories()
 	options.compilerArgs += [
 		"-AprojectName=${project.name}",
