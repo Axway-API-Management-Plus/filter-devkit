@@ -1,4 +1,4 @@
-// List of Apigateway dependencies (7.7.0.20231130-2)
+// List of Apigateway dependencies (7.7.0.20240228-1)
 
 repositories {
     // include your repositories here
@@ -257,58 +257,58 @@ dependencies {
     apigw_central('com.graphql-java:graphql-java:21.1') {
         transitive = false
     }
-    apigw_central('org.codehaus.groovy:groovy:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy:2.5.23') {
         transitive = false
     }
-    apigw_central('org.codehaus.groovy:groovy-bsf:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-bsf:2.5.23') {
         transitive = false
     }
-    apigw_central('org.codehaus.groovy:groovy-datetime:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-datetime:2.5.23') {
         transitive = false
     }
-    apigw_central('org.codehaus.groovy:groovy-dateutil:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-dateutil:2.5.23') {
         transitive = false
     }
-    apigw_central('org.codehaus.groovy:groovy-jaxb:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-jaxb:2.5.23') {
         transitive = false
     }
-    apigw_central('org.codehaus.groovy:groovy-jmx:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-jmx:2.5.23') {
         transitive = false
     }
-    apigw_central('org.codehaus.groovy:groovy-json:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-json:2.5.23') {
         transitive = false
     }
-    apigw_central('org.codehaus.groovy:groovy-json-direct:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-json-direct:2.5.23') {
         transitive = false
     }
-    apigw_central('org.codehaus.groovy:groovy-jsr223:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-jsr223:2.5.23') {
         transitive = false
     }
-    apigw_central('org.codehaus.groovy:groovy-macro:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-macro:2.5.23') {
         transitive = false
     }
-    apigw_central('org.codehaus.groovy:groovy-nio:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-nio:2.5.23') {
         transitive = false
     }
-    apigw_central('org.codehaus.groovy:groovy-servlet:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-servlet:2.5.23') {
         transitive = false
     }
-    apigw_central('org.codehaus.groovy:groovy-sql:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-sql:2.5.23') {
         transitive = false
     }
-    apigw_central('org.codehaus.groovy:groovy-templates:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-templates:2.5.23') {
         transitive = false
     }
-    apigw_central('org.codehaus.groovy:groovy-xml:2.5.13') {
+    apigw_central('org.codehaus.groovy:groovy-xml:2.5.23') {
         transitive = false
     }
     apigw_central('com.google.guava:guava:32.1.2-jre') {
         transitive = false
     }
-    apigw_central('org.apache.hadoop:hadoop-annotations:3.3.3') {
+    apigw_central('org.apache.hadoop:hadoop-annotations:3.3.6') {
         transitive = false
     }
-    apigw_central('org.apache.hadoop:hadoop-common:3.3.3') {
+    apigw_central('org.apache.hadoop:hadoop-common:3.3.6') {
         transitive = false
     }
     apigw_central('com.github.jknack:handlebars:4.3.1') {
@@ -341,16 +341,16 @@ dependencies {
     apigw_central('org.apache.httpcomponents:httpmime:4.5.13') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.core:jackson-annotations:2.15.2') {
+    apigw_central('com.fasterxml.jackson.core:jackson-annotations:2.16.1') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.core:jackson-core:2.15.2') {
+    apigw_central('com.fasterxml.jackson.core:jackson-core:2.16.1') {
         transitive = false
     }
     apigw_central('com.github.java-json-tools:jackson-coreutils:1.12') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.core:jackson-databind:2.15.2') {
+    apigw_central('com.fasterxml.jackson.core:jackson-databind:2.16.1') {
         transitive = false
     }
     apigw_central('com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.2') {
@@ -359,22 +359,22 @@ dependencies {
     apigw_central('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.2') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2') {
+    apigw_central('com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:2.15.2') {
+    apigw_central('com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:2.16.1') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.15.2') {
+    apigw_central('com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.16.1') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations:2.15.2') {
+    apigw_central('com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations:2.16.1') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.15.2') {
+    apigw_central('com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.16.1') {
         transitive = false
     }
-    apigw_central('com.fasterxml.jackson.module:jackson-module-jsonSchema:2.15.2') {
+    apigw_central('com.fasterxml.jackson.module:jackson-module-jsonSchema:2.16.1') {
         transitive = false
     }
     apigw_central('jakarta.activation:jakarta.activation-api:2.1.2') {
@@ -443,7 +443,7 @@ dependencies {
     apigw_central('javax.xml:jaxrpc-api:1.1') {
         transitive = false
     }
-    apigw_central('org.slf4j:jcl-over-slf4j:1.7.31') {
+    apigw_central('org.slf4j:jcl-over-slf4j:1.7.36') {
         transitive = false
     }
     apigw_central('com.beust:jcommander:1.48') {
@@ -488,10 +488,10 @@ dependencies {
     apigw_central('joda-time:joda-time:2.10.3') {
         transitive = false
     }
-    apigw_central('com.github.mwiede:jsch:0.2.11') {
+    apigw_central('com.github.mwiede:jsch:0.2.16') {
         transitive = false
     }
-    apigw_central('org.json:json:20230227') {
+    apigw_central('org.json:json:20231013') {
         transitive = false
     }
     apigw_central('com.github.java-json-tools:json-patch:1.12') {
@@ -524,7 +524,7 @@ dependencies {
     apigw_central('de.odysseus.juel:juel-impl:2.2.4') {
         transitive = false
     }
-    apigw_central('org.slf4j:jul-to-slf4j:1.7.31') {
+    apigw_central('org.slf4j:jul-to-slf4j:1.7.36') {
         transitive = false
     }
     apigw_central('org.python:jython:2.7.3') {
@@ -542,7 +542,7 @@ dependencies {
     apigw_central('org.apache.logging.log4j:log4j-core:2.17.1') {
         transitive = false
     }
-    apigw_central('org.slf4j:log4j-over-slf4j:1.7.31') {
+    apigw_central('org.slf4j:log4j-over-slf4j:1.7.36') {
         transitive = false
     }
     apigw_central('org.apache.logging.log4j:log4j-slf4j-impl:2.17.1') {
@@ -677,7 +677,7 @@ dependencies {
     apigw_central('org.fusesource:sigar:1.6.4') {
         transitive = false
     }
-    apigw_central('org.slf4j:slf4j-api:1.7.31') {
+    apigw_central('org.slf4j:slf4j-api:1.7.36') {
         transitive = false
     }
     apigw_central('org.yaml:snakeyaml:2.0') {
@@ -701,7 +701,7 @@ dependencies {
     apigw_central('io.swagger:swagger-annotations:1.6.11') {
         transitive = false
     }
-    apigw_central('io.swagger.core.v3:swagger-annotations:2.2.9') {
+    apigw_central('io.swagger.core.v3:swagger-annotations:2.2.20') {
         transitive = false
     }
     apigw_central('io.swagger:swagger-compat-spec-parser:1.0.66') {
@@ -710,7 +710,7 @@ dependencies {
     apigw_central('io.swagger:swagger-core:1.6.11') {
         transitive = false
     }
-    apigw_central('io.swagger.core.v3:swagger-core:2.2.9') {
+    apigw_central('io.swagger.core.v3:swagger-core:2.2.20') {
         transitive = false
     }
     apigw_central('io.swagger:swagger-jaxrs:1.6.11') {
@@ -719,16 +719,19 @@ dependencies {
     apigw_central('io.swagger:swagger-models:1.6.11') {
         transitive = false
     }
-    apigw_central('io.swagger.core.v3:swagger-models:2.2.9') {
+    apigw_central('io.swagger.core.v3:swagger-models:2.2.20') {
         transitive = false
     }
     apigw_central('io.swagger:swagger-parser:1.0.66') {
         transitive = false
     }
-    apigw_central('io.swagger.parser.v3:swagger-parser-core:2.1.14') {
+    apigw_central('io.swagger.parser.v3:swagger-parser-core:2.1.20') {
         transitive = false
     }
-    apigw_central('io.swagger.parser.v3:swagger-parser-v3:2.1.14') {
+    apigw_central('io.swagger.parser.v3:swagger-parser-safe-url-resolver:2.1.20') {
+        transitive = false
+    }
+    apigw_central('io.swagger.parser.v3:swagger-parser-v3:2.1.20') {
         transitive = false
     }
     apigw_central('org.twitter4j:twitter4j-core:3.0.3') {
@@ -761,7 +764,7 @@ dependencies {
     apigw_central('xerces:xercesImpl:2.12.2') {
         transitive = false
     }
-    apigw_central('org.apache.santuario:xmlsec:2.1.8') {
+    apigw_central('org.apache.santuario:xmlsec:2.2.6') {
         transitive = false
     }
     apigw_central fileTree("${apigw_vdistdir}").matching {
