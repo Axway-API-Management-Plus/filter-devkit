@@ -6,6 +6,11 @@
                 <execute>/usr/bin/firefox</execute>
             </action>
         </item>
+        <item label="Policy Studio">
+            <action name="Execute">
+                <execute>/opt/axway/policystudio/policystudio</execute>
+            </action>
+        </item>
         <separator />
         <item label="Terminal">
             <action name="Execute">

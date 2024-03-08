@@ -1,33 +1,25 @@
 # Cache stage
 FROM node:16-bookworm as stage_cache
 
-### configure apt for stage_cache
-RUN rm -f /etc/apt/apt.conf.d/docker-clean ; \
-	echo 'Binary::apt::APT::Keep-Downloaded-Packages "true" ;' > /etc/apt/apt.conf.d/keep-cache
-
 ### refresh the 'apt' cache and download debian packages
 RUN --mount=type=tmpfs,target=/tmp \
-	apt update && \
+	apt update
+
+FROM node:16-bookworm as base_image
+
+RUN --mount=type=tmpfs,target=/tmp \
+	--mount=type=cache,from=stage_cache,sharing=locked,source=/var/cache/apt,target=/var/cache/apt \
+	--mount=type=cache,from=stage_cache,sharing=locked,source=/var/lib/apt,target=/var/lib/apt \
 	apt install -y wget apt-transport-https && \
 	wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /usr/share/keyrings/adoptium.asc && \
 	echo "deb [signed-by=/usr/share/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list && \
 	apt update && \
-	apt --download-only install -y libxkbfile-dev libsecret-1-dev git && \
-	apt --download-only install -y git openssh-client bash libsecret-1-0 temurin-8-jdk temurin-17-jdk && \
-	apt --download-only install -y novnc websockify && \
-	apt --download-only install -y libgtk2.0-bin openbox tint2 xdg-utils lxterminal hsetroot tigervnc-standalone-server supervisor && \
-	apt --download-only install -y build-essential libx11-dev libxkbfile-dev sudo && \
-	apt upgrade -y
+	apt install -y libxkbfile-dev libsecret-1-dev git && \
+	apt upgrade -y && \
+	apt autoremove --yes
 
 # Builder stage
-FROM node:16-bookworm as build_stage
-
-# install required tools to build the application
-RUN --mount=type=tmpfs,target=/tmp \
-	--mount=type=cache,from=stage_cache,sharing=locked,source=/var/cache/apt,target=/var/cache/apt \
-	--mount=type=cache,from=stage_cache,sharing=locked,source=/var/lib/apt,target=/var/lib/apt \
-	apt upgrade -y && \
-	apt install -y libxkbfile-dev libsecret-1-dev git
+FROM base_image as build_stage
 
 WORKDIR /home/theia
 
@@ -45,13 +37,10 @@ RUN git clone https://github.com/eclipse-theia/theia-blueprint.git . && \
 	yarn cache clean && \
 	rm -r .git applications/electron theia-extensions/launcher theia-extensions/updater node_modules
 
-FROM node:16-bookworm
+FROM base_image
 
 ARG APIM_RUN_FILE
 ARG APIM_LIC_FILE
-
-COPY --from=stage_cache /usr/share/keyrings/adoptium.asc /usr/share/keyrings/adoptium.asc
-COPY --from=stage_cache /etc/apt/sources.list.d/adoptium.list /etc/apt/sources.list.d/adoptium.list
 
 # Create theia user and directories with sudo configuration
 # Application will be copied to /home/theia
@@ -73,11 +62,9 @@ RUN adduser theia --shell /bin/bash && \
 # generate persistent gradle configuration
 RUN --mount=type=tmpfs,target=/tmp \
 	--mount=target=/tmp/export,type=bind \
-	cd /tmp && tar -cpf - export | tar -C /home/project -xpf - && \
-	mv /home/project/export/${APIM_RUN_FILE} /tmp/APIGateway_Install_linux-x86-64.run && \
-	mv /home/project/export/${APIM_LIC_FILE} /tmp/API.lic && \
-	rm -rf /home/project/export/dist && \
-	cd /tmp && tar -cpf - export/dist/.keep | tar -C /home/project -xpf - && \
+	cd /tmp && tar --exclude='dist/*.run' --exclude='dist/*.lic' -cpf - export | tar -C /home/project -xpf - && \
+	cp /tmp/export/${APIM_RUN_FILE} /tmp/APIGateway_Install_linux-x86-64.run && \
+	cp /tmp/export/${APIM_LIC_FILE} /tmp/API.lic && \
 	mv /home/project/export /home/project/filter-devkit && \
 	mkdir -p /opt/axway && \
 	chmod 755 /home/project/filter-devkit/gradlew && \
@@ -131,7 +118,8 @@ RUN --mount=type=tmpfs,target=/tmp \
 	chown -R theia:theia /home/project/filter-devkit/.gradle && \
 	su theia -c "cd /opt/axway/apigateway && \
 		posix/bin/nodemanager -d && \
-		posix/bin/managedomain --username admin --password changeme --create_instance --name fdk-instance --group fdk-group" && \
+		posix/bin/managedomain --username admin --password changeme --create_instance --name fdk-instance --group fdk-group && \
+		posix/bin/nodemanager -k" && \
 	su theia -c "cd /home/project/filter-devkit && \
 		./gradlew clean cleanEclipse build jar copyArchives deployRuntime deployPlugin && \
 		./gradlew clean && \
@@ -148,7 +136,11 @@ COPY src/main/playground/menu.xml /etc/xdg/openbox/
 RUN echo 'hsetroot -solid "#123456" &' >> /etc/xdg/openbox/autostart && \
 	ln -s vnc.html /usr/share/novnc/index.html && \
 	su theia -c "mkdir -p /home/theia/.config/tint2" && \
-	su theia -c "cp /home/project/filter-devkit/src/main/playground/tint2rc /home/theia/.config/tint2"
+	su theia -c "cp /home/project/filter-devkit/src/main/playground/tint2rc /home/theia/.config/tint2 && \
+		mkdir -p /home/theia/.local/share/icons/dist && \
+		mkdir -p /home/theia/.local/share/applications && \
+		cp /home/project/filter-devkit/src/main/playground/policystudio.png /home/theia/.local/share/icons/dist && \
+		cp /home/project/filter-devkit/src/main/playground/policystudio.desktop /home/theia/.local/share/applications"
 
 # expose theia port and ANM port
 EXPOSE 3000

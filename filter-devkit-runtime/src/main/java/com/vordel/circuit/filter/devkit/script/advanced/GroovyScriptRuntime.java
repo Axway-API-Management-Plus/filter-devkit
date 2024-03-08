@@ -4,6 +4,11 @@ import javax.script.ScriptException;
 
 import groovy.lang.Script;
 
+/**
+ * Additional top level functions exported to groovy runtime.
+ * 
+ * @author rdesaintleger@axway.com
+ */
 public interface GroovyScriptRuntime extends AdvancedScriptRuntime {
 	/**
 	 * bind annotated groovy methods to exportable context (usable in selectors and

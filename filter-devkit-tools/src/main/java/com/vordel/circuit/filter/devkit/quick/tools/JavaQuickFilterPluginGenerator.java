@@ -6,6 +6,7 @@ import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -185,9 +186,9 @@ public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 			String template = filter.generateJavaTemplate("filter_template.txt");
 			String qualifiedName = filter.getFilterQualifiedName();
 
-			template = template.replace("<requiredAttributes>", generateAttributeList(filter.filterDefinition.getAnnotation(QuickFilterRequired.class), (annotation) -> annotation.value()));
-			template = template.replace("<consumedAttributes>", generateAttributeList(filter.filterDefinition.getAnnotation(QuickFilterConsumed.class), (annotation) -> annotation.value()));
-			template = template.replace("<generatedAttributes>", generateAttributeList(filter.filterDefinition.getAnnotation(QuickFilterGenerated.class), (annotation) -> annotation.value()));
+			template = template.replace("<requiredAttributes>", generateAttributeList(filter.filterDefinition, QuickFilterRequired.class, (annotation) -> annotation.value()));
+			template = template.replace("<consumedAttributes>", generateAttributeList(filter.filterDefinition, QuickFilterConsumed.class, (annotation) -> annotation.value()));
+			template = template.replace("<generatedAttributes>", generateAttributeList(filter.filterDefinition, QuickFilterGenerated.class, (annotation) -> annotation.value()));
 
 			writeTemplate(qualifiedName, template);
 		} catch (IOException e) {
@@ -252,20 +253,53 @@ public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 		}
 	}
 
-	private static <T> String generateAttributeList(T holder, Function<T, String[]> getter) {
+	private static <A extends Annotation> void scanFilterAttributeList(TypeElement element, Class<A> annotationType, List<A> annotations) {
+		A annotation = element.getAnnotation(annotationType);
+
+		if (annotation != null) {
+			annotations.add(annotation);
+		}
+
+		for(TypeMirror interfaceMirror : element.getInterfaces()) {
+			if ((interfaceMirror != null) && (interfaceMirror.getKind() == TypeKind.DECLARED)) {
+				TypeElement superElement = (TypeElement) ((DeclaredType) interfaceMirror).asElement();
+
+				scanFilterAttributeList(superElement, annotationType, annotations);
+			}
+		}
+
+		TypeMirror superMirror = element.getSuperclass();
+
+		if ((superMirror != null) && (superMirror.getKind() == TypeKind.DECLARED)) {
+			scanFilterAttributeList((TypeElement) ((DeclaredType) superMirror).asElement(), annotationType, annotations);
+		}
+	}
+
+	private static <A extends Annotation> String generateAttributeList(TypeElement element, Class<A> annotationType, Function<A, String[]> getter) {
+		List<String> attributes = new ArrayList<String>();
+		Set<String> seen = new HashSet<String>();
+		List<A> annotations = new ArrayList<A>();
+
 		StringBuilder builder = new StringBuilder();
 		int count = 0;
 
-		if (holder != null) {
+		scanFilterAttributeList(element, annotationType, annotations);
 
-			for (String value : getter.apply(holder)) {
-				if (count > 0) {
-					builder.append(", ");
+		for(A annotation : annotations) {
+			for (String value : getter.apply(annotation)) {
+				if ((value != null) && (!value.isEmpty()) && seen.add(value)) {
+					attributes.add(value);
 				}
-
-				builder.append(String.format("\"%s\"", AnnotatedQuickFilter.toStringLiteral(value)));
-				count++;
 			}
+		}
+
+		for (String value : attributes) {
+			if (count > 0) {
+				builder.append(", ");
+			}
+
+			builder.append(String.format("\"%s\"", AnnotatedQuickFilter.toStringLiteral(value)));
+			count++;
 		}
 
 		return count > 1 ? String.format("{ %s }", builder.toString()) : builder.toString();
@@ -469,7 +503,7 @@ public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 
 		@Override
 		public String getDefinitionPackageName() {
-			return packageElement.toString();
+			return packageElement.getQualifiedName().toString();
 		}
 
 		@Override

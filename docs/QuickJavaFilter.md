@@ -1,206 +1,44 @@
 # Quick Java Filters
 
-The Quick Java Filter feature allow to package a Java classes as first order filters (i.e appears in pallette etc). It works using class path scanning and annotations.
+The Quick Java Filter feature allow to package a Java classes as first order filters (i.e appears in pallette etc). Filter classes and typesets are generated from a single annotated definition class. All generated classes and typesets are packaged with the declarative UI and NLS properties files to for an policy studio compatible plugin.
+
 A [tutorial](QuickJavaFilterTutorial.md) is provided for Quick Java Filter development. 
 
-## Differences with [Quick Script Filters](QuickScriptFilter.md)
+## Quick Java Filters annotations
 
-The typedoc.xml is generated from class methods annotations. The generated EntityType does not embed script and engineName attributes. All other features and limitations apply.
+To be recognized by the annotation processor. The definition class must inherit [JavaQuickFilterDefinition](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/quick/JavaQuickFilterDefinition.java) and must be annotated with [QuickFilterType](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/quick/annotations/QuickFilterType.java).
 
-## Required Packaging
+Each filter field must have an specific setter method annotated either with [QuickFilterComponent](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/quick/annotations/QuickFilterComponent.java) or [QuickFilterField](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/quick/annotations/QuickFilterField.java).
 
-Typical Filter packaging is done with a class which extends the QuickJavaFilterDefinition class annotated with @QuickFilterType annotation.
+Annotated components setter must have the follolwing arguments :
+ - ConfigContext object (first argument of attachFilter method)
+ - Entity object (second argument of attachFilter)
+ - Collection of ESPK object, each representing an entity component
 
-Additionally Each Entity field must have a corresponding setter annotated with @QuickFilterField
+Annotated fields must have the following arguments : (ConfigContext ctx, Entity entity, String field)
+ - ConfigContext object (first argument of attachFilter method)
+ - Entity object (second argument of attachFilter)
+ - Entity field name as string
 
-### QuickFilterType annotation
+Annotated setter must always be present (it is used for typeset/typedoc generation).If the filter requires complex initialization with optional fields or components, let the setter empty and use the filter definition attach hook (which is called after all setters) to execute missing or additional configuration.
 
-```java
-package com.vordel.circuit.ext.filter.quick;
+Additionally, three other annotations can be added to the definition type ([QuickFilterRequired](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/quick/annotations/QuickFilterRequired.java), [QuickFilterGenerated](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/quick/annotations/QuickFilterGenerated.java) and [QuickFilterConsumed](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/quick/annotations/QuickFilterConsumed.java)). Those last annotations are used to indicate required/generated/consumed attributes to Policy Studio.
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+## Quick Filter Lifecycle
 
-@Target({ ElementType.TYPE })
-@Retention(RetentionPolicy.RUNTIME)
-public @interface QuickFilterType {
-	/**
-	 * @return filter type name in the entity store
-	 */
-	String name();
-
-	/**
-	 * @return filter version
-	 */
-	int version() default 1;
-
-	/**
-	 * @return name of java resource which contains the declarative ui file
-	 */
-	String ui();
-
-	/**
-	 * @return name of java resource which contains the filter properties
-	 */
-	String resources();
-	
-	/**
-	 * @return extends clause for entity type
-	 */
-	String extend() default "Filter";
-}
-```
-
-### QuickJavaFilterDefinition abstract class
-
-```java
-import com.vordel.circuit.CircuitAbortException;
-import com.vordel.circuit.Message;
-import com.vordel.config.Circuit;
-import com.vordel.config.ConfigContext;
-import com.vordel.es.Entity;
-
-public abstract class QuickJavaFilterDefinition {
-	public abstract boolean invokeFilter(Circuit c, Message m) throws CircuitAbortException;
-	
-	public abstract void attachFilter(ConfigContext ctx, Entity entity);
-	public abstract void detachFilter();
-}
-```
-
-### QuickFilterField annotation
-
-```java
-package com.vordel.circuit.ext.filter.quick;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-@Target({ ElementType.METHOD })
-@Retention(RetentionPolicy.RUNTIME)
-public @interface QuickFilterField {
-	/**
-	 * @return name of the entity field
-	 */
-	String name();
-
-	/**
-	 * @return mapping of 'cardinality' attribute of field element
-	 */
-	String cardinality();
-
-	/**
-	 * @return mapping of 'type' attribute of field element
-	 */
-	String type();
-
-	/**
-	 * @return mapping of 'isKey' attribute of field element
-	 */
-	boolean isKey() default false;
-
-	/**
-	 * @return array of default values. A signel value will be set in the 'default' field attribute.
-	 */
-	String[] defaults() default {};
-}
-```
-
-## Filter Lifecycle
-
-Once a filter has been discovered by [class path scanning](ClassPathScanning.md) or [dynamic compiler](DynamicCompiler.md), the class definition is registered in the MessageContextModule.
-
-After all modules has been attached to the API Gateway, the policy configuration starts. For each Quick Java Filter which is referenced, the dedicated processor will lookup the definition from the MessageContextModule.
+Quick Filters are no longer discovered dynamically. They are instantiated using the regular API Gateway and Policy Studio mechanism. On the API Gateway side, the generated filter class will return the generated MessageProcessor class which will instantiate and initialize the filter definition (MessageProcessor is acting as a proxy class for the definition).
 
 Each Quick Java Filter initialize itself using the following steps:
  - invoke the no-arg constructor,
- - call each annotated setter from entity fields,
+ - call each annotated setter from entity fields with proper field name or ESPK collection,
  - call the attachFilter() method
 
-the method invokeFilter() will be called for all incoming messages which reach the filter
+the method invokeFilter() will be called for all incoming messages which will reach the filter
 
-Lastly, when detached, the detachFilter() is called. (Quick Java Filter registry is cleared each time a configuration is deployed).
+Lastly, when detached, the detachFilter() is called. Any error occuring while detach is logged but ignored
 
-## Quick Filter Builder Services
+## Quick Filter Packaging
 
-No external tool is provided for typedoc creation. This task is done by using a policy which call appropriate method in the [dynamic compiler](DynamicCompiler.md) module. Filter definition for the policy studio must be downloaded from a live API Gateway (typically a development instance).
+All quick filter files are generated during compilation, including typeset, OSGi packaging and eclipse plugin xml file. Source files are generated from simple templates which does not require any dependency outside JDK.
 
-## Example Policy Shortcut using Quick Java Filter
-
-```java
-package com.vordel.sdk.samples.quick;
-
-import com.vordel.circuit.CircuitAbortException;
-import com.vordel.circuit.Message;
-import com.vordel.circuit.ext.filter.quick.QuickFilterField;
-import com.vordel.circuit.ext.filter.quick.QuickFilterType;
-import com.vordel.circuit.ext.filter.quick.QuickJavaFilterDefinition;
-import com.vordel.circuit.script.context.resources.PolicyResource;
-import com.vordel.config.Circuit;
-import com.vordel.config.ConfigContext;
-import com.vordel.el.Selector;
-import com.vordel.es.Entity;
-import com.vordel.trace.Trace;
-
-@QuickFilterType(name = "JavaQuickFilter", resources = "shortcut.properties", ui = "shortcut.xml")
-public class QuickFilterJavaProto extends QuickJavaFilterDefinition {
-	private Selector<String> hello = null;
-
-	private PolicyResource policy = null;
-
-	/**
-	 * This method is called when the filter is attached. The annotation is
-	 * reflected in typedoc generation. individual setters are called BEFORE the
-	 * attach call.
-	 * 
-	 * @param ctx    current config context (same as the attach call)
-	 * @param entity filter instance (same as the attach call)
-	 * @param field  name of the field to be set
-	 */
-	@QuickFilterField(name = "circuitPK", cardinality = "?", type = "^FilterCircuit")
-	private void setShortcut(ConfigContext ctx, Entity entity, String field) {
-		policy  = new PolicyResource(ctx, entity, field);
-	}
-
-	@QuickFilterField(name = "message", cardinality = "?", type = "string")
-	private void setHelloQuickFilter(ConfigContext ctx, Entity entity, String field) {
-		hello = new Selector<String>(entity.getStringValue(field), String.class);
-	}
-
-	@Override
-	public void attachFilter(ConfigContext ctx, Entity entity) {
-		/*
-		 * The main attach call. This method is called after all individual setters has
-		 * been called
-		 */
-	}
-
-	@Override
-	public boolean invokeFilter(Circuit c, Message m) throws CircuitAbortException {
-		if (hello != null) {
-			String value = hello.substitute(m);
-			
-			if ((value != null) && (!value.isEmpty())) {
-				Trace.info(value);
-			}
-		}
-		
-		if (policy == null) {
-			throw new CircuitAbortException("No Policy Configured");
-		}
-
-		return policy.invoke(c, m);
-	}
-
-	@Override
-	public void detachFilter() {
-		/* regular detach call, no additional processing is done */
-		policy = null;
-		hello = null;
-	}
-}
-```
+The [Extended Eval Filter](../filter-devkit-plugins/filter-devkit-plugins-eval/README.md) is a good starting point for developing new quick filters since it include a minimal set of what is required in a definition and build system.
