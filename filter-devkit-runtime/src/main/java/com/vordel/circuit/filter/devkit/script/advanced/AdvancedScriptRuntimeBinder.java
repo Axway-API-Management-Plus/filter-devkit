@@ -12,16 +12,15 @@ import org.codehaus.groovy.runtime.MethodClosure;
 import org.python.core.Py;
 import org.python.core.PyObject;
 
-import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
-import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
-import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionBinder;
+import com.vordel.trace.Trace;
 
-public abstract class AdvancedScriptRuntimeBinder implements ScriptExtensionBinder {
+public abstract class AdvancedScriptRuntimeBinder {
 	private AdvancedScriptRuntimeBinder() {
 	}
 
 	private static final String getJavascriptClosureTemplate(int argc) {
 		StringBuilder body = new StringBuilder();
+
 		StringBuilder args = new StringBuilder();
 
 		for (int index = 0; index < argc; index++) {
@@ -29,13 +28,13 @@ public abstract class AdvancedScriptRuntimeBinder implements ScriptExtensionBind
 				args.append(", ");
 			}
 
-			args.append(String.format("arg%d", index));
+			args.append(String.format("arguments[%d]", index));
 		}
 
 		String argv = args.toString();
 
 		body.append("%s = (function(bindings) {\n");
-		body.append("\treturn function(").append(argv).append(") {\n");
+		body.append("\treturn function() {\n");
 		body.append("\t\treturn bindings.%s(").append(argv).append(");\n");
 		body.append("\t}\n");
 		body.append("}(exportedRuntime));\n");
@@ -64,120 +63,76 @@ public abstract class AdvancedScriptRuntimeBinder implements ScriptExtensionBind
 		return binder;
 	}
 
-	public abstract void bindRuntime(ScriptEngine engine, AdvancedScriptRuntime runtime) throws ScriptException;
+	protected void bind(ScriptEngine engine, AdvancedScriptRuntime runtime) throws ScriptException {
+		bind(engine, runtime, AdvancedScriptConfigurator.class.getDeclaredMethods());
+		bind(engine, runtime, AdvancedScriptRuntime.class.getDeclaredMethods());
+	}
 
-	public static AdvancedScriptRuntimeBinder getJavascriptBinder() {
+	public abstract void bind(ScriptEngine engine, Object instance, Method[] methods) throws ScriptException;
+
+	private static AdvancedScriptRuntimeBinder getJavascriptBinder() {
 		return new AdvancedScriptRuntimeBinder() {
 			@Override
-			public void bindRuntime(ScriptEngine engine, AdvancedScriptRuntime runtime) throws ScriptException {
+			public void bind(ScriptEngine engine, Object instance, Method[] methods) throws ScriptException {
 				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
 				StringBuilder builder = new StringBuilder();
 
-				for (Method method : AdvancedScriptRuntime.class.getDeclaredMethods()) {
-					String name = method.getName();
-					String template = getJavascriptClosureTemplate(method.getParameterCount());
-
-					builder.append(String.format(template, name, name));
-				}
-
-				/* sets script runtime */
-				bindings.put("exportedRuntime", runtime);
-				try {
-					engine.eval(builder.toString());
-				} finally {
-					bindings.remove("exportedRuntime");
-				}
-
-				ExtensionLoader.bindScriptExtensions(engine, this);
-			}
-
-			@Override
-			public void bindRuntime(ScriptEngine engine, ScriptExtension runtime, Class<?> clazz) throws ScriptException {
-				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-				StringBuilder builder = new StringBuilder();
-
-				for (Method method : clazz.getDeclaredMethods()) {
-					String name = method.getName();
-					String template = getJavascriptClosureTemplate(method.getParameterCount());
-
-					builder.append(String.format(template, name, name));
-				}
-
-				/* sets script runtime */
-				bindings.put("exportedRuntime", runtime);
-
-				try {
-					engine.eval(builder.toString());
-				} finally {
-					bindings.remove("exportedRuntime");
-				}
-			}
-		};
-	}
-
-	public static AdvancedScriptRuntimeBinder getPythonBinder() {
-		return new AdvancedScriptRuntimeBinder() {
-			@Override
-			public void bindRuntime(ScriptEngine engine, AdvancedScriptRuntime runtime) throws ScriptException {
-				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-				PyObject pyobj = Py.java2py(runtime);
-
-				for (Method method : AdvancedScriptRuntime.class.getDeclaredMethods()) {
+				for (Method method : methods) {
 					String name = method.getName();
 
-					/* sets script runtime */
-					bindings.put(name, pyobj.__findattr__(name));
-				}
+					if (method.isVarArgs()) {
+						Trace.error(String.format("this script engine does not support varriable arguments for functions. script function '%' skipped", name));
+					} else {
+						String template = getJavascriptClosureTemplate(method.getParameterCount());
 
-				ExtensionLoader.bindScriptExtensions(engine, this);
-			}
-
-			@Override
-			public void bindRuntime(ScriptEngine engine, ScriptExtension runtime, Class<?> clazz) throws ScriptException {
-				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-				PyObject pyobj = Py.java2py(runtime);
-
-				for (Method method : clazz.getDeclaredMethods()) {
-					String name = method.getName();
-					/* sets script runtime */
-					bindings.put(name, pyobj.__findattr__(name));
-				}
-			}
-		};
-	}
-
-	public static AdvancedScriptRuntimeBinder getGroovyBinder() {
-		return new AdvancedScriptRuntimeBinder() {
-			@Override
-			public void bindRuntime(ScriptEngine engine, AdvancedScriptRuntime runtime) throws ScriptException {
-				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-
-				if (runtime instanceof GroovyScriptRuntime) {
-					for (Method method : GroovyScriptRuntime.class.getDeclaredMethods()) {
-						String name = method.getName();
-						MethodClosure closure = new MethodClosure(runtime, name);
-
-						bindings.put(name, closure);
+						builder.append(String.format(template, name, name));
 					}
 				}
-				
-				for (Method method : AdvancedScriptRuntime.class.getDeclaredMethods()) {
-					String name = method.getName();
-					MethodClosure closure = new MethodClosure(runtime, name);
 
-					bindings.put(name, closure);
+				/* sets script runtime */
+				bindings.put("exportedRuntime", instance);
+				try {
+					engine.eval(builder.toString());
+				} finally {
+					bindings.remove("exportedRuntime");
 				}
+			}
+		};
+	}
 
-				ExtensionLoader.bindScriptExtensions(engine, this);
+	private static AdvancedScriptRuntimeBinder getPythonBinder() {
+		return new AdvancedScriptRuntimeBinder() {
+			@Override
+			public void bind(ScriptEngine engine, Object instance, Method[] methods) throws ScriptException {
+				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+				PyObject pyobj = Py.java2py(instance);
+
+				for (Method method : methods) {
+					String name = method.getName();
+
+					/* sets script runtime */
+					bindings.put(name, pyobj.__findattr__(name));
+				}
+			}
+		};
+	}
+
+	private static AdvancedScriptRuntimeBinder getGroovyBinder() {
+		return new AdvancedScriptRuntimeBinder() {
+			@Override
+			protected void bind(ScriptEngine engine, AdvancedScriptRuntime runtime) throws ScriptException {
+				super.bind(engine, runtime);
+
+				bind(engine, runtime, GroovyScriptConfigurator.class.getDeclaredMethods());
 			}
 
 			@Override
-			public void bindRuntime(ScriptEngine engine, ScriptExtension runtime, Class<?> clazz) throws ScriptException {
+			public void bind(ScriptEngine engine, Object instance, Method[] methods) throws ScriptException {
 				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
 
-				for (Method method : clazz.getDeclaredMethods()) {
+				for (Method method : methods) {
 					String name = method.getName();
-					MethodClosure closure = new MethodClosure(runtime, name);
+					MethodClosure closure = new MethodClosure(instance, name);
 
 					bindings.put(name, closure);
 				}

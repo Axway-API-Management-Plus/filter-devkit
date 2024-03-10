@@ -20,10 +20,11 @@ This filter brings the concept of 'Configuration Resource'. Resources are either
 
 ## Provided runtime functions
 
-Advanced Script Filter providetop level functions to the script to configure behavior and interact with attached resources
+Advanced Script Filter provide top level functions to the script to configure behavior and interact with attached resources
 
  - *setUnwrapCircuitAbortException((boolean)* : this function can be called in the script attach hook. It allows script to throw CircuitAbortException (which is not available in the base Script Filter)
  - *setExtendedInvoke(boolean)* : this function can be called in the script attach hook. its purpose is to provide the circuit to the invoke function.
+ - *reflectExtension(string)* : this function can be called in the script attach hook. its purpose is to bind additional top level functions from script extensions. This function takes a fully qualified interface name as argument.
  - *getContextResource(string)* : Retrieve an attached resource using its name in the script configuration
  - *getInvocableResource(string)* : Retrieve an attached resource which is invokable (Ex: a policy). If the configured resource does not exists or is not invokable, null is returned.
  - *getKPSResource(string)* : Retrieve an attached resource which is a KPS Table. If the configured resource does not exists or is not a KPS Table, null is returned.

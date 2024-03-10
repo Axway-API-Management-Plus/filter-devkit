@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
@@ -87,6 +88,12 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	private static <T> ExtensionContext create(T instance, Class<? extends T> clazz, String filterName) {
 		Map<String, ContextResource> resources = new HashMap<String, ContextResource>();
 
+		reflect(resources, instance, clazz, filterName);
+
+		return new ExtensionContext(clazz, Collections.unmodifiableMap(resources));
+	}
+
+	private static <T> void reflect(Map<String, ContextResource> resources, T instance, Class<? extends T> clazz, String filterName) {
 		if (clazz != null) {
 			Map<Method, InvocableMethod> invocables = new HashMap<Method, InvocableMethod>();
 			Map<Method, ExtensionFunction> functions = new HashMap<Method, ExtensionFunction>();
@@ -105,88 +112,72 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 					/* find the best method according to parameters (must be public) */
 					method = clazz.getMethod(method.getName(), method.getParameterTypes());
 
-					if (invocable != null) {
-						String name = name(method, invocable);
-
-						invocables.put(method, invocable);
-						methods.add(method);
-
-						if (!exported.add(name)) {
-							duplicates.add(name);
-						}
-					}
-
-					if (function != null) {
-						String name = name(method, function);
-
-						functions.put(method, function);
-						methods.add(method);
-
-						if (!exported.add(name)) {
-							duplicates.add(name);
-						}
-					}
-
-					if (substitutable != null) {
-						String name = name(method, substitutable);
-
-						substitutables.put(method, substitutable);
-						methods.add(method);
-
-						if (!exported.add(name)) {
-							duplicates.add(name);
-						}
-					}
+					addAnnotatedMethod(invocables, methods, exported, duplicates, method, invocable, ExtensionContext::name);
+					addAnnotatedMethod(functions, methods, exported, duplicates, method, function, ExtensionContext::name);
+					addAnnotatedMethod(substitutables, methods, exported, duplicates, method, substitutable, ExtensionContext::name);
 				} catch (NoSuchMethodException e) {
 					/* ignore exception and continue processing */
 				}
 			}
 
-			for (Method method : methods) {
-				int modifiers = method.getModifiers();
+			if (resources != null) {
+				for (Method method : methods) {
+					int modifiers = method.getModifiers();
 
-				if (!Modifier.isPublic(modifiers)) {
-					Trace.error(String.format("method '%s' must be public", method.getName()));
-				} else if ((instance != null) || Modifier.isStatic(modifiers)) {
-					InvocableMethod invocable = invocables.get(method);
-					ExtensionFunction function = functions.get(method);
-					SubstitutableMethod substitutable = substitutables.get(method);
-					ContextResource resource = null;
-					String resourceName = null;
+					if (!Modifier.isPublic(modifiers)) {
+						Trace.error(String.format("method '%s' must be public", method.getName()));
+					} else if ((instance != null) || Modifier.isStatic(modifiers)) {
+						InvocableMethod invocable = invocables.get(method);
+						ExtensionFunction function = functions.get(method);
+						SubstitutableMethod substitutable = substitutables.get(method);
+						ContextResource resource = null;
+						String resourceName = null;
 
-					if (hasMultipleAnnotations(invocable, function, substitutable)) {
-						Trace.error(String.format("method '%s' can only be one of Invocable or Substitutable or ExtensionFunction", method.getName()));
-					} else if (invocable != null) {
-						Class<?> returnType = method.getReturnType();
+						if (hasMultipleAnnotations(invocable, function, substitutable)) {
+							Trace.error(String.format("method '%s' can only be one of Invocable or Substitutable or ExtensionFunction", method.getName()));
+						} else if (invocable != null) {
+							Class<?> returnType = method.getReturnType();
 
-						if (boolean.class.equals(returnType) || Boolean.class.equals(returnType)) {
-							resourceName = name(method, invocable);
-							resource = createInvocableResource(instance, method, resourceName, filterName);
-						} else {
-							Trace.error(String.format("method '%s' must return a boolean to be invocable", method.getName()));
+							if (boolean.class.equals(returnType) || Boolean.class.equals(returnType)) {
+								resourceName = name(method, invocable);
+								resource = createInvocableResource(instance, method, resourceName, filterName);
+							} else {
+								Trace.error(String.format("method '%s' must return a boolean to be invocable", method.getName()));
+							}
+						} else if (function != null) {
+							resourceName = name(method, function);
+							resource = createFunctionResource(instance, method, resourceName, filterName);
+						} else if (substitutable != null) {
+							resourceName = name(method, substitutable);
+							resource = createSubstitutableResource(instance, method, method.getReturnType(), resourceName, filterName);
 						}
-					} else if (function != null) {
-						resourceName = name(method, function);
-						resource = createFunctionResource(instance, method, resourceName, filterName);
-					} else if (substitutable != null) {
-						resourceName = name(method, substitutable);
-						resource = createSubstitutableResource(instance, method, method.getReturnType(), resourceName, filterName);
-					}
 
-					if (resource != null) {
-						if (duplicates.contains(resourceName)) {
-							Trace.error(String.format("resource '%s' is declared more than once", resourceName));
-						} else {
-							resources.put(resourceName, resource);
+						if (resource != null) {
+							if (duplicates.contains(resourceName)) {
+								Trace.error(String.format("resource '%s' is declared more than once", resourceName));
+							} else {
+								resources.put(resourceName, resource);
+							}
 						}
+					} else {
+						Trace.error(String.format("method '%s' must be static (no instance provided)", method.getName()));
 					}
-				} else {
-					Trace.error(String.format("method '%s' must be static (no instance provided)", method.getName()));
 				}
 			}
 		}
+	}
 
-		return new ExtensionContext(clazz, Collections.unmodifiableMap(resources));
+	private static <A> void addAnnotatedMethod(Map<Method, A> annotations, Set<Method> methods, Set<String> exported, Set<String> duplicates, Method method, A annotation, BiFunction<Method, A, String> nameFunction) {
+		if (annotation != null) {
+			String name = nameFunction.apply(method, annotation);
+
+			annotations.put(method, annotation);
+			methods.add(method);
+
+			if (!exported.add(name)) {
+				duplicates.add(name);
+			}
+		}
 	}
 
 	private static boolean hasMultipleAnnotations(InvocableMethod invocable, ExtensionFunction function, SubstitutableMethod substitutable) {
@@ -261,19 +252,20 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	 * Substituable cannot throw any exception. In such case null is returned and
 	 * the exception is dropped.
 	 * 
+	 * @param resources script attached resources
 	 * @param script     script to be bound
 	 * @param filterName name of filter hosting the script (for debugging purposes
-	 * @return an ExtensionContext which reflects exported methods of the given
-	 *         script.
 	 */
-	public static ExtensionContext bind(Script script, String filterName) {
+	public static void reflect(Map<String, ContextResource> resources, Script script, String filterName) {
 		Class<? extends Script> clazz = script.getClass();
-
-		return create(script, clazz, filterName);
+		
+		reflect(resources, script, clazz, filterName);
 	}
 
-	public static ExtensionContext bind(Class<?> clazz) {
-		return create(null, clazz);
+	static void reflect(Map<String, ContextResource> resources, Object instance) {
+		Class<?> clazz = instance.getClass();
+
+		reflect(resources, instance, clazz, null);
 	}
 
 	private static InvocableResource createInvocableResource(final Object script, final Method method, final String name, final String filterName) {
