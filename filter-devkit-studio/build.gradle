@@ -21,15 +21,10 @@ apply from: rootProject.file('policystudio.gradle')
 deployPlugin.enabled = true
 
 configurations {
-	implementation.extendsFrom(studio_dist)
+	compileOnly.extendsFrom(studio_dist)
 }
 
 dependencies {
-	implementation fileTree("${studio_vdistdir}").matching {
-		include 'plugins/com.vordel.filter.jwt.*.jar'
-		include 'plugins/com.vordel.filter.script.*.jar'
-	}
-
 	implementation project(':filter-devkit-annotations')
 	implementation project(':filter-devkit-runtime')
 }

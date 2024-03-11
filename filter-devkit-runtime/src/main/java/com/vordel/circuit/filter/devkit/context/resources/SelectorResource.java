@@ -36,6 +36,15 @@ public class SelectorResource<T> implements SubstitutableResource<T> {
 		return selector == null ? null : selector.substitute(dict);
 	}
 
+	/**
+	 * substitute a Boolean expression, relaying CircuitAbortException if any
+	 * 
+	 * @param dict     selector dictionary (usually this is the current message)
+	 * @param selector selector object to be substituted
+	 * @return 'true' or 'false' depending on the expression result
+	 * @throws CircuitAbortException relayed exception or newly contructed if the
+	 *                               expression did not return a boolean.
+	 */
 	public static final Boolean invoke(Dictionary dict, Selector<Boolean> selector) throws CircuitAbortException {
 		Boolean rc = null;
 
@@ -55,6 +64,7 @@ public class SelectorResource<T> implements SubstitutableResource<T> {
 				}
 			}
 
+			/* no underlying CircuitAbortException, create a new one with the thrown exception as cause */
 			throw new CircuitAbortException(String.format("Could not evaluate boolean expression %s", selector.getLiteral()), e);
 		}
 

@@ -29,9 +29,26 @@ import com.vordel.es.EntityStoreException;
 import com.vordel.es.EntityType;
 import com.vordel.trace.Trace;
 
+/**
+ * Used as {@link JavaQuickFilterDefinition} proxy. This class will create and
+ * use the definition class. this class is inherited by Quick Filter annotation
+ * processor code generator.
+ * 
+ * @author rdesaintleger@axway.com
+ */
 public abstract class JavaQuickFilterProcessor extends MessageProcessor {
+	/**
+	 * This method is implemented by the code generator. Is will return the
+	 * definition class object.
+	 * 
+	 * @return the definition class
+	 * @throws ClassNotFoundException if the class could not be found.
+	 */
 	public abstract Class<? extends JavaQuickFilterDefinition> getQuickFilterDefinition() throws ClassNotFoundException;
 
+	/**
+	 * instanciated Quick Filter instance
+	 */
 	private JavaQuickFilterDefinition instance = null;
 
 	@Override
@@ -45,6 +62,7 @@ public abstract class JavaQuickFilterProcessor extends MessageProcessor {
 		String definitionName = null;
 
 		try {
+			/* retrieve the definition class and associated simple name */
 			definitionClazz = getQuickFilterDefinition();
 			definitionName = definitionClazz.getSimpleName();
 		} catch (ClassNotFoundException e) {
@@ -68,7 +86,10 @@ public abstract class JavaQuickFilterProcessor extends MessageProcessor {
 			}
 
 			try {
+				/* instantiate the definition class... */
 				contructor.setAccessible(true);
+				
+				/* ... and configure it */
 				instance = filterAttached(ctx, entity, JavaQuickFilterDefinition.class.cast(contructor.newInstance()), fields, components);
 			} finally {
 				contructor.setAccessible(false);
@@ -141,6 +162,7 @@ public abstract class JavaQuickFilterProcessor extends MessageProcessor {
 
 				Trace.error(String.format("got error setting component '%s' parameter for class '%s'", component.name(), definitionClazz.getName()), cause);
 			} catch (IllegalAccessException e) {
+				/* should not occur since we have set the method accessible */
 				Trace.error(String.format("got error setting component '%s' parameter for class '%s'", component.name(), definitionClazz.getName()), e);
 			} finally {
 				method.setAccessible(false);
@@ -180,11 +202,14 @@ public abstract class JavaQuickFilterProcessor extends MessageProcessor {
 	public void filterDetached() {
 		if (instance != null) {
 			try {
+				/* call the instance detatchment hook */
 				instance.detachFilter();
 			} catch (Exception e) {
+				/* signal any error during detachment */
 				Trace.error("Got error detaching filter", e);
 			}
 
+			/* help garbage collector */
 			instance = null;
 		}
 

@@ -4,6 +4,11 @@ import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.common.Dictionary;
 
+/**
+ * Base interface representing a set of attached resources.
+ * 
+ * @author rdesaintleger@axway.com
+ */
 public interface ContextResourceProvider {
 
 	/**

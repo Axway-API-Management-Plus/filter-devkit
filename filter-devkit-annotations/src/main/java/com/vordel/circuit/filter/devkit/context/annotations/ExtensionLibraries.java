@@ -7,7 +7,8 @@ import java.lang.annotation.Target;
 
 /**
  * Marker annotation for class loading 'child first' of extensions modules and
- * contexts. values provided can include directories.
+ * contexts. values provided can include directories. Selector syntax is
+ * supported (using deploy runtime resolution)
  * 
  * @author rdesaintleger@axway.com
  */

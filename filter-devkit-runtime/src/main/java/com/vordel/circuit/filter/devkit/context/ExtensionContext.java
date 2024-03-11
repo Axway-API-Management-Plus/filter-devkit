@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
@@ -21,6 +22,7 @@ import com.vordel.circuit.filter.devkit.context.annotations.SelectorExpression;
 import com.vordel.circuit.filter.devkit.context.annotations.SubstitutableMethod;
 import com.vordel.circuit.filter.devkit.context.resources.AbstractContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
+import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
 import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
@@ -33,22 +35,65 @@ import com.vordel.trace.Trace;
 
 import groovy.lang.Script;
 
+/**
+ * This class represent exported resources from Java (and Groovy) code. It will
+ * expose annotated methods to the API Gateway using the
+ * {@link ContextResourceProvider} interface. Exposed methods are discovered
+ * using basic reflection.
+ * 
+ * @author rdesaintleger@axway.com
+ */
 public final class ExtensionContext extends AbstractContextResourceProvider {
 	private final Map<String, ContextResource> resources;
 	private final Class<?> clazz;
 
+	/**
+	 * Private constructor. Called when exposed methods has been discovered
+	 * 
+	 * @param clazz     class which has been reflected
+	 * @param resources exposed resources for this class.
+	 */
 	private ExtensionContext(Class<?> clazz, Map<String, ContextResource> resources) {
 		this.resources = resources;
 		this.clazz = clazz;
 	}
 
-	static <T> ExtensionContext create(T script, Class<? extends T> clazz) {
-		return create(script, clazz, null);
+	/**
+	 * package private create() call. Used by the {@link ExtensionScanner}. This
+	 * method will reflect provided class parameter and will create resources
+	 * according to the given instance.
+	 * 
+	 * @param <T>    type parameter used to link the provided instance and provided
+	 *               class
+	 * @param module module instance to be reflected
+	 * @param clazz  class definition of the module instance
+	 * @return ExtensionContext containing exposed methods for the given module
+	 */
+	static <T> ExtensionContext create(T module, Class<? extends T> clazz) {
+		return create(module, clazz, null);
 	}
 
-	private static <T> ExtensionContext create(T script, Class<? extends T> clazz, String filterName) {
+	/**
+	 * private create call. This method will reflect provided class parameter and
+	 * will create resources according to the given instance. The filterName
+	 * parameter is used for debugging purposes.
+	 * 
+	 * @param <T>        type parameter used to link the provided instance and
+	 *                   provided class
+	 * @param instance   instance which holds non static exported methods
+	 * @param clazz      Class object corresponding to the given instance
+	 * @param filterName used when the instance is a script
+	 * @return ExtensionContext containing exposed methods for the given instance
+	 */
+	private static <T> ExtensionContext create(T instance, Class<? extends T> clazz, String filterName) {
 		Map<String, ContextResource> resources = new HashMap<String, ContextResource>();
 
+		reflect(resources, instance, clazz, filterName);
+
+		return new ExtensionContext(clazz, Collections.unmodifiableMap(resources));
+	}
+
+	private static <T> void reflect(Map<String, ContextResource> resources, T instance, Class<? extends T> clazz, String filterName) {
 		if (clazz != null) {
 			Map<Method, InvocableMethod> invocables = new HashMap<Method, InvocableMethod>();
 			Map<Method, ExtensionFunction> functions = new HashMap<Method, ExtensionFunction>();
@@ -67,88 +112,72 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 					/* find the best method according to parameters (must be public) */
 					method = clazz.getMethod(method.getName(), method.getParameterTypes());
 
-					if (invocable != null) {
-						String name = name(method, invocable);
-
-						invocables.put(method, invocable);
-						methods.add(method);
-
-						if (!exported.add(name)) {
-							duplicates.add(name);
-						}
-					}
-
-					if (function != null) {
-						String name = name(method, function);
-
-						functions.put(method, function);
-						methods.add(method);
-
-						if (!exported.add(name)) {
-							duplicates.add(name);
-						}
-					}
-
-					if (substitutable != null) {
-						String name = name(method, substitutable);
-
-						substitutables.put(method, substitutable);
-						methods.add(method);
-
-						if (!exported.add(name)) {
-							duplicates.add(name);
-						}
-					}
+					addAnnotatedMethod(invocables, methods, exported, duplicates, method, invocable, ExtensionContext::name);
+					addAnnotatedMethod(functions, methods, exported, duplicates, method, function, ExtensionContext::name);
+					addAnnotatedMethod(substitutables, methods, exported, duplicates, method, substitutable, ExtensionContext::name);
 				} catch (NoSuchMethodException e) {
 					/* ignore exception and continue processing */
 				}
 			}
 
-			for (Method method : methods) {
-				int modifiers = method.getModifiers();
+			if (resources != null) {
+				for (Method method : methods) {
+					int modifiers = method.getModifiers();
 
-				if (!Modifier.isPublic(modifiers)) {
-					Trace.error(String.format("method '%s' must be public", method.getName()));
-				} else if ((script != null) || Modifier.isStatic(modifiers)) {
-					InvocableMethod invocable = invocables.get(method);
-					ExtensionFunction function = functions.get(method);
-					SubstitutableMethod substitutable = substitutables.get(method);
-					ContextResource resource = null;
-					String resourceName = null;
+					if (!Modifier.isPublic(modifiers)) {
+						Trace.error(String.format("method '%s' must be public", method.getName()));
+					} else if ((instance != null) || Modifier.isStatic(modifiers)) {
+						InvocableMethod invocable = invocables.get(method);
+						ExtensionFunction function = functions.get(method);
+						SubstitutableMethod substitutable = substitutables.get(method);
+						ContextResource resource = null;
+						String resourceName = null;
 
-					if (hasMultipleAnnotations(invocable, function, substitutable)) {
-						Trace.error(String.format("method '%s' can only be one of Invocable or Substitutable or ExtensionFunction", method.getName()));
-					} else if (invocable != null) {
-						Class<?> returnType = method.getReturnType();
+						if (hasMultipleAnnotations(invocable, function, substitutable)) {
+							Trace.error(String.format("method '%s' can only be one of Invocable or Substitutable or ExtensionFunction", method.getName()));
+						} else if (invocable != null) {
+							Class<?> returnType = method.getReturnType();
 
-						if (boolean.class.equals(returnType) || Boolean.class.equals(returnType)) {
-							resourceName = name(method, invocable);
-							resource = createInvocableResource(script, method, resourceName, filterName);
-						} else {
-							Trace.error(String.format("method '%s' must return a boolean to be invocable", method.getName()));
+							if (boolean.class.equals(returnType) || Boolean.class.equals(returnType)) {
+								resourceName = name(method, invocable);
+								resource = createInvocableResource(instance, method, resourceName, filterName);
+							} else {
+								Trace.error(String.format("method '%s' must return a boolean to be invocable", method.getName()));
+							}
+						} else if (function != null) {
+							resourceName = name(method, function);
+							resource = createFunctionResource(instance, method, resourceName, filterName);
+						} else if (substitutable != null) {
+							resourceName = name(method, substitutable);
+							resource = createSubstitutableResource(instance, method, method.getReturnType(), resourceName, filterName);
 						}
-					} else if (function != null) {
-						resourceName = name(method, function);
-						resource = createFunctionResource(script, method, resourceName, filterName);
-					} else if (substitutable != null) {
-						resourceName = name(method, substitutable);
-						resource = createSubstitutableResource(script, method, method.getReturnType(), resourceName, filterName);
-					}
 
-					if (resource != null) {
-						if (duplicates.contains(resourceName)) {
-							Trace.error(String.format("resource '%s' is declared more than once", resourceName));
-						} else {
-							resources.put(resourceName, resource);
+						if (resource != null) {
+							if (duplicates.contains(resourceName)) {
+								Trace.error(String.format("resource '%s' is declared more than once", resourceName));
+							} else {
+								resources.put(resourceName, resource);
+							}
 						}
+					} else {
+						Trace.error(String.format("method '%s' must be static (no instance provided)", method.getName()));
 					}
-				} else {
-					Trace.error(String.format("method '%s' must be static (no instance provided)", method.getName()));
 				}
 			}
 		}
+	}
 
-		return new ExtensionContext(clazz, Collections.unmodifiableMap(resources));
+	private static <A> void addAnnotatedMethod(Map<Method, A> annotations, Set<Method> methods, Set<String> exported, Set<String> duplicates, Method method, A annotation, BiFunction<Method, A, String> nameFunction) {
+		if (annotation != null) {
+			String name = nameFunction.apply(method, annotation);
+
+			annotations.put(method, annotation);
+			methods.add(method);
+
+			if (!exported.add(name)) {
+				duplicates.add(name);
+			}
+		}
 	}
 
 	private static boolean hasMultipleAnnotations(InvocableMethod invocable, ExtensionFunction function, SubstitutableMethod substitutable) {
@@ -217,39 +246,26 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	}
 
 	/**
-	 * register groovy script methods as api gateway resources. invocable methods
-	 * can be invoked like policies. method parameters are injected from current
-	 * context. substitutable methods are used to return arbitrary values from an
-	 * injected context. Invocable methods must return boolean and may throw
-	 * CirtuitAbortException. Substituable cannot throw any exception. In such case
-	 * null is returned and the exception is dropped.
+	 * register groovy script methods as api gateway resources. Substitutable
+	 * methods are used to return arbitrary values from an injected context.
+	 * Invocable methods must return boolean and may throw CirtuitAbortException.
+	 * Substituable cannot throw any exception. In such case null is returned and
+	 * the exception is dropped.
 	 * 
-	 * @param script script to be bound
-	 * @param filterName name of filter hosting the script
-	 * @return an ExtensionContext which reflects exported methods of the given
-	 *         script.
+	 * @param resources script attached resources
+	 * @param script     script to be bound
+	 * @param filterName name of filter hosting the script (for debugging purposes
 	 */
-	public static ExtensionContext bind(Script script, String filterName) {
+	public static void reflect(Map<String, ContextResource> resources, Script script, String filterName) {
 		Class<? extends Script> clazz = script.getClass();
-
-		return create(script, clazz, filterName);
+		
+		reflect(resources, script, clazz, filterName);
 	}
 
-	public static ExtensionContext bind(Class<?> clazz) {
-		return create(null, clazz);
-	}
+	static void reflect(Map<String, ContextResource> resources, Object instance) {
+		Class<?> clazz = instance.getClass();
 
-	/**
-	 * register a java class instance as apigateway resources.
-	 * 
-	 * @param <T>      class type
-	 * @param instance instance to be bound
-	 * @param clazz    type which contains method exports
-	 * @return an ExtensionContext which reflects exported methods of the given
-	 *         class.
-	 */
-	public static <T> ExtensionContext bind(T instance, Class<? super T> clazz) {
-		return create(instance, clazz);
+		reflect(resources, instance, clazz, null);
 	}
 
 	private static InvocableResource createInvocableResource(final Object script, final Method method, final String name, final String filterName) {

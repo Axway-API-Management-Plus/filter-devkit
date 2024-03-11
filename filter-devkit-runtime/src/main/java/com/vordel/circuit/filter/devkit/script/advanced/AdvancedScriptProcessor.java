@@ -12,7 +12,6 @@ import javax.script.ScriptException;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
-import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.filter.devkit.context.ExtensionContext;
 import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
 import com.vordel.circuit.filter.devkit.context.resources.AbstractContextResourceProvider;
@@ -35,6 +34,14 @@ import com.vordel.trace.Trace;
 
 import groovy.lang.Script;
 
+/**
+ * Implementation of the Advanced Script Processor. Script coming from the
+ * original script filter are compatible. (substitution on deploy time,
+ * CircuitAbortException wrapped in ScriptException, attach() and detach() are
+ * set as optional and will not trigger an exception if missing.
+ * 
+ * @author rdesaintleger@axway.com
+ */
 public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	/**
 	 * Resources retrieved from configured UI
@@ -56,14 +63,9 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	private boolean unwrapCircuitAbortException = false;
 
 	/**
-	 * Resources reflected from groovy scripts
-	 */
-	private ExtensionContext exports = null;
-
-	/**
 	 * Instance of reflected groovy script
 	 */
-	private Object groovyInstance = null;
+	private Script groovyInstance = null;
 	/**
 	 * Detach method of groovy script (if compatible with argument injection)
 	 */
@@ -76,7 +78,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	/**
 	 * exportable resource provider
 	 */
-	private final ExportedResources context = new ExportedResources();
+	private final ExportedResources exports = new ExportedResources();
 
 	@Override
 	protected String substituteScript(String script) {
@@ -121,7 +123,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		try {
 			ContextResourceFactory.releaseResources(resources);
 		} catch (Exception e) {
-			Trace.error("Unexpected Exception when detaching filter", e);
+			Trace.error("Unexpected Exception when releasing resources", e);
 		} finally {
 			this.resources = null;
 		}
@@ -156,11 +158,13 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		AdvancedScriptRuntimeBinder binder = AdvancedScriptRuntimeBinder.getScriptBinder(engine);
 
 		if (binder != null) {
-			binder.bindRuntime(engine, runtime);
-
-			ExtensionLoader.bindScriptExtensions(engine, binder);
+			/* create top level closure from local runtime */
+			binder.bind(engine, runtime);
 		}
 
+		/*
+		 * after resources has been bound and script runtime loaded, execute the script
+		 */
 		super.evaluateScript(ctx, entity, script);
 	}
 
@@ -174,23 +178,38 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 				/* invoke the groovy method */
 				result = groovyInvoke.invoke(groovyInstance, args);
 			} catch (InvocationTargetException e) {
+				/* got exception invoking script, examine cause */
 				Throwable cause = e.getCause();
 
-				if (cause instanceof Error) {
-					throw (Error) cause;
-				} else if (cause instanceof RuntimeException) {
-					throw (RuntimeException) cause;
-				} else if (cause instanceof CircuitAbortException) {
+				if (cause instanceof CircuitAbortException) {
+					/* just relay this king of exception */
 					throw (CircuitAbortException) cause;
+				} else if (cause instanceof ScriptException) {
+					if (unwrapCircuitAbortException) {
+						/*
+						 * in case of ScriptException, try to unwrap it according to requested
+						 * configuration
+						 */
+						CircuitAbortException nested = unwrapException((ScriptException) cause, CircuitAbortException.class);
+
+						if (nested != null) {
+							throw nested;
+						}
+					}
+
+					throw new CircuitAbortException(cause);
 				} else {
+					/*
+					 * in all other cases (including runtime exceptions, report unexpected exception
+					 */
 					throw new CircuitAbortException("Unexpected exception during groovy invocation", cause);
 				}
-			} catch (RuntimeException e) {
-				throw (RuntimeException) e;
 			} catch (Exception e) {
+				/* fallback case for invocation */
 				throw new CircuitAbortException("Unable to run groovy invoke function", e);
 			}
 		} else {
+			/* in case script has not been reflected, use the JSR-223 regular invoke */
 			result = invokeScript(c, m, extendedInvoke, unwrapCircuitAbortException);
 		}
 
@@ -229,11 +248,11 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 
 			if (type.isAssignableFrom(Message.class)) {
 				args[index] = msg;
-			} else if (type.isAssignableFrom(ContextResourceProvider.class)) {
-				args[index] = context;
+			} else if (type.isAssignableFrom(ExportedResources.class)) {
+				args[index] = exports;
 			} else if (type.isAssignableFrom(Circuit.class)) {
 				args[index] = circuit;
-			} else if (type.isAssignableFrom(MessageProcessor.class)) {
+			} else if (type.equals(AdvancedScriptProcessor.class)) {
 				args[index] = this;
 			} else {
 				Trace.error("Unable to resolve arguments for invoke method");
@@ -252,9 +271,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		for (int index = 0; index < types.length; index++) {
 			Class<?> type = types[index];
 
-			if (type.isAssignableFrom(ContextResourceProvider.class)) {
-				args[index] = context;
-			} else if (type.isAssignableFrom(MessageProcessor.class)) {
+			if (type.equals(AdvancedScriptProcessor.class)) {
 				args[index] = this;
 			} else {
 				Trace.error("Unable to resolve arguments for detach method");
@@ -266,7 +283,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		return args;
 	}
 
-	private class ExportedRuntime implements GroovyScriptRuntime {
+	private final class ExportedRuntime implements AdvancedScriptRuntime, GroovyScriptConfigurator {
 		private void checkState() throws ScriptException {
 			if (attached) {
 				throw new ScriptException("This function can only be used during filter attachment");
@@ -293,46 +310,48 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 
 		@Override
 		public ContextResource getContextResource(String name) {
-			return context.getContextResource(name);
+			return exports.getContextResource(name);
 		}
 
 		@Override
 		public InvocableResource getInvocableResource(String name) {
-			return context.getInvocableResource(name);
+			return exports.getInvocableResource(name);
 		}
 
 		@Override
 		public KPSResource getKPSResource(String name) {
-			return context.getKPSResource(name);
+			return exports.getKPSResource(name);
 		}
 
 		@Override
 		public CacheResource getCacheResource(String name) {
-			return context.getCacheResource(name);
+			ContextResource resource = getContextResource(name);
+
+			return resource instanceof CacheResource ? (CacheResource) resource : null;
 		}
 
 		@Override
 		public Boolean invokeResource(Message msg, String name) throws CircuitAbortException {
-			return context.invoke(msg, name);
+			return exports.invoke(msg, name);
 		}
 
 		@Override
 		public Object substituteResource(Dictionary dict, String name) {
-			return context.substitute(dict, name);
+			return exports.substitute(dict, name);
 		}
 
 		@Override
 		public void reflectResources(Script script) throws ScriptException {
 			checkState();
 
-			if (exports != null) {
-				throw new ScriptException("This function can only be called once");
-			}
-			
-			/* retrieve filter name for debug */
-			String filterName = getFilter().getName();
+			ExtensionContext.reflect(resources, script, getFilterName());
+		}
 
-			exports = ExtensionContext.bind(script, filterName);
+		@Override
+		public void reflectExtension(String name) throws ScriptException {
+			checkState();
+
+			ExtensionLoader.bind(resources, engine, this, name);
 		}
 
 		@Override
@@ -359,7 +378,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 
 		@Override
 		public ContextResourceProvider getExportedResources() {
-			return context;
+			return exports;
 		}
 
 		@Override
@@ -368,22 +387,10 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		}
 	}
 
-	private class ExportedResources extends AbstractContextResourceProvider {
+	private final class ExportedResources extends AbstractContextResourceProvider {
 		@Override
 		public ContextResource getContextResource(String name) {
-			ContextResource resource = exports == null ? null : exports.getContextResource(name);
-
-			if (resource == null) {
-				resource = resources.get(name);
-			}
-
-			return resource;
-		}
-
-		public final CacheResource getCacheResource(String name) {
-			ContextResource resource = getContextResource(name);
-
-			return resource instanceof CacheResource ? (CacheResource) resource : null;
+			return resources.get(name);
 		}
 	}
 }

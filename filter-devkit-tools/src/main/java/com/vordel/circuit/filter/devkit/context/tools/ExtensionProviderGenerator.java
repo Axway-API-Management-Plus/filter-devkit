@@ -19,10 +19,14 @@ import javax.tools.StandardLocation;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionLibraries;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin;
+import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
-@SupportedAnnotationTypes({ "com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin",
-		"com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin", })
+@SupportedAnnotationTypes({
+	"com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin",
+	"com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin",
+	"com.vordel.circuit.filter.devkit.script.extension.ScriptExtension",
+})
 public class ExtensionProviderGenerator extends AbstractProcessor {
 	private final Set<TypeElement> extensions = new HashSet<TypeElement>();
 
@@ -37,9 +41,11 @@ public class ExtensionProviderGenerator extends AbstractProcessor {
 		} else {
 			Set<? extends Element> plugins = roundEnv.getElementsAnnotatedWith(ExtensionContextPlugin.class);
 			Set<? extends Element> modules = roundEnv.getElementsAnnotatedWith(ExtensionModulePlugin.class);
+			Set<? extends Element> scripts = roundEnv.getElementsAnnotatedWith(ScriptExtension.class);
 
 			registerClasses(plugins);
 			registerClasses(modules);
+			registerClasses(scripts);
 		}
 
 		return true;

@@ -21,6 +21,14 @@ import com.vordel.es.EntityStoreException;
 import com.vordel.es.xes.PortableESPK;
 import com.vordel.trace.Trace;
 
+/**
+ * this abstract class allows to implement a script message processor compatible
+ * with the default API Gateway script filter, the Script Quick Filter
+ * implementation and the new Advanced Script Filter.
+ * 
+ * @author rdesaintleger@axway.com
+ *
+ */
 public class AbstractScriptProcessor extends MessageProcessor {
 	/**
 	 * Attach script global function
@@ -37,12 +45,25 @@ public class AbstractScriptProcessor extends MessageProcessor {
 
 	protected ScriptEngine engine = null;
 
+	/**
+	 * Retrieve the JSR-223 engine name for the current script
+	 * 
+	 * @param entity configuration entity for this script
+	 * @return the script engine name to be used
+	 */
 	protected String getEngineName(Entity entity) {
 		String name = entity.getStringValue("engineName");
 
 		return name;
 	}
 
+	/**
+	 * Retrieve the script store in the entity store. Scritp which requires
+	 * substitution should override {@link #substituteScript(String)}
+	 * 
+	 * @param entity configuration entity for this script
+	 * @return the raw script
+	 */
 	protected String getEntityScript(Entity entity) {
 		return entity.getStringValue("script");
 	}
@@ -119,6 +140,14 @@ public class AbstractScriptProcessor extends MessageProcessor {
 		}
 	}
 
+	/**
+	 * Normalize the engineName parameter (use nashorn as default, use rhino if 'js'
+	 * provided) and instantiate the {@link ScriptEngine} object.
+	 * 
+	 * @param engineName configured engine name
+	 * @return the script engine to be used
+	 * @throws ScriptException if any error occurs.
+	 */
 	private static final ScriptEngine getScriptEngine(String engineName) throws ScriptException {
 		ScriptEngineManager mgr = new ScriptEngineManager();
 
@@ -139,24 +168,77 @@ public class AbstractScriptProcessor extends MessageProcessor {
 		return engine;
 	}
 
+	/**
+	 * execute substitution of the script if needed
+	 * 
+	 * @param script raw script obtained from {@link #getEntityScript(Entity)}
+	 * @return substituted script
+	 */
 	protected String substituteScript(String script) {
 		return script;
 	}
 
+	/**
+	 * Base evaluation of the configured script. This will create
+	 * attach()/detach()/invoke() functions and eventually produce closures private
+	 * to the script.
+	 * 
+	 * @param ctx    current configuration context
+	 * @param entity entity store script instance
+	 * @param script retrieved script from the entity store
+	 * @throws ScriptException if an evaluation error occurs
+	 */
 	protected void evaluateScript(ConfigContext ctx, Entity entity, String script) throws ScriptException {
 		engine.eval(script);
 	}
 
+	/**
+	 * Invoke the script attach function (after script has been evaluated). Default
+	 * behavior is to launch the {@link NoSuchMethodException}. This method can be
+	 * overrided to silent this exception or to skip script attach hook.
+	 * 
+	 * @param ctx    current configuration context
+	 * @param entity entity store script instance
+	 * @throws ScriptException       if an error occurs evaluating the attach
+	 *                               function
+	 * @throws NoSuchMethodException if no attach method exists
+	 */
 	protected void attachScript(ConfigContext ctx, Entity entity) throws ScriptException, NoSuchMethodException {
 		/* try to invoke the attach function */
 		invokeFunction(engine, ATTACH_FUNCTION_NAME, ctx, entity);
 	}
 
+	/**
+	 * default script invoke method. This implementation will apply default API
+	 * Gateway script behavior (no extended invoke prototype and no exception
+	 * unwrapping)
+	 * 
+	 * @param c provided circuit (see
+	 *          {@link MessageProcessor#invoke(Circuit, Message)}
+	 * @param m provided message (see
+	 *          {@link MessageProcessor#invoke(Circuit, Message)}
+	 * @return value returned by JSR-223 script
+	 * @throws CircuitAbortException if any errors occurs (see
+	 *                               {@link MessageProcessor#invoke(Circuit, Message)}
+	 */
 	protected Object invokeScript(Circuit c, Message m) throws CircuitAbortException {
 		/* default behavior for regular script filter */
 		return invokeScript(c, m, false, false);
 	}
 
+	/**
+	 * @param c                provided circuit (see
+	 *                         {@link MessageProcessor#invoke(Circuit, Message)}
+	 * @param m                provided message (see
+	 *                         {@link MessageProcessor#invoke(Circuit, Message)}
+	 * @param extended         if 'true' the circuit will be provided as first
+	 *                         argument to the script's invoke function
+	 * @param unwrapExceptions if 'true' CircuitAbortException which are cause to
+	 *                         the thrown ScriptException will be unwrapped.
+	 * @return value returned by JSR-223 script
+	 * @throws CircuitAbortException if any errors occurs (see
+	 *                               {@link MessageProcessor#invoke(Circuit, Message)}
+	 */
 	protected final Object invokeScript(Circuit c, Message m, boolean extended, boolean unwrapExceptions) throws CircuitAbortException {
 		try {
 			/* invoke script main function */
@@ -190,11 +272,21 @@ public class AbstractScriptProcessor extends MessageProcessor {
 		}
 	}
 
+	/**
+	 * Script detachment hook. default behavior is to launch the
+	 * {@link NoSuchMethodException}. Other implementation will override this
+	 * behavior by making this exception silent. Other exceptions will be logged and
+	 * ignored.
+	 * 
+	 * @throws NoSuchMethodException if no detach method exists
+	 */
 	protected void detachScript() throws NoSuchMethodException {
 		try {
 			/* try to invoke the detach function */
 			invokeFunction(engine, DETACH_FUNCTION_NAME);
-		} catch (ScriptException ex) {
+		} catch (NoSuchMethodException ex) {
+			throw ex;
+		} catch (Exception ex) {
 			if (Trace.isDebugEnabled()) {
 				Trace.error("There was a problem unloading the script: " + ex.getMessage(), ex);
 			} else {
@@ -203,7 +295,16 @@ public class AbstractScriptProcessor extends MessageProcessor {
 		}
 	}
 
-	private static final <T extends Exception> T unwrapException(ScriptException ex, Class<T> kind) {
+	/**
+	 * Simple utility method to unwrap an exception from a given
+	 * {@link ScriptException}
+	 * 
+	 * @param <T>  type of exception to be unwrapped
+	 * @param ex   wrapping (outher) exception
+	 * @param kind class object representing the type of exception to be unwrapped
+	 * @return wrapped exception if found, other wise null.
+	 */
+	protected static final <T extends Exception> T unwrapException(ScriptException ex, Class<T> kind) {
 		T result = null;
 
 		if (ex != null) {

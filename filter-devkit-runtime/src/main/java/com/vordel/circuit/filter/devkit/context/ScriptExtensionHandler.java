@@ -5,7 +5,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import com.vordel.circuit.filter.devkit.script.ScriptHelper;
-import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
 import com.vordel.trace.Trace;
 
 /**
@@ -15,9 +14,9 @@ import com.vordel.trace.Trace;
  * @author rdesaintleger@axway.com
  */
 public class ScriptExtensionHandler implements InvocationHandler {
-	private final ScriptExtension module;
+	private final Object module;
 
-	public ScriptExtensionHandler(ScriptExtension module) {
+	public ScriptExtensionHandler(Object module) {
 		this.module = module;
 	}
 

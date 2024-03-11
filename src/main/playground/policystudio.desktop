@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=Policy Studio
+Icon=/home/theia/.local/share/icons/dist/policystudio.png
+Exec=/opt/axway/policystudio/policystudio
+Type=Application
