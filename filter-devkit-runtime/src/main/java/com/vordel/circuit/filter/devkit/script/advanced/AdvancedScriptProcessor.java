@@ -12,7 +12,6 @@ import javax.script.ScriptException;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
-import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.filter.devkit.context.ExtensionContext;
 import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
 import com.vordel.circuit.filter.devkit.context.resources.AbstractContextResourceProvider;
@@ -64,14 +63,9 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	private boolean unwrapCircuitAbortException = false;
 
 	/**
-	 * Resources reflected from groovy scripts
-	 */
-	private ExtensionContext exports = null;
-
-	/**
 	 * Instance of reflected groovy script
 	 */
-	private Object groovyInstance = null;
+	private Script groovyInstance = null;
 	/**
 	 * Detach method of groovy script (if compatible with argument injection)
 	 */
@@ -84,7 +78,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	/**
 	 * exportable resource provider
 	 */
-	private final ExportedResources context = new ExportedResources();
+	private final ExportedResources exports = new ExportedResources();
 
 	@Override
 	protected String substituteScript(String script) {
@@ -164,10 +158,8 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		AdvancedScriptRuntimeBinder binder = AdvancedScriptRuntimeBinder.getScriptBinder(engine);
 
 		if (binder != null) {
-			/* create top level closure (from local runtime and loaded extensions */
-			binder.bindRuntime(engine, runtime);
-
-			ExtensionLoader.bindScriptExtensions(engine, binder);
+			/* create top level closure from local runtime */
+			binder.bind(engine, runtime);
 		}
 
 		/*
@@ -256,11 +248,11 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 
 			if (type.isAssignableFrom(Message.class)) {
 				args[index] = msg;
-			} else if (type.isAssignableFrom(ContextResourceProvider.class)) {
-				args[index] = context;
+			} else if (type.isAssignableFrom(ExportedResources.class)) {
+				args[index] = exports;
 			} else if (type.isAssignableFrom(Circuit.class)) {
 				args[index] = circuit;
-			} else if (type.isAssignableFrom(MessageProcessor.class)) {
+			} else if (type.equals(AdvancedScriptProcessor.class)) {
 				args[index] = this;
 			} else {
 				Trace.error("Unable to resolve arguments for invoke method");
@@ -279,9 +271,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		for (int index = 0; index < types.length; index++) {
 			Class<?> type = types[index];
 
-			if (type.isAssignableFrom(ContextResourceProvider.class)) {
-				args[index] = context;
-			} else if (type.isAssignableFrom(MessageProcessor.class)) {
+			if (type.equals(AdvancedScriptProcessor.class)) {
 				args[index] = this;
 			} else {
 				Trace.error("Unable to resolve arguments for detach method");
@@ -293,7 +283,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		return args;
 	}
 
-	private class ExportedRuntime implements GroovyScriptRuntime {
+	private final class ExportedRuntime implements AdvancedScriptRuntime, GroovyScriptConfigurator {
 		private void checkState() throws ScriptException {
 			if (attached) {
 				throw new ScriptException("This function can only be used during filter attachment");
@@ -320,46 +310,50 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 
 		@Override
 		public ContextResource getContextResource(String name) {
-			return context.getContextResource(name);
+			return exports.getContextResource(name);
 		}
 
 		@Override
 		public InvocableResource getInvocableResource(String name) {
-			return context.getInvocableResource(name);
+			return exports.getInvocableResource(name);
 		}
 
 		@Override
 		public KPSResource getKPSResource(String name) {
-			return context.getKPSResource(name);
+			return exports.getKPSResource(name);
 		}
 
 		@Override
 		public CacheResource getCacheResource(String name) {
-			return context.getCacheResource(name);
+			ContextResource resource = getContextResource(name);
+
+			return resource instanceof CacheResource ? (CacheResource) resource : null;
 		}
 
 		@Override
 		public Boolean invokeResource(Message msg, String name) throws CircuitAbortException {
-			return context.invoke(msg, name);
+			return exports.invoke(msg, name);
 		}
 
 		@Override
 		public Object substituteResource(Dictionary dict, String name) {
-			return context.substitute(dict, name);
+			return exports.substitute(dict, name);
 		}
 
 		@Override
 		public void reflectResources(Script script) throws ScriptException {
 			checkState();
 
-			if (exports != null) {
-				throw new ScriptException("This function can only be called once");
-			}
+			ExtensionContext.reflect(resources, script, getFilterName());
+		}
 
-			/* retrieve filter name for debug */
-			String filterName = getFilter().getName();
+		@Override
+		public void reflectExtension(String name) throws ScriptException {
+			checkState();
+			
+			Trace.info(String.format("attaching extension '%s' in script '%s'", name, getFilterName()));
 
-			exports = ExtensionContext.bind(script, filterName);
+			ExtensionLoader.bind(resources, engine, this, name);
 		}
 
 		@Override
@@ -386,7 +380,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 
 		@Override
 		public ContextResourceProvider getExportedResources() {
-			return context;
+			return exports;
 		}
 
 		@Override
@@ -395,22 +389,10 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		}
 	}
 
-	private class ExportedResources extends AbstractContextResourceProvider {
+	private final class ExportedResources extends AbstractContextResourceProvider {
 		@Override
 		public ContextResource getContextResource(String name) {
-			ContextResource resource = exports == null ? null : exports.getContextResource(name);
-
-			if (resource == null) {
-				resource = resources.get(name);
-			}
-
-			return resource;
-		}
-
-		public final CacheResource getCacheResource(String name) {
-			ContextResource resource = getContextResource(name);
-
-			return resource instanceof CacheResource ? (CacheResource) resource : null;
+			return resources.get(name);
 		}
 	}
 }

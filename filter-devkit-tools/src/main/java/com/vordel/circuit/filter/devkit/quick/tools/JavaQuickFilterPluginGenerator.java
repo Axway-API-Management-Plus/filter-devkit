@@ -287,7 +287,7 @@ public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 
 		for(A annotation : annotations) {
 			for (String value : getter.apply(annotation)) {
-				if ((value != null) && (!value.isBlank()) && seen.add(value)) {
+				if ((value != null) && (!value.isEmpty()) && seen.add(value)) {
 					attributes.add(value);
 				}
 			}

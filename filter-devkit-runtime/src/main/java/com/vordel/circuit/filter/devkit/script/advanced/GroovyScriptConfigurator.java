@@ -9,7 +9,7 @@ import groovy.lang.Script;
  * 
  * @author rdesaintleger@axway.com
  */
-public interface GroovyScriptRuntime extends AdvancedScriptRuntime {
+public interface GroovyScriptConfigurator extends AdvancedScriptConfigurator {
 	/**
 	 * bind annotated groovy methods to exportable context (usable in selectors and
 	 * other scripts)

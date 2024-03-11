@@ -62,11 +62,9 @@ RUN adduser theia --shell /bin/bash && \
 # generate persistent gradle configuration
 RUN --mount=type=tmpfs,target=/tmp \
 	--mount=target=/tmp/export,type=bind \
-	cd /tmp && tar -cpf - export | tar -C /home/project -xpf - && \
-	mv /home/project/export/${APIM_RUN_FILE} /tmp/APIGateway_Install_linux-x86-64.run && \
-	mv /home/project/export/${APIM_LIC_FILE} /tmp/API.lic && \
-	rm -rf /home/project/export/dist && \
-	cd /tmp && tar -cpf - export/dist/.keep | tar -C /home/project -xpf - && \
+	cd /tmp && tar --exclude='dist/*.run' --exclude='dist/*.lic' -cpf - export | tar -C /home/project -xpf - && \
+	cp /tmp/export/${APIM_RUN_FILE} /tmp/APIGateway_Install_linux-x86-64.run && \
+	cp /tmp/export/${APIM_LIC_FILE} /tmp/API.lic && \
 	mv /home/project/export /home/project/filter-devkit && \
 	mkdir -p /opt/axway && \
 	chmod 755 /home/project/filter-devkit/gradlew && \
@@ -142,8 +140,7 @@ RUN echo 'hsetroot -solid "#123456" &' >> /etc/xdg/openbox/autostart && \
 		mkdir -p /home/theia/.local/share/icons/dist && \
 		mkdir -p /home/theia/.local/share/applications && \
 		cp /home/project/filter-devkit/src/main/playground/policystudio.png /home/theia/.local/share/icons/dist && \
-		cp /home/project/filter-devkit/src/main/playground/policystudio.desktop /home/theia/.local/share/applications && \
-		cp /home/project/filter-devkit/src/main/playground/eclipse.desktop /home/theia/.local/share/applications"
+		cp /home/project/filter-devkit/src/main/playground/policystudio.desktop /home/theia/.local/share/applications"
 
 # expose theia port and ANM port
 EXPOSE 3000

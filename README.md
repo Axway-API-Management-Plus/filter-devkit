@@ -8,7 +8,7 @@ To build this artefact, you need the following items:
  - JDK 11
  - API Gateway and Policy Studio 7.7.20231130
  
-Code base is actually stable and has been tested from 20220530 (JDK 8) to 20231130 (JDK 11). Even if jars compiled using another release should work, it is recommended to use artifacts produced for a particular release using the branch specific the the API Gateway version you're targeting (some bytecode changes can trigger a MethodNotFoundException). If no branch already exists please open an issue for it or make a Pull Request for this new branch.
+Code base is actually stable and has been tested from 20220530 (JDK 8) to 20240228 (JDK 11). Even if jars compiled using another release should work, it is recommended to use artifacts produced for a particular release using the branch specific the the API Gateway version you're targeting (some bytecode changes can trigger a MethodNotFoundException). If no branch already exists please open an issue for it or make a Pull Request for this new branch.
 
 A playground Dockerfile is provided. It provides an on-premise API Gateway, Policy Studio, In-Browser GUI and IDE with the FDK pre-installed.
 
@@ -39,13 +39,13 @@ Execute the following docker build command (replace filenames according to your 
 *For Windows :*
 
 ```
-docker build --build-arg APIM_RUN_FILE=dist/APIGateway_7.7.20220530_Install_linux-x86-64_BN02.run --build-arg APIM_LIC_FILE=dist/licence.lic -t filter-devkit-docker -f src\main\docker\Dockerfile .
+docker build --build-arg APIM_RUN_FILE=dist/APIGateway_7.7.20231130_Install_linux-x86-64_BN02.run --build-arg APIM_LIC_FILE=dist/licence.lic -t filter-devkit-docker -f src\main\docker\Dockerfile .
 ```
 
 *For Linux :*
 
 ```
-docker build --build-arg APIM_RUN_FILE=dist/APIGateway_7.7.20220530_Install_linux-x86-64_BN02.run --build-arg APIM_LIC_FILE=dist/licence.lic -t filter-devkit-docker -f src/main/docker/Dockerfile .
+docker build --build-arg APIM_RUN_FILE=dist/APIGateway_7.7.20231130_Install_linux-x86-64_BN02.run --build-arg APIM_LIC_FILE=dist/licence.lic -t filter-devkit-docker -f src/main/docker/Dockerfile .
 ```
 
 At the end of the build, you should have a (big) docker image called 'filter-devkit-docker'. run it with the following docker command
