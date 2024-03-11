@@ -1,9 +1,8 @@
 package com.vordel.circuit.filter.devkit.script.ext;
 
 import com.vordel.circuit.Message;
-import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
 
-public interface ScriptExtendedRuntime extends ScriptExtension {
+public interface ScriptExtendedRuntime {
 	String getHTTPVerb(Message msg);
 	void setHTTPVerb(Message msg, String verb);
 	

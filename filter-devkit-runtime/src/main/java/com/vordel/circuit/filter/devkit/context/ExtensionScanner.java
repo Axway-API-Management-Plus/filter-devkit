@@ -21,9 +21,12 @@ import java.util.Set;
 
 import javax.annotation.Priority;
 
-import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin;
+import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
+import com.vordel.circuit.filter.devkit.script.extension.AbstractScriptExtension;
+import com.vordel.circuit.filter.devkit.script.extension.AbstractScriptExtensionBuilder;
+import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
 import com.vordel.common.Dictionary;
 import com.vordel.config.ConfigContext;
 import com.vordel.el.Selector;
@@ -39,27 +42,37 @@ public class ExtensionScanner {
 
 		if (isInstantiable(clazz)) {
 			try {
-				Constructor<?> contructor = clazz.getDeclaredConstructor();
+				/* class is annotated is an extension module */
+				Constructor<?> constructor = clazz.getDeclaredConstructor();
 
 				try {
-					contructor.setAccessible(true);
-					instance = contructor.newInstance();
+					constructor.setAccessible(true);
+					instance = constructor.newInstance();
 
 					/* attach module */
 					ExtensionLoader.registerExtensionInstance(ctx, instance);
 				} finally {
-					contructor.setAccessible(false);
+					constructor.setAccessible(false);
 				}
 			} catch (InstantiationException e) {
 				Trace.error(String.format("the class '%s' can't be instantiated", clazz.getName()), e);
 			} catch (IllegalAccessException e) {
-				Trace.error(String.format("the no-arg contructor for class '%s' is not accessible", clazz.getName()), e);
+				Trace.error(String.format("the no-arg constructor for class '%s' is not accessible", clazz.getName()), e);
 			} catch (InvocationTargetException e) {
 				Throwable cause = e.getCause();
 
 				Trace.error(String.format("got error instantiating class '%s'", clazz.getName()), cause);
 			} catch (NoSuchMethodException e) {
-				Trace.error(String.format("the class '%s' must have a no-arg contructor", clazz.getName()), e);
+				Trace.error(String.format("the class '%s' must have a no-arg constructor", clazz.getName()), e);
+			}
+		} else if (isScriptExtension(clazz)) {
+			try {
+				/* class is annotated is an extension module */
+				Constructor<? extends AbstractScriptExtension> constructor = clazz.asSubclass(AbstractScriptExtension.class).getDeclaredConstructor(AbstractScriptExtensionBuilder.class);
+
+				ExtensionLoader.registerScriptExtension(constructor);
+			} catch (NoSuchMethodException e) {
+				Trace.error(String.format("the class '%s' must have a no-arg constructor", clazz.getName()), e);
 			}
 		}
 
@@ -129,7 +142,8 @@ public class ExtensionScanner {
 		for (String clazzName : clazzes) {
 			try {
 				/*
-				 * create classes which expose ExtensionContextPlugin or ExtensionModulePlugin annotation
+				 * create classes which expose ExtensionContextPlugin or ExtensionModulePlugin
+				 * annotation
 				 */
 				scanned.add(Class.forName(clazzName, false, getClassLoader(loader, clazzName)));
 			} catch (Exception e) {
@@ -138,8 +152,8 @@ public class ExtensionScanner {
 				Trace.error(String.format("Got error loading class '%s'", clazzName), e);
 			}
 		}
-		
-		for(Class<?> loaded : scanned) {
+
+		for (Class<?> loaded : scanned) {
 			String clazzName = loaded.getName();
 
 			try {
@@ -152,11 +166,11 @@ public class ExtensionScanner {
 
 		return scanned;
 	}
-	
+
 	/**
 	 * create a child first classloader for an extension module (or context)
 	 * 
-	 * @param loader parent ClassLoader
+	 * @param loader    parent ClassLoader
 	 * @param clazzName class to be loaded.
 	 * @return
 	 */
@@ -164,11 +178,11 @@ public class ExtensionScanner {
 		String libs = String.format("META-INF/vordel/libraries/%s", clazzName);
 		URL jars = loader.getResource(libs);
 		Set<File> scanned = new HashSet<File>();
-		
+
 		if (jars != null) {
 			try {
 				InputStream in = jars.openStream();
-				
+
 				try {
 					BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 
@@ -181,11 +195,11 @@ public class ExtensionScanner {
 							if (!line.isEmpty()) {
 								Selector<String> selector = SelectorResource.fromLiteral(line, String.class, true);
 								File file = new File(selector.substitute(Dictionary.empty));
-								
+
 								if (!file.exists()) {
 									Trace.error(String.format("path '%s' does not exists for module '%s'", selector.getLiteral(), clazzName));
 								}
-								
+
 								scanJavaArchives(file, scanned);
 							}
 						}
@@ -199,24 +213,24 @@ public class ExtensionScanner {
 			} catch (IOException e) {
 				Trace.error(String.format("Got error reading module libraries for '%s'", clazzName), e);
 			}
-			
+
 			Set<URL> urls = new HashSet<URL>();
-			
-			for(File file : scanned) {
+
+			for (File file : scanned) {
 				try {
 					urls.add(file.toURI().toURL());
 				} catch (MalformedURLException e) {
 					Trace.error(String.format("can't normalize file path '%s' to URL", file.getAbsolutePath()), e);
 				}
 			}
-			
+
 			loader = new ExtensionClassLoader(clazzName, urls.toArray(new URL[0]), loader);
 		}
-		
+
 		return loader;
 	}
 
-	public static Set<File> scanJavaArchives(File root, Set<File> scanned) {
+	private static Set<File> scanJavaArchives(File root, Set<File> scanned) {
 		if ((root != null) && root.exists() && (scanned != null) && (!scanned.contains(root))) {
 			if (root.isDirectory()) {
 				File meta = new File(root, "META-INF");
@@ -258,10 +272,36 @@ public class ExtensionScanner {
 
 	private static boolean isInstantiable(Class<?> clazz) {
 		boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
-		boolean isInstance = clazz.getAnnotation(ExtensionModulePlugin.class) != null;
+		boolean isInstance = (clazz.getAnnotation(ExtensionModulePlugin.class) != null) || (clazz.getAnnotation(ScriptExtension.class) != null);
 		boolean isModule = ExtensionModule.class.isAssignableFrom(clazz);
+		boolean hasEmptyContructor = false;
+		
+		try {
+			clazz.getDeclaredConstructor();
+			
+			hasEmptyContructor = true;
+		} catch (Exception e) {
+			/* ignore */
+		}
 
-		return (!isAbstract) && (isInstance || isModule);
+		return (!isAbstract) && ((isInstance && hasEmptyContructor) || isModule);
+	}
+
+	private static boolean isScriptExtension(Class<?> clazz) {
+		boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
+		boolean isInstance = clazz.getAnnotation(ScriptExtension.class) != null;
+		boolean isEntension = AbstractScriptExtension.class.isAssignableFrom(clazz);
+		boolean hasExtensionContructor = false;
+		
+		try {
+			clazz.getDeclaredConstructor(AbstractScriptExtensionBuilder.class);
+			
+			hasExtensionContructor = true;
+		} catch (Exception e) {
+			/* ignore */
+		}
+
+		return (!isAbstract) && isInstance && isEntension && hasExtensionContructor;
 	}
 
 	public static void registerClasses(ConfigContext ctx, Iterable<Class<?>> clazzes) {
@@ -271,7 +311,7 @@ public class ExtensionScanner {
 			for (Class<?> clazz : clazzes) {
 				ExtensionContextPlugin plugin = clazz.getAnnotation(ExtensionContextPlugin.class);
 
-				if ((plugin != null) || isInstantiable(clazz)) {
+				if ((plugin != null) || isInstantiable(clazz) || isScriptExtension(clazz)) {
 					sorted.add(clazz);
 				}
 			}
