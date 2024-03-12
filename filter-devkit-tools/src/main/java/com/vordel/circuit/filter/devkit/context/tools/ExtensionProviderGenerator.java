@@ -21,24 +21,37 @@ import com.vordel.circuit.filter.devkit.context.annotations.ExtensionLibraries;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin;
 import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
 
+/**
+ * Annotation processor for FilterDevKit extensions.
+ * 
+ * This processor will generate registration files for annotated classes.
+ * 
+ * @author rdesaintleger@axway.com
+ */
 @SupportedSourceVersion(SourceVersion.RELEASE_11)
-@SupportedAnnotationTypes({
-	"com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin",
-	"com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin",
-	"com.vordel.circuit.filter.devkit.script.extension.ScriptExtension",
-})
+@SupportedAnnotationTypes({ "com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin",
+		"com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin",
+		"com.vordel.circuit.filter.devkit.script.extension.ScriptExtension", })
 public class ExtensionProviderGenerator extends AbstractProcessor {
+	/**
+	 * Set of discovered classes
+	 */
 	private final Set<TypeElement> extensions = new HashSet<TypeElement>();
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 		if (roundEnv.processingOver()) {
 			try {
+				/* no more rounds, write registration files */
 				writeExtensionsFile();
 			} catch (IOException e) {
 				throw new IllegalStateException("Unable to write extensions files", e);
 			}
 		} else {
+			/*
+			 * retrieve all annotated components for this round and add them to registered
+			 * classes
+			 */
 			Set<? extends Element> plugins = roundEnv.getElementsAnnotatedWith(ExtensionContextPlugin.class);
 			Set<? extends Element> modules = roundEnv.getElementsAnnotatedWith(ExtensionModulePlugin.class);
 			Set<? extends Element> scripts = roundEnv.getElementsAnnotatedWith(ScriptExtension.class);
@@ -51,6 +64,11 @@ public class ExtensionProviderGenerator extends AbstractProcessor {
 		return true;
 	}
 
+	/**
+	 * Utility method to add classes in the registered set.
+	 * 
+	 * @param classes set of classes to be registered.
+	 */
 	private void registerClasses(Set<? extends Element> classes) {
 		for (Element element : classes) {
 			if (element instanceof TypeElement) {
@@ -59,6 +77,12 @@ public class ExtensionProviderGenerator extends AbstractProcessor {
 		}
 	}
 
+	/**
+	 * Write registration files (list of registered class) and calls the external
+	 * class path info writer.
+	 * 
+	 * @throws IOException if any error occurs
+	 */
 	private void writeExtensionsFile() throws IOException {
 		if (!extensions.isEmpty()) {
 			Filer filer = processingEnv.getFiler();
@@ -85,6 +109,14 @@ public class ExtensionProviderGenerator extends AbstractProcessor {
 		}
 	}
 
+	/**
+	 * write class path info file for a given class.
+	 * 
+	 * @param filer   compiler standard filer.
+	 * @param element annotated class
+	 * @param entries list of class path selector expression
+	 * @throws IOException if any error occurs
+	 */
 	private void writeLibrariesFile(Filer filer, TypeElement element, String[] entries) throws IOException {
 		FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "", String.format("META-INF/vordel/libraries/%s", element.getQualifiedName().toString()));
 		Writer libraries = file.openWriter();

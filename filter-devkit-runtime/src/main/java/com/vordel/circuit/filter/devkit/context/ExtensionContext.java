@@ -93,6 +93,17 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		return new ExtensionContext(clazz, Collections.unmodifiableMap(resources));
 	}
 
+	/**
+	 * reflect the given class and create associated resources.
+	 * 
+	 * @param <T>        type parameter used to link the provided instance and
+	 *                   provided class
+	 * @param resources  map of resources. reflected resources will be added to this
+	 *                   map
+	 * @param instance   instance to be reflected
+	 * @param clazz      class definition of the given instance
+	 * @param filterName name of the filter if reflecting a Groovy Script
+	 */
 	private static <T> void reflect(Map<String, ContextResource> resources, T instance, Class<? extends T> clazz, String filterName) {
 		if (clazz != null) {
 			Map<Method, InvocableMethod> invocables = new HashMap<Method, InvocableMethod>();
@@ -108,16 +119,9 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 				ExtensionFunction function = method.getAnnotation(ExtensionFunction.class);
 				SubstitutableMethod substitutable = method.getAnnotation(SubstitutableMethod.class);
 
-				try {
-					/* find the best method according to parameters (must be public) */
-					method = clazz.getMethod(method.getName(), method.getParameterTypes());
-
-					addAnnotatedMethod(invocables, methods, exported, duplicates, method, invocable, ExtensionContext::name);
-					addAnnotatedMethod(functions, methods, exported, duplicates, method, function, ExtensionContext::name);
-					addAnnotatedMethod(substitutables, methods, exported, duplicates, method, substitutable, ExtensionContext::name);
-				} catch (NoSuchMethodException e) {
-					/* ignore exception and continue processing */
-				}
+				addAnnotatedMethod(invocables, methods, exported, duplicates, method, invocable, ExtensionContext::name);
+				addAnnotatedMethod(functions, methods, exported, duplicates, method, function, ExtensionContext::name);
+				addAnnotatedMethod(substitutables, methods, exported, duplicates, method, substitutable, ExtensionContext::name);
 			}
 
 			if (resources != null) {
@@ -130,33 +134,51 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 						InvocableMethod invocable = invocables.get(method);
 						ExtensionFunction function = functions.get(method);
 						SubstitutableMethod substitutable = substitutables.get(method);
-						ContextResource resource = null;
-						String resourceName = null;
 
-						if (hasMultipleAnnotations(invocable, function, substitutable)) {
-							Trace.error(String.format("method '%s' can only be one of Invocable or Substitutable or ExtensionFunction", method.getName()));
-						} else if (invocable != null) {
+						if (function != null) {
+							if ((invocable != null) || (substitutable != null)) {
+								Trace.error(String.format("method '%s' : ExtensionFunction can't be combined with Invocable or Substitutable", method.getName()));
+							} else {
+								String resourceName = name(method, function);
+								ContextResource resource = createFunctionResource(instance, clazz, method, resourceName, filterName);
+
+								registerResource(resources, duplicates, resourceName, resource);
+							}
+						} else {
 							Class<?> returnType = method.getReturnType();
 
-							if (boolean.class.equals(returnType) || Boolean.class.equals(returnType)) {
-								resourceName = name(method, invocable);
-								resource = createInvocableResource(instance, method, resourceName, filterName);
-							} else {
-								Trace.error(String.format("method '%s' must return a boolean to be invocable", method.getName()));
-							}
-						} else if (function != null) {
-							resourceName = name(method, function);
-							resource = createFunctionResource(instance, method, resourceName, filterName);
-						} else if (substitutable != null) {
-							resourceName = name(method, substitutable);
-							resource = createSubstitutableResource(instance, method, method.getReturnType(), resourceName, filterName);
-						}
+							if (invocable != null) {
+								if (boolean.class.equals(returnType) || Boolean.class.equals(returnType)) {
+									String invocableName = name(method, invocable);
+									ContextResource resource = null;
 
-						if (resource != null) {
-							if (duplicates.contains(resourceName)) {
-								Trace.error(String.format("resource '%s' is declared more than once", resourceName));
-							} else {
-								resources.put(resourceName, resource);
+									if (substitutable != null) {
+										String substitutableName = name(method, substitutable);
+
+										if (invocableName.equals(substitutableName)) {
+											/*
+											 * special case Invocable or Substitutable returning boolean with same name
+											 */
+											resource = new ReflectedSubstitutableBooleanResource(instance, clazz, method, invocableName, filterName);
+											substitutable = null;
+										}
+									}
+
+									if (resource == null) {
+										resource = createInvocableResource(instance, clazz, method, invocableName, filterName);
+									}
+
+									registerResource(resources, duplicates, invocableName, resource);
+								} else {
+									Trace.error(String.format("method '%s' must return a boolean to be invocable", method.getName()));
+								}
+							}
+
+							if (substitutable != null) {
+								String substitutableName = name(method, substitutable);
+								ContextResource resource = createSubstitutableResource(instance, clazz, method, returnType, substitutableName, filterName);
+
+								registerResource(resources, duplicates, substitutableName, resource);
 							}
 						}
 					} else {
@@ -167,6 +189,35 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		}
 	}
 
+	/**
+	 * register a resource in the resource map, checking duplicates.
+	 * 
+	 * @param resources    resources map which will host the new resource
+	 * @param duplicates   duplicate names for reflected methods
+	 * @param resourceName name of resource to be registered
+	 * @param resource     resource instance
+	 */
+	private static void registerResource(Map<String, ContextResource> resources, Set<String> duplicates, String resourceName, ContextResource resource) {
+		if (duplicates.contains(resourceName)) {
+			Trace.error(String.format("resource '%s' is declared more than once", resourceName));
+		} else {
+			resources.put(resourceName, resource);
+		}
+	}
+
+	/**
+	 * record an annotated method and check for duplicate names
+	 * 
+	 * @param <A>          annotation type parameter. Used to link the name function
+	 * @param annotations  map of seen annotations
+	 * @param methods      set of methods to be reflected
+	 * @param exported     set of exported names
+	 * @param duplicates   set of duplicate names
+	 * @param method       method to be added
+	 * @param annotation   method annotation
+	 * @param nameFunction function to retrieve resource name from annotation and
+	 *                     method
+	 */
 	private static <A> void addAnnotatedMethod(Map<Method, A> annotations, Set<Method> methods, Set<String> exported, Set<String> duplicates, Method method, A annotation, BiFunction<Method, A, String> nameFunction) {
 		if (annotation != null) {
 			String name = nameFunction.apply(method, annotation);
@@ -180,16 +231,13 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		}
 	}
 
-	private static boolean hasMultipleAnnotations(InvocableMethod invocable, ExtensionFunction function, SubstitutableMethod substitutable) {
-		int count = 0;
-
-		count += invocable == null ? 0 : 1;
-		count += function == null ? 0 : 1;
-		count += substitutable == null ? 0 : 1;
-
-		return count > 1;
-	}
-
+	/**
+	 * retrieve name of resource from annotation
+	 * 
+	 * @param method    reflected method
+	 * @param invocable method annotation
+	 * @return name of resource
+	 */
 	private static final String name(Method method, InvocableMethod invocable) {
 		String name = invocable.value();
 
@@ -200,6 +248,13 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		return name;
 	}
 
+	/**
+	 * retrieve name of resource from annotation
+	 * 
+	 * @param method   reflected method
+	 * @param function method annotation
+	 * @return name of resource
+	 */
 	private static final String name(Method method, ExtensionFunction function) {
 		String name = function.value();
 
@@ -210,6 +265,13 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		return name;
 	}
 
+	/**
+	 * retrieve name of resource from annotation
+	 * 
+	 * @param method        reflected method
+	 * @param substitutable method annotation
+	 * @return name of resource
+	 */
 	private static final String name(Method method, SubstitutableMethod substitutable) {
 		String name = substitutable.value();
 
@@ -220,6 +282,13 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		return name;
 	}
 
+	/**
+	 * recursively scan class for annotated methods
+	 * 
+	 * @param clazz     reflected class
+	 * @param annotated aggregated list of annotated methods
+	 * @return aggregated list of annotated methods
+	 */
 	private static List<Method> scanMethods(Class<?> clazz, List<Method> annotated) {
 		Class<?> superClazz = clazz.getSuperclass();
 		Class<?>[] interfaces = clazz.getInterfaces();
@@ -252,90 +321,46 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	 * Substituable cannot throw any exception. In such case null is returned and
 	 * the exception is dropped.
 	 * 
-	 * @param resources script attached resources
+	 * @param resources  script attached resources
 	 * @param script     script to be bound
 	 * @param filterName name of filter hosting the script (for debugging purposes
 	 */
 	public static void reflect(Map<String, ContextResource> resources, Script script, String filterName) {
 		Class<? extends Script> clazz = script.getClass();
-		
+
 		reflect(resources, script, clazz, filterName);
 	}
 
+	/**
+	 * package private entry to register script extension methods as api gateway
+	 * resources.
+	 * 
+	 * @param resources script attached resources
+	 * @param instance  extension to be bound to the script
+	 */
 	static void reflect(Map<String, ContextResource> resources, Object instance) {
 		Class<?> clazz = instance.getClass();
 
 		reflect(resources, instance, clazz, null);
 	}
 
-	private static InvocableResource createInvocableResource(final Object script, final Method method, final String name, final String filterName) {
-		final InjectableParameter<?>[] parameters = processInjectableParameters(method);
-
-		return new InvocableResource() {
-			@Override
-			public Boolean invoke(Message m) throws CircuitAbortException {
-				MethodDictionary dictionary = new MethodDictionary(m, m);
-				boolean result = false;
-
-				try {
-					Object[] resolved = new Object[parameters.length];
-					String[] debug = new String[parameters.length];
-
-					for (int index = 0; index < parameters.length; index++) {
-						InjectableParameter<?> resolver = parameters[index];
-
-						if (resolver != null) {
-							resolver.resolve(dictionary, index, resolved, debug);
-						} else {
-							resolved[index] = null;
-							debug[index] = null;
-						}
-					}
-
-					if (Trace.isDebugEnabled()) {
-						if (filterName != null) {
-							Trace.debug(String.format("invoke '%s' from script '%s' (bound as '%s')", method.getName(), filterName, name));
-						} else {
-							Trace.debug(String.format("invoke '%s' (bound as '%s')", method, name));
-						}
-
-						Trace.debug(String.format("provided parameters : '%s'", debugInjectableParameters(debug)));
-					}
-
-					Object value = method.invoke(script, resolved);
-
-					if (value instanceof Boolean) {
-						result = ((Boolean) value).booleanValue();
-
-						if (Trace.isDebugEnabled()) {
-							Trace.debug(String.format("method '%s' returned '%s'", method.getName(), value.toString()));
-						}
-					} else {
-						throw new CircuitAbortException("script did not return a boolean");
-					}
-				} catch (IllegalAccessException e) {
-					throw new CircuitAbortException("script method is not accessible", e);
-				} catch (IllegalArgumentException e) {
-					throw new CircuitAbortException("can't invoke script method", e);
-				} catch (InvocationTargetException e) {
-					Throwable cause = e.getCause();
-
-					if (cause instanceof CircuitAbortException) {
-						throw (CircuitAbortException) cause;
-					}
-
-					throw new CircuitAbortException("got error when invoking method", cause);
-				} catch (RuntimeException e) {
-					throw new CircuitAbortException("unexpected exception", e);
-				}
-
-				return result;
-			}
-		};
+	/**
+	 * creates an invocable resource from the given parameters
+	 * 
+	 * @param instance   reflected instance if any (maybe <code>null</code>)
+	 * @param clazz      reflected class definition
+	 * @param annotated  annotated method (maybe static)
+	 * @param name       resource name
+	 * @param filterName script filter name if applicable (maybe <code>null</code>)
+	 * @return a new invocable resource
+	 */
+	private static InvocableResource createInvocableResource(final Object instance, final Class<?> clazz, final Method annotated, final String name, final String filterName) {
+		return new ReflectedInvocableResource(instance, clazz, annotated, name, filterName);
 	}
 
-	private static FunctionResource createFunctionResource(final Object script, final Method method, final String name, final String filterName) {
+	private static FunctionResource createFunctionResource(final Object instance, final Class<?> clazz, final Method annotated, final String name, final String filterName) {
 		/* first argument of functions is the context dictionary, can be a Message */
+		final Method method = getBestPublicMethod(clazz, annotated);
 		final Class<?> dictionaryType = getFunctionDictionaryType(method);
 
 		return new FunctionResource() {
@@ -361,7 +386,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 						}
 					}
 
-					Object result = method.invoke(script, params);
+					Object result = method.invoke(instance, params);
 
 					if (Trace.isDebugEnabled()) {
 						if (result instanceof String) {
@@ -423,72 +448,19 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		return params.toArray();
 	}
 
-	private static <T> SubstitutableResource<T> createSubstitutableResource(final Object script, final Method method, final Class<T> returnType, String name, final String filterName) {
-		final InjectableParameter<?>[] parameters = processInjectableParameters(method);
+	private static <T> SubstitutableResource<T> createSubstitutableResource(final Object instance, final Class<?> clazz, final Method annotated, final Class<T> returnType, String name, final String filterName) {
+		return new ReflectedSubstitutableResource<T>(instance, clazz, annotated, returnType, name, filterName);
+	}
 
-		return new SubstitutableResource<T>() {
-			@Override
-			public T substitute(Dictionary dict) {
-				MethodDictionary dictionary = new MethodDictionary(dict instanceof Message ? (Message) dict : null, dict);
-				T result = null;
+	private static final Method getBestPublicMethod(Class<?> clazz, Method method) {
+		try {
+			/* find the best method according to parameters (must be public) */
+			method = clazz.getMethod(method.getName(), method.getParameterTypes());
+		} catch (NoSuchMethodException e) {
+			/* ignore exception and continue processing */
+		}
 
-				try {
-					Object[] resolved = new Object[parameters.length];
-					String[] debug = new String[parameters.length];
-
-					for (int index = 0; index < parameters.length; index++) {
-						InjectableParameter<?> resolver = parameters[index];
-
-						if (resolver != null) {
-							resolver.resolve(dictionary, index, resolved, debug);
-						} else {
-							resolved[index] = null;
-							debug[index] = null;
-						}
-					}
-
-					if (Trace.isDebugEnabled()) {
-						if (filterName != null) {
-							Trace.debug(String.format("substitute '%s' from script '%s' (bound as '%s')", method.getName(), filterName, name));
-						} else {
-							Trace.debug(String.format("substitute '%s' (bound as '%s')", method, name));
-						}
-
-						Trace.debug(String.format("provided parameters : '%s'", debugInjectableParameters(debug)));
-					}
-
-					Object value = method.invoke(script, resolved);
-
-					if (Trace.isDebugEnabled()) {
-						if (value instanceof String) {
-							Trace.debug(String.format("method '%s' returned \"%s\"", method.getName(), ScriptHelper.encodeLiteral((String) value)));
-						} else if ((value instanceof Boolean) || (value instanceof Number)) {
-							Trace.debug(String.format("method '%s' returned '%s'", method.getName(), value.toString()));
-						} else if (value != null) {
-							Trace.debug(String.format("method '%s' returned a value of type '%s'", method.getName(), value.getClass().getName()));
-						} else {
-							Trace.debug(String.format("method '%s' returned null", method.getName()));
-						}
-					}
-
-					if ((value != null) && (returnType.isAssignableFrom(value.getClass()))) {
-						result = returnType.cast(value);
-					}
-				} catch (IllegalAccessException e) {
-					Trace.error("script method is not accessible", e);
-				} catch (IllegalArgumentException e) {
-					Trace.error("can't invoke script method", e);
-				} catch (InvocationTargetException e) {
-					Throwable cause = e.getCause();
-
-					Trace.error("got error when invoking method", cause);
-				} catch (RuntimeException e) {
-					Trace.error("unexpected exception", e);
-				}
-
-				return result;
-			}
-		};
+		return method;
 	}
 
 	private static InjectableParameter<?>[] processInjectableParameters(Method method) {
@@ -585,10 +557,6 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		builder.append(']');
 
 		return builder.toString();
-	}
-
-	public final Map<String, ContextResource> getContextResources() {
-		return resources;
 	}
 
 	@Override
@@ -723,6 +691,185 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 			}
 
 			return debug;
+		}
+	}
+
+	private static class ReflectedResource<T> {
+		private final InjectableParameter<?>[] parameters;
+		private final Method method;
+		private final Object instance;
+		private final String name;
+		private final String filterName;
+		private final Class<T> returnType;
+
+		private ReflectedResource(Object instance, Class<?> clazz, Method annotated, Class<T> returnType, String name, String filterName) {
+			this.parameters = processInjectableParameters(annotated);
+			this.method = getBestPublicMethod(clazz, annotated);
+
+			this.instance = instance;
+			this.name = name;
+			this.filterName = filterName;
+			this.returnType = returnType;
+		}
+
+		protected void debugInvoke(Method method, String[] debug, String name, String filterName) {
+			Trace.debug(String.format("provided parameters : '%s'", debugInjectableParameters(debug)));
+		}
+
+		protected T invokeMethod(Dictionary dict) throws InvocationTargetException {
+			MethodDictionary dictionary = new MethodDictionary(dict instanceof Message ? (Message) dict : null, dict);
+			T result = null;
+
+			try {
+				Object[] resolved = new Object[parameters.length];
+				String[] debug = new String[parameters.length];
+
+				for (int index = 0; index < parameters.length; index++) {
+					InjectableParameter<?> resolver = parameters[index];
+
+					if (resolver != null) {
+						resolver.resolve(dictionary, index, resolved, debug);
+					} else {
+						resolved[index] = null;
+						debug[index] = null;
+					}
+				}
+
+				if (Trace.isDebugEnabled()) {
+					debugInvoke(method, debug, name, filterName);
+				}
+
+				Object value = method.invoke(instance, resolved);
+
+				if (Trace.isDebugEnabled()) {
+					if (value instanceof String) {
+						Trace.debug(String.format("method '%s' returned \"%s\"", method.getName(), ScriptHelper.encodeLiteral((String) value)));
+					} else if ((value instanceof Boolean) || (value instanceof Number)) {
+						Trace.debug(String.format("method '%s' returned '%s'", method.getName(), value.toString()));
+					} else if (value != null) {
+						Trace.debug(String.format("method '%s' returned a value of type '%s'", method.getName(), value.getClass().getName()));
+					} else {
+						Trace.debug(String.format("method '%s' returned null", method.getName()));
+					}
+				}
+
+				if ((value != null) && (returnType.isAssignableFrom(value.getClass()))) {
+					result = returnType.cast(value);
+				}
+			} catch (IllegalAccessException e) {
+				throw new IllegalStateException("method is not accessible", e);
+			}
+
+			return result;
+		}
+	}
+
+	private static class ReflectedInvocableResource extends ReflectedResource<Boolean> implements InvocableResource {
+		private ReflectedInvocableResource(Object instance, Class<?> clazz, Method annotated, String name, String filterName) {
+			super(instance, clazz, annotated, Boolean.class, name, filterName);
+		}
+
+		@Override
+		protected void debugInvoke(Method method, String[] debug, String name, String filterName) {
+			if (filterName != null) {
+				Trace.debug(String.format("invoke '%s' from script '%s' (bound as '%s')", method.getName(), filterName, name));
+			} else {
+				Trace.debug(String.format("invoke '%s' (bound as '%s')", method, name));
+			}
+
+			super.debugInvoke(method, debug, name, filterName);
+		}
+
+		@Override
+		public Boolean invoke(Message m) throws CircuitAbortException {
+			try {
+				Boolean result = super.invokeMethod(m);
+
+				if (result == null) {
+					throw new CircuitAbortException("method did not return a boolean");
+				}
+
+				return result;
+			} catch (InvocationTargetException e) {
+				Throwable cause = e.getCause();
+
+				if (cause instanceof CircuitAbortException) {
+					throw (CircuitAbortException) cause;
+				}
+
+				throw new CircuitAbortException("got error when invoking method", cause);
+			} catch (RuntimeException e) {
+				throw new CircuitAbortException("unexpected exception", e);
+			}
+		}
+	}
+
+	private static class ReflectedSubstitutableResource<T> extends ReflectedResource<T> implements SubstitutableResource<T> {
+		private ReflectedSubstitutableResource(Object instance, Class<?> clazz, Method annotated, Class<T> returnType, String name, String filterName) {
+			super(instance, clazz, annotated, returnType, name, filterName);
+		}
+
+		@Override
+		protected void debugInvoke(Method method, String[] debug, String name, String filterName) {
+			if (filterName != null) {
+				Trace.debug(String.format("substitute '%s' from script '%s' (bound as '%s')", method.getName(), filterName, name));
+			} else {
+				Trace.debug(String.format("substitute '%s' (bound as '%s')", method, name));
+			}
+
+			super.debugInvoke(method, debug, name, filterName);
+		}
+
+		@Override
+		public T substitute(Dictionary dict) {
+			try {
+				return super.invokeMethod(dict);
+			} catch (InvocationTargetException e) {
+				Throwable cause = e.getCause();
+
+				/*
+				 * since exceptions are silenced for substitutables, do not report an error but
+				 * show the stacktrace in debug
+				 */
+				Trace.debug("got error when invoking method", cause);
+			} catch (RuntimeException e) {
+				/*
+				 * since exceptions are silenced for substitutables, do not report an error but
+				 * show the stacktrace in debug
+				 */
+				Trace.debug("unexpected exception", e);
+			}
+
+			return null;
+		}
+	}
+
+	private static class ReflectedSubstitutableBooleanResource extends ReflectedInvocableResource implements SubstitutableResource<Boolean> {
+		private ReflectedSubstitutableBooleanResource(Object instance, Class<?> clazz, Method annotated, String name, String filterName) {
+			super(instance, clazz, annotated, name, filterName);
+		}
+
+		@Override
+		public Boolean substitute(Dictionary dict) {
+			try {
+				return super.invokeMethod(dict);
+			} catch (InvocationTargetException e) {
+				Throwable cause = e.getCause();
+
+				/*
+				 * since exceptions are silenced for substitutables, do not report an error but
+				 * show the stacktrace in debug
+				 */
+				Trace.debug("got error when invoking method", cause);
+			} catch (RuntimeException e) {
+				/*
+				 * since exceptions are silenced for substitutables, do not report an error but
+				 * show the stacktrace in debug
+				 */
+				Trace.debug("unexpected exception", e);
+			}
+
+			return null;
 		}
 	}
 }

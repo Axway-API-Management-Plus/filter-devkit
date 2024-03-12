@@ -16,7 +16,7 @@ A playground Dockerfile is provided. It provides an on-premise API Gateway, Poli
 
  - [Filter Code Generator (Java Quick Filters)](docs/QuickJavaFilter.md)
  - [Advanced script filter](docs/AdvancedScriptFilter.md)
- - Extension subsystem (child first ClassLoader, selector accessible methods and script extensions)
+ - [Extension subsystem](docs/Extensions.md) (child first ClassLoader, selector accessible methods and script extensions)
 
 ## Developer Feature
 
