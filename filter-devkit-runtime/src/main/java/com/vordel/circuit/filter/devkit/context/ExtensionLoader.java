@@ -5,10 +5,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
@@ -336,7 +338,7 @@ public final class ExtensionLoader implements LoadableModule {
 			ExtensionContext.reflect(resources, instance);
 
 			/* gather interface methods */
-			scanInterfaces(factory.getExtensionInterface(), methods);
+			scanScriptExtensionInterface(factory.getExtensionInterface(), methods);
 
 			/* bind proxy interface to script */
 			binder.bind(engine, factory.proxify(instance), methods.toArray(new Method[0]));
@@ -344,25 +346,49 @@ public final class ExtensionLoader implements LoadableModule {
 	}
 
 	/**
-	 *  scan all super interfaces for a given script extension
-	 *  
-	 * @param clazz class to be scanned
+	 * scan all super interfaces for a given script extension
+	 * 
+	 * @param clazz   class to be scanned
 	 * @param methods aggregated methods for all super interfaces found
 	 */
-	private static void scanInterfaces(Class<?> clazz, List<Method> methods) {
+	private static void scanScriptExtensionInterface(Class<?> clazz, List<Method> methods) {
+		Set<Method> seen = new HashSet<Method>();
+
+		scanScriptExtensionInterface(clazz, clazz, methods, seen);
+	}
+
+	/**
+	 * scan all super interfaces for a given script extension. ignoring overidden
+	 * methods
+	 * 
+	 * @param base    base interface
+	 * @param clazz   current interface
+	 * @param methods aggregated methods for all super interfaces found
+	 * @param seen    methods which are already aggregated
+	 */
+	private static void scanScriptExtensionInterface(Class<?> base, Class<?> clazz, List<Method> methods, Set<Method> seen) {
 		Class<?> superClazz = clazz.getSuperclass();
 		Class<?>[] interfaces = clazz.getInterfaces();
 
 		for (Method method : clazz.getDeclaredMethods()) {
-			methods.add(method);
-		}
+			try {
+				/* retrieve base method according to base class */
+				method = base.getMethod(method.getName(), method.getParameterTypes());
+			} catch (NoSuchMethodException e) {
+				/* ignore */
+			}
 
-		if ((superClazz != null) && (superClazz.isInterface())) {
-			scanInterfaces(superClazz, methods);
+			if (seen.add(method)) {
+				methods.add(method);
+			}
 		}
 
 		for (Class<?> impl : interfaces) {
-			scanInterfaces(impl, methods);
+			scanScriptExtensionInterface(base, impl, methods, seen);
+		}
+
+		if ((superClazz != null) && (superClazz.isInterface())) {
+			scanScriptExtensionInterface(base, superClazz, methods, seen);
 		}
 	}
 

@@ -1,5 +1,7 @@
 # Advanced Script Filter
 
+Goal of the Advanced Script Filter is to avoid use of Custom Filters whenever possible, because most problems of Custom Filters comes from GUI maintenance and deployment in the policy studio.
+
 The Advanced script filter is a feature which extends the classing scripting filter in order to provide the following functionalities:
  - Call Policies,
  - Resolve Selectors,
@@ -22,9 +24,6 @@ This filter brings the concept of 'Configuration Resource'. Resources are either
 
 Advanced Script Filter provide top level functions to the script to configure behavior and interact with attached resources
 
- - *setUnwrapCircuitAbortException((boolean)* : this function can be called in the script attach hook. It allows script to throw CircuitAbortException (which is not available in the base Script Filter)
- - *setExtendedInvoke(boolean)* : this function can be called in the script attach hook. its purpose is to provide the circuit to the invoke function.
- - *reflectExtension(string)* : this function can be called in the script attach hook. its purpose is to bind additional top level functions from script extensions. This function takes a fully qualified interface name as argument.
  - *getContextResource(string)* : Retrieve an attached resource using its name in the script configuration
  - *getInvocableResource(string)* : Retrieve an attached resource which is invokable (Ex: a policy). If the configured resource does not exists or is not invokable, null is returned.
  - *getKPSResource(string)* : Retrieve an attached resource which is a KPS Table. If the configured resource does not exists or is not a KPS Table, null is returned.
@@ -33,4 +32,15 @@ Advanced Script Filter provide top level functions to the script to configure be
  - *substituteResource(string)* : Execute selector substitution. It the resource does not exists or is not substitutable null is returned. Even if the substitution triggers an invocation, exception are not thrown (in this case null is returned). The return value is the result of substitution.
  - *getExportedResources()* : Retrieve this script context for exporting in the message (to be used by another script or extension).
  - *getFilterName()* : Retrieve the filter configured name. Purpose of this method is for debugging and diagnostic.
+
+Additional top level function are provided for filter attachment for all script languages
+
+ - *setUnwrapCircuitAbortException((boolean)* : this function can be called in the script attach hook. It allows script to throw CircuitAbortException (which is not available in the base Script Filter). Even if using groovy reflected entry points this option may be set when calling [Script Extensions](Extensions.md)
+ - *setExtendedInvoke(boolean)* : this function can be called in the script attach hook. its purpose is to provide the circuit to the invoke function.
+ - *reflectExtension(string)* : this function can be called in the script attach hook. its purpose is to bind additional top level functions from script extensions. This function takes a fully qualified interface name as argument.
+
+Groovy scripts define additional runtime functions. Reflection on groovy scripts produce illegal reflection messages in the instance startup log which can be safely ignored.
+
+ - *reflectResources(script)* : reflect the script for methods exported as resources. It must be called with the 'this' keyword as argument. It will search for methods annotated with [InvocableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/InvocableMethod.java), [SubstitutableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/SubstitutableMethod.java) and [ExtensionFunction](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionFunction.java) and will add them to the script's resources. See [Extension Context](Extensions.md) documentation for further information about reflection and injection rules for each annotation.
+ - *reflectEntryPoints(script)* : reflect the script for invoke and detach methods. It must be called with the 'this' keyword as argument. It will search for *invoke()* and *detach()* methods and will replace JSR-223 invocation by a direct Java reflection call. Method arguments are injected according to the requested type.
 

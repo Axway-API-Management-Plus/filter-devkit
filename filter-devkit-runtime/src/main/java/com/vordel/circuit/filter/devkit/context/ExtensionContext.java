@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -106,41 +107,42 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	 */
 	private static <T> void reflect(Map<String, ContextResource> resources, T instance, Class<? extends T> clazz, String filterName) {
 		if (clazz != null) {
-			Map<Method, InvocableMethod> invocables = new HashMap<Method, InvocableMethod>();
-			Map<Method, ExtensionFunction> functions = new HashMap<Method, ExtensionFunction>();
-			Map<Method, SubstitutableMethod> substitutables = new HashMap<Method, SubstitutableMethod>();
-			Set<Method> methods = new HashSet<Method>();
+			Map<Method, AnnotatedMethod> methods = new HashMap<Method, AnnotatedMethod>();
 
 			Set<String> exported = new HashSet<String>();
 			Set<String> duplicates = new HashSet<String>();
 
-			for (Method method : scanMethods(clazz, new ArrayList<Method>())) {
-				InvocableMethod invocable = method.getAnnotation(InvocableMethod.class);
-				ExtensionFunction function = method.getAnnotation(ExtensionFunction.class);
-				SubstitutableMethod substitutable = method.getAnnotation(SubstitutableMethod.class);
+			ExtensionContext.scanAnnotatedMethod(clazz, clazz, methods);
 
-				addAnnotatedMethod(invocables, methods, exported, duplicates, method, invocable, ExtensionContext::name);
-				addAnnotatedMethod(functions, methods, exported, duplicates, method, function, ExtensionContext::name);
-				addAnnotatedMethod(substitutables, methods, exported, duplicates, method, substitutable, ExtensionContext::name);
+			for (AnnotatedMethod annotated : methods.values()) {
+				InvocableMethod invocable = annotated.getInvocableMethod();
+				ExtensionFunction function = annotated.getExtensionFunction();
+				SubstitutableMethod substitutable = annotated.getSubstitutableMethod();
+				Method method = annotated.getMethod();
+
+				addAnnotatedMethod(exported, duplicates, method, invocable, ExtensionContext::name);
+				addAnnotatedMethod(exported, duplicates, method, function, ExtensionContext::name);
+				addAnnotatedMethod(exported, duplicates, method, substitutable, ExtensionContext::name);
 			}
 
+			filterAnnotatedMethods(methods);
+
 			if (resources != null) {
-				for (Method method : methods) {
+				for (AnnotatedMethod annotated : methods.values()) {
+					Method method = annotated.getMethod();
 					int modifiers = method.getModifiers();
 
-					if (!Modifier.isPublic(modifiers)) {
-						Trace.error(String.format("method '%s' must be public", method.getName()));
-					} else if ((instance != null) || Modifier.isStatic(modifiers)) {
-						InvocableMethod invocable = invocables.get(method);
-						ExtensionFunction function = functions.get(method);
-						SubstitutableMethod substitutable = substitutables.get(method);
+					if ((instance != null) || Modifier.isStatic(modifiers)) {
+						InvocableMethod invocable = annotated.getInvocableMethod();
+						ExtensionFunction function = annotated.getExtensionFunction();
+						SubstitutableMethod substitutable = annotated.getSubstitutableMethod();
 
 						if (function != null) {
 							if ((invocable != null) || (substitutable != null)) {
 								Trace.error(String.format("method '%s' : ExtensionFunction can't be combined with Invocable or Substitutable", method.getName()));
 							} else {
 								String resourceName = name(method, function);
-								ContextResource resource = createFunctionResource(instance, clazz, method, resourceName, filterName);
+								ContextResource resource = createFunctionResource(instance, clazz, annotated, resourceName, filterName);
 
 								registerResource(resources, duplicates, resourceName, resource);
 							}
@@ -159,13 +161,13 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 											/*
 											 * special case Invocable or Substitutable returning boolean with same name
 											 */
-											resource = new ReflectedSubstitutableBooleanResource(instance, clazz, method, invocableName, filterName);
+											resource = new ReflectedSubstitutableBooleanResource(instance, clazz, annotated, invocableName, filterName);
 											substitutable = null;
 										}
 									}
 
 									if (resource == null) {
-										resource = createInvocableResource(instance, clazz, method, invocableName, filterName);
+										resource = createInvocableResource(instance, clazz, annotated, invocableName, filterName);
 									}
 
 									registerResource(resources, duplicates, invocableName, resource);
@@ -176,7 +178,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 
 							if (substitutable != null) {
 								String substitutableName = name(method, substitutable);
-								ContextResource resource = createSubstitutableResource(instance, clazz, method, returnType, substitutableName, filterName);
+								ContextResource resource = createSubstitutableResource(instance, clazz, annotated, returnType, substitutableName, filterName);
 
 								registerResource(resources, duplicates, substitutableName, resource);
 							}
@@ -208,22 +210,18 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	/**
 	 * record an annotated method and check for duplicate names
 	 * 
-	 * @param <A>          annotation type parameter. Used to link the name function
-	 * @param annotations  map of seen annotations
-	 * @param methods      set of methods to be reflected
 	 * @param exported     set of exported names
 	 * @param duplicates   set of duplicate names
 	 * @param method       method to be added
 	 * @param annotation   method annotation
 	 * @param nameFunction function to retrieve resource name from annotation and
 	 *                     method
+	 * 
+	 * @param <A>          annotation type parameter. Used to link the name function
 	 */
-	private static <A> void addAnnotatedMethod(Map<Method, A> annotations, Set<Method> methods, Set<String> exported, Set<String> duplicates, Method method, A annotation, BiFunction<Method, A, String> nameFunction) {
+	private static <A> void addAnnotatedMethod(Set<String> exported, Set<String> duplicates, Method method, A annotation, BiFunction<Method, A, String> nameFunction) {
 		if (annotation != null) {
 			String name = nameFunction.apply(method, annotation);
-
-			annotations.put(method, annotation);
-			methods.add(method);
 
 			if (!exported.add(name)) {
 				duplicates.add(name);
@@ -285,33 +283,57 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	/**
 	 * recursively scan class for annotated methods
 	 * 
-	 * @param clazz     reflected class
-	 * @param annotated aggregated list of annotated methods
-	 * @return aggregated list of annotated methods
+	 * @param base    base class
+	 * @param clazz   current class
+	 * @param methods current public methods
 	 */
-	private static List<Method> scanMethods(Class<?> clazz, List<Method> annotated) {
+	private static void scanAnnotatedMethod(Class<?> base, Class<?> clazz, Map<Method, AnnotatedMethod> methods) {
 		Class<?> superClazz = clazz.getSuperclass();
 		Class<?>[] interfaces = clazz.getInterfaces();
 
 		if (superClazz != null) {
-			annotated = scanMethods(superClazz, annotated);
+			scanAnnotatedMethod(base, superClazz, methods);
 		}
 
 		for (Class<?> impl : interfaces) {
-			annotated = scanMethods(impl, annotated);
+			scanAnnotatedMethod(base, impl, methods);
 		}
 
 		for (Method method : clazz.getDeclaredMethods()) {
-			InvocableMethod invocable = method.getAnnotation(InvocableMethod.class);
-			ExtensionFunction function = method.getAnnotation(ExtensionFunction.class);
-			SubstitutableMethod substitutable = method.getAnnotation(SubstitutableMethod.class);
+			AnnotatedMethod parent = null;
+			Method top = null;
 
-			if ((invocable != null) || (function != null) || (substitutable != null)) {
-				annotated.add(method);
+			try {
+				top = base.getMethod(method.getName(), method.getParameterTypes());
+				parent = methods.get(top);
+			} catch (NoSuchMethodException e) {
+				/* ignore, method is not public */
+			}
+
+			AnnotatedMethod annotated = new AnnotatedMethod(parent, method, top);
+
+			if ((top == null) && annotated.hasExtensionAnnotation() && (!Modifier.isPublic(method.getModifiers()))) {
+				Trace.error(String.format("method '%s' must be public", method.getName()));
+			} else {
+				/* this method has annotations and has a public member in the base class */
+				methods.put(top, annotated);
 			}
 		}
+	}
 
-		return annotated;
+	/**
+	 * cleanup method map after scan (remove methods which are not annotated
+	 * 
+	 * @param methods public reflected methods
+	 */
+	private static void filterAnnotatedMethods(Map<Method, AnnotatedMethod> methods) {
+		Iterator<AnnotatedMethod> iterator = methods.values().iterator();
+
+		while (iterator.hasNext()) {
+			if (!iterator.next().hasExtensionAnnotation()) {
+				iterator.remove();
+			}
+		}
 	}
 
 	/**
@@ -354,13 +376,13 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	 * @param filterName script filter name if applicable (maybe <code>null</code>)
 	 * @return a new invocable resource
 	 */
-	private static InvocableResource createInvocableResource(final Object instance, final Class<?> clazz, final Method annotated, final String name, final String filterName) {
+	private static InvocableResource createInvocableResource(final Object instance, final Class<?> clazz, final AnnotatedMethod annotated, final String name, final String filterName) {
 		return new ReflectedInvocableResource(instance, clazz, annotated, name, filterName);
 	}
 
-	private static FunctionResource createFunctionResource(final Object instance, final Class<?> clazz, final Method annotated, final String name, final String filterName) {
+	private static FunctionResource createFunctionResource(final Object instance, final Class<?> clazz, final AnnotatedMethod annotated, final String name, final String filterName) {
 		/* first argument of functions is the context dictionary, can be a Message */
-		final Method method = getBestPublicMethod(clazz, annotated);
+		final Method method = annotated.getMethod();
 		final Class<?> dictionaryType = getFunctionDictionaryType(method);
 
 		return new FunctionResource() {
@@ -448,25 +470,14 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		return params.toArray();
 	}
 
-	private static <T> SubstitutableResource<T> createSubstitutableResource(final Object instance, final Class<?> clazz, final Method annotated, final Class<T> returnType, String name, final String filterName) {
+	private static <T> SubstitutableResource<T> createSubstitutableResource(final Object instance, final Class<?> clazz, final AnnotatedMethod annotated, final Class<T> returnType, String name, final String filterName) {
 		return new ReflectedSubstitutableResource<T>(instance, clazz, annotated, returnType, name, filterName);
 	}
 
-	private static final Method getBestPublicMethod(Class<?> clazz, Method method) {
-		try {
-			/* find the best method according to parameters (must be public) */
-			method = clazz.getMethod(method.getName(), method.getParameterTypes());
-		} catch (NoSuchMethodException e) {
-			/* ignore exception and continue processing */
-		}
-
-		return method;
-	}
-
-	private static InjectableParameter<?>[] processInjectableParameters(Method method) {
+	private static InjectableParameter<?>[] processInjectableParameters(AnnotatedMethod method) {
 		List<InjectableParameter<?>> parameters = new ArrayList<InjectableParameter<?>>();
 		Annotation[][] annotations = method.getParameterAnnotations();
-		Class<?>[] parameterTypes = method.getParameterTypes();
+		Class<?>[] parameterTypes = method.getMethod().getParameterTypes();
 
 		for (int index = 0; index < parameterTypes.length; index++) {
 			Class<?> type = parameterTypes[index];
@@ -569,6 +580,90 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	 */
 	public final ClassLoader getClassLoader() {
 		return clazz.getClassLoader();
+	}
+
+	private static class AnnotatedMethod {
+		private final AnnotatedMethod parent;
+		private final Method method;
+
+		private final ExtensionFunction function;
+		private final InvocableMethod invocable;
+		private final SubstitutableMethod substitutable;
+		private final Method top;
+
+		private AnnotatedMethod(AnnotatedMethod parent, Method method, Method top) {
+			this.method = method;
+			this.top = top;
+			this.parent = parent;
+
+			this.function = method.getAnnotation(ExtensionFunction.class);
+			this.invocable = method.getAnnotation(InvocableMethod.class);
+			this.substitutable = method.getAnnotation(SubstitutableMethod.class);
+		}
+
+		public Method getMethod() {
+			return top;
+		}
+
+		public boolean hasExtensionAnnotation() {
+			return (function != null) || (invocable != null) || (substitutable != null);
+		}
+
+		public ExtensionFunction getExtensionFunction() {
+			if (hasExtensionAnnotation()) {
+				return function;
+			} else if (parent != null) {
+				return parent.getExtensionFunction();
+			}
+
+			return null;
+		}
+
+		public InvocableMethod getInvocableMethod() {
+			if (hasExtensionAnnotation()) {
+				return invocable;
+			} else if (parent != null) {
+				return parent.getInvocableMethod();
+			}
+
+			return null;
+		}
+
+		public SubstitutableMethod getSubstitutableMethod() {
+			if (hasExtensionAnnotation()) {
+				return substitutable;
+			} else if (parent != null) {
+				return parent.getSubstitutableMethod();
+			}
+
+			return null;
+		}
+
+		public Annotation[][] getParameterAnnotations() {
+			int length = method.getParameterCount();
+			Annotation[][] annotations = new Annotation[length][];
+
+			for (int index = 0; index < length; index++) {
+				annotations[index] = getParameterAnnotations(index);
+			}
+
+			return annotations;
+		}
+
+		public Annotation[] getParameterAnnotations(int index) {
+			Annotation[][] annotations = method.getParameterAnnotations();
+
+			for (Annotation annotation : annotations[index]) {
+				Class<? extends Annotation> annotationType = annotation.annotationType();
+
+				if (annotationType.equals(DictionaryAttribute.class) || annotationType.equals(SelectorExpression.class)) {
+					return annotations[index];
+				}
+			}
+
+			/* no annotations defined for parameter return default result for method */
+			return parent == null ? annotations[index] : parent.getParameterAnnotations(index);
+		}
 	}
 
 	private static class MethodDictionary implements Dictionary {
@@ -702,9 +797,9 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		private final String filterName;
 		private final Class<T> returnType;
 
-		private ReflectedResource(Object instance, Class<?> clazz, Method annotated, Class<T> returnType, String name, String filterName) {
+		private ReflectedResource(Object instance, Class<?> clazz, AnnotatedMethod annotated, Class<T> returnType, String name, String filterName) {
 			this.parameters = processInjectableParameters(annotated);
-			this.method = getBestPublicMethod(clazz, annotated);
+			this.method = annotated.getMethod();
 
 			this.instance = instance;
 			this.name = name;
@@ -765,7 +860,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	}
 
 	private static class ReflectedInvocableResource extends ReflectedResource<Boolean> implements InvocableResource {
-		private ReflectedInvocableResource(Object instance, Class<?> clazz, Method annotated, String name, String filterName) {
+		private ReflectedInvocableResource(Object instance, Class<?> clazz, AnnotatedMethod annotated, String name, String filterName) {
 			super(instance, clazz, annotated, Boolean.class, name, filterName);
 		}
 
@@ -805,7 +900,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	}
 
 	private static class ReflectedSubstitutableResource<T> extends ReflectedResource<T> implements SubstitutableResource<T> {
-		private ReflectedSubstitutableResource(Object instance, Class<?> clazz, Method annotated, Class<T> returnType, String name, String filterName) {
+		private ReflectedSubstitutableResource(Object instance, Class<?> clazz, AnnotatedMethod annotated, Class<T> returnType, String name, String filterName) {
 			super(instance, clazz, annotated, returnType, name, filterName);
 		}
 
@@ -845,7 +940,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	}
 
 	private static class ReflectedSubstitutableBooleanResource extends ReflectedInvocableResource implements SubstitutableResource<Boolean> {
-		private ReflectedSubstitutableBooleanResource(Object instance, Class<?> clazz, Method annotated, String name, String filterName) {
+		private ReflectedSubstitutableBooleanResource(Object instance, Class<?> clazz, AnnotatedMethod annotated, String name, String filterName) {
 			super(instance, clazz, annotated, name, filterName);
 		}
 
