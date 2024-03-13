@@ -106,7 +106,7 @@ ${extensions['name'].exportedFunction(arg1, arg2, arg3}
 
 Reflection rules :
 
- - A method if marked as exported to the extension context if any of [InvocableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/InvocableMethod.java), [SubstitutableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/SubstitutableMethod.java) or [ExtensionFunction](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionFunction.java) annotations are seen on a given method,
+ - A method is marked as exported to the extension context if any of [InvocableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/InvocableMethod.java), [SubstitutableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/SubstitutableMethod.java) or [ExtensionFunction](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionFunction.java) annotations are seen on a given method,
  - All exported methods must be public,
  - If the [ExtensionModulePlugin](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionModulePlugin.java) annotation is not used, only static method export is allowed. Otherwise, the class is instanciated with the no-arg constructor,
  - Annotations must be set on concrete or abstract classes not on interfaces,
