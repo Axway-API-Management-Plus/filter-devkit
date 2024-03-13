@@ -19,6 +19,7 @@ import com.vordel.circuit.filter.devkit.context.resources.CacheResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceFactory;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
+import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
 import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
 import com.vordel.circuit.filter.devkit.context.resources.KPSResource;
 import com.vordel.common.Dictionary;
@@ -316,6 +317,11 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		@Override
 		public InvocableResource getInvocableResource(String name) {
 			return exports.getInvocableResource(name);
+		}
+
+		@Override
+		public FunctionResource getFunctionResource(String name) {
+			return exports.getFunctionResource(name);
 		}
 
 		@Override

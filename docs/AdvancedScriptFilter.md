@@ -26,6 +26,7 @@ Advanced Script Filter provide top level functions to the script to configure be
 
  - *getContextResource(string)* : Retrieve an attached resource using its name in the script configuration
  - *getInvocableResource(string)* : Retrieve an attached resource which is invokable (Ex: a policy). If the configured resource does not exists or is not invokable, null is returned.
+ - *getFunctionResource(string)* : Retrieve an attached resource which is a function (may come from groovy reflection or script extension). If the configured resource does not exists or is not a function, null is returned.
  - *getKPSResource(string)* : Retrieve an attached resource which is a KPS Table. If the configured resource does not exists or is not a KPS Table, null is returned.
  - *getCacheResource(string)* : Retrieve an attached resource which is a KPS Table. If the configured resource does not exists or is not a KPS Table, null is returned.
  - *invokeResource(string)* : Invoke the target resource. It the resource does not exists or is not invokable, null is returned. Otherwise a Boolean is returned reflecting the status of execution. This method may also throw a CircuitAbortException.

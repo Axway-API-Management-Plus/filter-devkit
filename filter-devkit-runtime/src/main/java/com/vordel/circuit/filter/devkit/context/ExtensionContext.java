@@ -112,7 +112,8 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 			Set<String> exported = new HashSet<String>();
 			Set<String> duplicates = new HashSet<String>();
 
-			ExtensionContext.scanAnnotatedMethod(clazz, clazz, methods);
+			/* retrieve all annotated methods for this class */
+			ExtensionContext.scanAnnotatedMethod(clazz, methods);
 
 			for (AnnotatedMethod annotated : methods.values()) {
 				InvocableMethod invocable = annotated.getInvocableMethod();
@@ -124,8 +125,6 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 				addAnnotatedMethod(exported, duplicates, method, function, ExtensionContext::name);
 				addAnnotatedMethod(exported, duplicates, method, substitutable, ExtensionContext::name);
 			}
-
-			filterAnnotatedMethods(methods);
 
 			if (resources != null) {
 				for (AnnotatedMethod annotated : methods.values()) {
@@ -160,6 +159,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 										if (invocableName.equals(substitutableName)) {
 											/*
 											 * special case Invocable or Substitutable returning boolean with same name
+											 * on same method
 											 */
 											resource = new ReflectedSubstitutableBooleanResource(instance, clazz, annotated, invocableName, filterName);
 											substitutable = null;
@@ -283,40 +283,59 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	/**
 	 * recursively scan class for annotated methods
 	 * 
-	 * @param base    base class
 	 * @param clazz   current class
 	 * @param methods current public methods
 	 */
-	private static void scanAnnotatedMethod(Class<?> base, Class<?> clazz, Map<Method, AnnotatedMethod> methods) {
-		Class<?> superClazz = clazz.getSuperclass();
-		Class<?>[] interfaces = clazz.getInterfaces();
+	private static void scanAnnotatedMethod(Class<?> clazz, Map<Method, AnnotatedMethod> methods) {
+		Set<Class<?>> seen = new HashSet<Class<?>>();
 
-		if (superClazz != null) {
-			scanAnnotatedMethod(base, superClazz, methods);
-		}
+		scanAnnotatedMethod(clazz, clazz, methods, seen);
+		filterAnnotatedMethods(methods);
+	}
 
-		for (Class<?> impl : interfaces) {
-			scanAnnotatedMethod(base, impl, methods);
-		}
+	/**
+	 * recursively scan class for annotated methods. This method takes care of
+	 * checking if class has already been reflected. Also it returns a map or
+	 * annotated method using the top concrete implementation as key.
+	 * 
+	 * @param base    base top class
+	 * @param clazz   current class
+	 * @param methods current public methods
+	 * @param seen    already reflected classes and interfaces
+	 */
+	private static void scanAnnotatedMethod(Class<?> base, Class<?> clazz, Map<Method, AnnotatedMethod> methods, Set<Class<?>> seen) {
+		if (seen.add(clazz)) {
+			Class<?> superClazz = clazz.getSuperclass();
+			Class<?>[] interfaces = clazz.getInterfaces();
 
-		for (Method method : clazz.getDeclaredMethods()) {
-			AnnotatedMethod parent = null;
-			Method top = null;
-
-			try {
-				top = base.getMethod(method.getName(), method.getParameterTypes());
-				parent = methods.get(top);
-			} catch (NoSuchMethodException e) {
-				/* ignore, method is not public */
+			if (superClazz != null) {
+				scanAnnotatedMethod(base, superClazz, methods, seen);
 			}
 
-			AnnotatedMethod annotated = new AnnotatedMethod(parent, method, top);
+			for (Class<?> impl : interfaces) {
+				scanAnnotatedMethod(base, impl, methods, seen);
+			}
 
-			if ((top == null) && annotated.hasExtensionAnnotation() && (!Modifier.isPublic(method.getModifiers()))) {
-				Trace.error(String.format("method '%s' must be public", method.getName()));
-			} else {
-				/* this method has annotations and has a public member in the base class */
-				methods.put(top, annotated);
+			for (Method method : clazz.getDeclaredMethods()) {
+				AnnotatedMethod parent = null;
+				Method top = null;
+
+				try {
+					top = base.getMethod(method.getName(), method.getParameterTypes());
+					parent = methods.get(top);
+				} catch (NoSuchMethodException e) {
+					/* ignore, method is not public */
+				}
+
+				AnnotatedMethod annotated = new AnnotatedMethod(parent, method, top);
+
+				if ((top == null) && annotated.hasExtensionAnnotation() && (!Modifier.isPublic(method.getModifiers()))) {
+					/* if this method is not public and it have extension annotations display it */
+					Trace.error(String.format("annotated method '%s' must be public", method.getName()));
+				} else if (top != null) {
+					/* if this method has a exposed public member, save it */
+					methods.put(top, annotated);
+				}
 			}
 		}
 	}
@@ -380,25 +399,38 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		return new ReflectedInvocableResource(instance, clazz, annotated, name, filterName);
 	}
 
+	/**
+	 * creates an function resource from the given parameters
+	 * 
+	 * @param instance   reflected instance if any (maybe <code>null</code>)
+	 * @param clazz      reflected class definition
+	 * @param annotated  annotated method (maybe static)
+	 * @param name       resource name
+	 * @param filterName script filter name if applicable (maybe <code>null</code>)
+	 * @return a new function resource
+	 */
 	private static FunctionResource createFunctionResource(final Object instance, final Class<?> clazz, final AnnotatedMethod annotated, final String name, final String filterName) {
 		/* first argument of functions is the context dictionary, can be a Message */
 		final Method method = annotated.getMethod();
 		final Class<?> dictionaryType = getFunctionDictionaryType(method);
 
+		if (dictionaryType == null) {
+			if (filterName != null) {
+				Trace.error(String.format("first argument of '%s' in script '%s' must be a dictionary", method.getName(), filterName));
+			} else {
+				Trace.error(String.format("first argument of '%s' must be a dictionary", method));
+			}
+
+			return null;
+		}
+
 		return new FunctionResource() {
 			@Override
 			public Object invoke(Dictionary dict, Object... args) throws CircuitAbortException {
 				try {
-					Object[] params = null;
-
-					if (dictionaryType != null) {
-						/* update arguments and prepend message/dictionary */
-						Message msg = dict instanceof Message ? (Message) dict : null;
-
-						params = ContextResourceResolver.coerceFunctionArguments(method, setupParams(msg, dict, dictionaryType, args));
-					} else {
-						params = ContextResourceResolver.coerceFunctionArguments(method, args);
-					}
+					/* update arguments and prepend message/dictionary */
+					Message msg = dict instanceof Message ? (Message) dict : null;
+					Object[] params = ContextResourceResolver.coerceFunctionArguments(method, setupParams(msg, dict, dictionaryType, args));
 
 					if (Trace.isDebugEnabled()) {
 						if (filterName != null) {
@@ -442,6 +474,12 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		};
 	}
 
+	/**
+	 * Check if the first argument of function is a dictionary.
+	 * 
+	 * @param method method to be checked
+	 * @return dictionary class or null if not dictionary.
+	 */
 	private static Class<?> getFunctionDictionaryType(Method method) {
 		Class<?>[] parameterTypes = method.getParameterTypes();
 
@@ -454,13 +492,27 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		return Dictionary.class.isAssignableFrom(dictionaryType) ? dictionaryType : null;
 	}
 
+	/**
+	 * prepend function dictionary to arguments
+	 * 
+	 * @param msg      message argument
+	 * @param dict     dictionary (general selector dictionary type. Usually same
+	 *                 object as given msg parameter)
+	 * @param dictType dictionary requested by function
+	 * @param args     original function call argument list
+	 * @return argument list prepended by best dictionary parameter (or
+	 *         <code>null</code> if not compatible)
+	 */
 	private static Object[] setupParams(Message msg, Dictionary dict, Class<?> dictType, Object[] args) {
 		List<Object> params = new ArrayList<Object>(args.length + 1);
+		Class<?> clazz = msg == null ? Message.class : msg.getClass();
 
-		if (Message.class.isAssignableFrom(dictType)) {
+		if (dictType.isAssignableFrom(clazz)) {
 			params.add(msg);
-		} else {
+		} else if (dictType.isAssignableFrom(Dictionary.class)) {
 			params.add(dict);
+		} else {
+			params.add(null);
 		}
 
 		for (Object arg : args) {
@@ -470,16 +522,36 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 		return params.toArray();
 	}
 
+	/**
+	 * creates an substitutable resource from the given parameters
+	 * 
+	 * @param <T>        type parameter locked to method return type
+	 * @param instance   reflected instance if any (maybe <code>null</code>)
+	 * @param clazz      reflected class definition
+	 * @param annotated  annotated method (maybe static)
+	 * @param returnType method return type
+	 * @param name       resource name
+	 * @param filterName script filter name if applicable (maybe <code>null</code>)
+	 * @return a new substitutable resource
+	 */
 	private static <T> SubstitutableResource<T> createSubstitutableResource(final Object instance, final Class<?> clazz, final AnnotatedMethod annotated, final Class<T> returnType, String name, final String filterName) {
 		return new ReflectedSubstitutableResource<T>(instance, clazz, annotated, returnType, name, filterName);
 	}
 
+	/**
+	 * Analyse invocable and substitutable parameters for parameter injection.
+	 * Purpose of this method is to preprocess injection of parameters to save time
+	 * when invocation is requested.
+	 * 
+	 * @param method annotated method to be analysed
+	 * @return parameter injection information.
+	 */
 	private static InjectableParameter<?>[] processInjectableParameters(AnnotatedMethod method) {
-		List<InjectableParameter<?>> parameters = new ArrayList<InjectableParameter<?>>();
 		Annotation[][] annotations = method.getParameterAnnotations();
 		Class<?>[] parameterTypes = method.getMethod().getParameterTypes();
+		InjectableParameter<?>[] parameters = new InjectableParameter<?>[parameterTypes.length];
 
-		for (int index = 0; index < parameterTypes.length; index++) {
+		for (int index = 0; index < parameters.length; index++) {
 			Class<?> type = parameterTypes[index];
 
 			/* ensure that requested type is not a java primitive */
@@ -499,13 +571,22 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 				type = Double.class;
 			}
 
-			processInjectableParameter(parameters, type, annotations[index]);
+			parameters[index] = processInjectableParameter(type, annotations[index]);
 		}
 
-		return parameters.toArray(new InjectableParameter<?>[0]);
+		return parameters;
 	}
 
-	private static <T> void processInjectableParameter(List<InjectableParameter<?>> parameters, Class<T> type, Annotation[] annotations) {
+	/**
+	 * create parameter injector from requested annotated class
+	 * 
+	 * @param <T>         type parameter locked to requested type (needed for
+	 *                    injector constructor)
+	 * @param type        requested parameter type
+	 * @param annotations available annotations on method parameter
+	 * @return a new parameter injector.
+	 */
+	private static <T> InjectableParameter<?> processInjectableParameter(Class<T> type, Annotation[] annotations) {
 		DictionaryAttribute attribute = null;
 		SelectorExpression selector = null;
 		InjectableParameter<?> parameter = null;
@@ -546,7 +627,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 			Trace.error(String.format("can't inject type '%s'", type.getName()));
 		}
 
-		parameters.add(parameter);
+		return parameter;
 	}
 
 	private static String debugInjectableParameters(String[] debug) {
