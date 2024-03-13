@@ -13,11 +13,25 @@ apply from: rootProject.file('apigateway.gradle')
 deployRuntime.enabled = true
 
 configurations {
+	compiler_extra
+	compiler_tools {
+		transitive = false
+	}
 	compileOnly.extendsFrom(apigw_central)
 }
 
+task deployCompiler(type: Copy, dependsOn: jar) {
+	from configurations.compiler_extra, configurations.compiler_tools
+	into file("${apigw_vdistdir}/ext/extra/compiler")
+}
+
+tasks.deployRuntime.dependsOn(deployCompiler)
+
 dependencies {
-    apigw_deploy 'org.eclipse.jdt:ecj:3.16.0'
+    //apigw_deploy 'coords'
+	// adds annotation processor and ecj compiler to deployed classes
+	compiler_extra 'org.eclipse.jdt:ecj:3.16.0'
+	compiler_tools project(':filter-devkit-tools')
 
 	implementation 'org.eclipse.jdt:ecj:3.16.0'
 

@@ -17,9 +17,16 @@ public class CompilerFileManager extends ForwardingJavaFileManager<StandardJavaF
 	}
 
 	public JavaFileObject getJavaFileForOutput(Location location, String name, JavaFileObject.Kind kind, FileObject sibling) throws IOException {
-		DynamicByteCode mbc = new DynamicByteCode(name);
+		DynamicResource mbc = new DynamicResource(name, kind);
 
-		xcl.defineClass(name, mbc);
+		switch(kind) {
+		case CLASS:
+			xcl.defineClass(name, mbc);
+			break;
+		default:
+			break;
+		
+		}
 
 		return mbc;
 	}

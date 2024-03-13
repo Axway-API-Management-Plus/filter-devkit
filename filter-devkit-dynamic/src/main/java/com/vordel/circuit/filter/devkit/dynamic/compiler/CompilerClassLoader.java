@@ -14,13 +14,13 @@ import com.vordel.circuit.filter.devkit.context.ExtensionClassLoader;
 import com.vordel.trace.Trace;
 
 public class CompilerClassLoader extends ExtensionClassLoader {
-	private final Map<String, DynamicByteCode> code = new HashMap<String, DynamicByteCode>();
+	private final Map<String, DynamicResource> code = new HashMap<String, DynamicResource>();
 
 	public CompilerClassLoader(File root, ClassLoader parent) {
 		super(toURLs(root), parent);
 	}
 
-	protected void defineClass(String name, DynamicByteCode mbc) {
+	protected void defineClass(String name, DynamicResource mbc) {
 		name = name.replace("/", ".");
 
 		code.put(name, mbc);
@@ -28,7 +28,7 @@ public class CompilerClassLoader extends ExtensionClassLoader {
 
 	@Override
 	protected Class<?> findClass(String name) throws ClassNotFoundException {
-		DynamicByteCode mbc = code.remove(name);
+		DynamicResource mbc = code.remove(name);
 		Class<?> result = null;
 
 		if (mbc == null) {
@@ -61,7 +61,7 @@ public class CompilerClassLoader extends ExtensionClassLoader {
 
 		return classes;
 	}
-	
+
 	private static URL[] toURLs(File root) {
 		try {
 			return Collections.singleton(root.toURI().toURL()).toArray(new URL[1]);

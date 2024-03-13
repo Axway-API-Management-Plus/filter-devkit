@@ -5,13 +5,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
+import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 
-public class DynamicByteCode extends SimpleJavaFileObject {
+public class DynamicResource extends SimpleJavaFileObject {
 	private ByteArrayOutputStream baos;
 
-	public DynamicByteCode(String name) {
-		super(URI.create(name), Kind.CLASS);
+	public DynamicResource(String name, JavaFileObject.Kind kind) {
+		super(URI.create(name), kind);
 	}
 
 	public CharSequence getCharContent(boolean ignoreEncodingErrors) {
