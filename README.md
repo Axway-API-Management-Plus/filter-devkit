@@ -20,7 +20,7 @@ A playground Dockerfile is provided. It provides an on-premise API Gateway, Poli
 
 ## Developer Feature
 
- - [Dynamic compilation support](docs/DynamicCompiler.md)
+ - [Dynamic compilation support](filter-devkit-dynamic/README.md)
 
 ## Building and Installing
 
