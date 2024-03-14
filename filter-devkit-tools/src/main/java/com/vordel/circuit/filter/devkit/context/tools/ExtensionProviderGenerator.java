@@ -17,8 +17,8 @@ import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContext;
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionLibraries;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionLibraries;
 import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
 
 /**
@@ -99,6 +99,7 @@ public class ExtensionProviderGenerator extends AbstractProcessor {
 
 					if (libraries != null) {
 						writeLibrariesFile(filer, element, libraries.value());
+						writeForceLoadFile(filer, element, libraries.classes());
 					}
 
 					services.append(String.format("%s\n", element.getQualifiedName().toString()));
@@ -119,6 +120,27 @@ public class ExtensionProviderGenerator extends AbstractProcessor {
 	 */
 	private void writeLibrariesFile(Filer filer, TypeElement element, String[] entries) throws IOException {
 		FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "", String.format("META-INF/vordel/libraries/%s", element.getQualifiedName().toString()));
+		Writer libraries = file.openWriter();
+
+		try {
+			for (String entry : entries) {
+				libraries.append(String.format("%s\n", entry));
+			}
+		} finally {
+			libraries.close();
+		}
+	}
+
+	/**
+	 * write classes which needs to be loaded in the 'child first' class loader.
+	 * 
+	 * @param filer   compiler standard filer.
+	 * @param element annotated class
+	 * @param entries list of classes to be loaded
+	 * @throws IOException if any error occurs
+	 */
+	private void writeForceLoadFile(Filer filer, TypeElement element, String[] entries) throws IOException {
+		FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "", String.format("META-INF/vordel/forceLoad/%s", element.getQualifiedName().toString()));
 		Writer libraries = file.openWriter();
 
 		try {

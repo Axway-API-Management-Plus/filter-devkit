@@ -143,8 +143,7 @@ public class ExtensionScanner {
 			if (extensions.add(clazzName)) {
 				try {
 					/*
-					 * create classes which expose ExtensionContext or ExtensionInstance
-					 * annotation
+					 * create classes which expose ExtensionContext or ExtensionInstance annotation
 					 */
 					scanned.add(Class.forName(clazzName, false, getClassLoader(loader, clazzName)));
 				} catch (Exception e) {
@@ -226,10 +225,49 @@ public class ExtensionScanner {
 				}
 			}
 
-			loader = new ExtensionClassLoader(clazzName, urls.toArray(new URL[0]), loader);
+			loader = new ExtensionClassLoader(getForceLoads(loader, clazzName), urls.toArray(new URL[0]), loader);
 		}
 
 		return loader;
+	}
+
+	private static Set<String> getForceLoads(ClassLoader loader, String clazzName) {
+		String classes = String.format("META-INF/vordel/forceLoad/%s", clazzName);
+		URL forceLoad = loader.getResource(classes);
+		Set<String> scanned = new HashSet<String>();
+
+		scanned.add(clazzName);
+
+		if (forceLoad != null) {
+			try {
+				InputStream in = forceLoad.openStream();
+
+				try {
+					BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+
+					try {
+						String line = null;
+
+						while ((line = reader.readLine()) != null) {
+							line = line.trim();
+
+							if (!line.isEmpty()) {
+								scanned.add(line);
+							}
+						}
+					} finally {
+						reader.close();
+					}
+
+				} finally {
+					in.close();
+				}
+			} catch (IOException e) {
+				Trace.error(String.format("Got error reading module classes for '%s'", clazzName), e);
+			}
+		}
+
+		return scanned;
 	}
 
 	private static Set<File> scanJavaArchives(File root, Set<File> scanned) {

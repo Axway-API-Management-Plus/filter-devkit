@@ -16,11 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.annotation.Priority;
-import javax.tools.Diagnostic;
-import javax.tools.Diagnostic.Kind;
-import javax.tools.DiagnosticListener;
 import javax.tools.JavaCompiler;
-import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
@@ -188,7 +184,7 @@ public class DynamicCompilerModule implements ExtensionModule {
 	 */
 	private static ClassLoader runCompiler(ClassLoader parent, File src, File output) throws IOException {
 		JavaCompiler javac = new EclipseCompiler();
-		CompilerListener diagnostic = new CompilerListener();
+		DynamicCompilerListener diagnostic = new DynamicCompilerListener();
 		StandardJavaFileManager sjfm = javac.getStandardFileManager(diagnostic, null, null);
 		ClassLoader loader = getCompiledClassLoader(parent, src, output);
 		CompilerFileManager fileManager = new CompilerFileManager(sjfm, loader, DynamicCompilerModule.class.getClassLoader());
@@ -338,32 +334,5 @@ public class DynamicCompilerModule implements ExtensionModule {
 		}
 
 		return output;
-	}
-
-	private final static class CompilerListener implements DiagnosticListener<JavaFileObject> {
-		@Override
-		public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
-			if (diagnostic != null) {
-				Kind kind = diagnostic.getKind();
-				JavaFileObject source = diagnostic.getSource();
-				String message = diagnostic.getMessage(null);
-
-				switch (kind) {
-				case ERROR:
-				case WARNING:
-				case MANDATORY_WARNING:
-					/* report all warnings as errors */
-					Trace.error(String.format("%s: %s line %d", source.getName(), kind.name(), diagnostic.getLineNumber()));
-					Trace.error(message);
-					break;
-				case NOTE:
-				case OTHER:
-					Trace.info(message);
-					break;
-				default:
-					break;
-				}
-			}
-		}
 	}
 }
