@@ -6,7 +6,7 @@ The Filter DevKit comes with rich extensions capabilities. Except for filters, a
  - Extension context : Exported Java methods callable from selectors or scripts (and custom filters).
  - Script extensions : Additional top level functions and resources for advanced script filter
 
-Each of these extensions are Java class based and may use a child first ClassLoader so they can be interface with a class path foreign to the API Gateway. This special class loading feture is activated when the extension class is annotated with [@ExtensionLibraries](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionLibraries.java).
+Each of these extensions are Java class based and may use a child first ClassLoader so they can be interface with a class path foreign to the API Gateway. This special class loading feture is activated when the extension class is annotated with [ExtensionLibraries](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionLibraries.java).
 
 Extension interfaces and contexts can also be called when the configuration is deployed or undeployed by implementing the [ExtensionModule](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/ExtensionModule.java).
 
@@ -17,13 +17,13 @@ The annotation processor will take care of referencing annotated classes which n
 Extension interfaces is a mechanism dedicated for custom filters and regular script filter. Main goal if this feature is to instanciate a module from a foreign class loader with a particular interface shared with API Gateway ClassPath and Module ClassPath. Using this feature is quite simple and can be used in other situations since the child first class loader remains optional.
 
  - The programmer start by creating an interface which will be exported. This interface must not inherit [ExtensionModule](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/ExtensionModule.java)
- - He also create an implementation for this interface with a no-arg constructor and the [@ExtensionModulePlugin](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionModulePlugin.java) annotation with the exported interface as value.
+ - He also create an implementation for this interface with a no-arg constructor and the [ExtensionInstance](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionInstance.java) annotation with the exported interface as value.
  - The implementation may also implement the [ExtensionModule](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/ExtensionModule.java) interface
- - The implementation may also be annotated by [@ExtensionLibraries](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionLibraries.java) if a child first class loader is needed.
+ - The implementation may also be annotated by [ExtensionLibraries](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionLibraries.java) if a child first class loader is needed.
 
 Compilation must be done with the [ExtensionProviderGenerator](../filter-devkit-tools/src/main/java/com/vordel/circuit/filter/devkit/context/tools/ExtensionProviderGenerator.java) annotation processor activated (generates Filter DevKit registration files)
 
-If no interface is provided in [@ExtensionModulePlugin](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionModulePlugin.java), the class will be instanciated but not registered.
+If no interface is provided in [ExtensionInstance](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionInstance.java), the class will be instanciated but not registered.
 
 In custom filter code, the interface instance is retrieved using the *ExtensionLoader.getExtensionInstance()* static call.
 
@@ -32,7 +32,7 @@ Here is an example implementation :
 ```java
 import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
 import com.vordel.circuit.filter.devkit.context.ExtensionModule;
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance;
 import com.vordel.config.ConfigContext;
 import com.vordel.es.EntityStoreException;
 
@@ -47,7 +47,7 @@ public interface ExtensionInterfaceSample {
  * interface implementation with annotation and no arg constructor. Each interface specified in the
  * annotation value will get registered
  */
-@ExtensionModulePlugin(ExtensionInterfaceSample.class)
+@ExtensionInstance(ExtensionInterfaceSample.class)
 class ExtensionInterfaceSampleImpl implements ExtensionInterfaceSample, ExtensionModule {
 	@Override
 	public String sayHello() {
@@ -108,7 +108,7 @@ Reflection rules :
 
  - A method is marked as exported to the extension context if any of [InvocableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/InvocableMethod.java), [SubstitutableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/SubstitutableMethod.java) or [ExtensionFunction](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionFunction.java) annotations are seen on a given method,
  - All exported methods must be public,
- - If the [ExtensionModulePlugin](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionModulePlugin.java) annotation is not used, only static method export is allowed. Otherwise, the class is instanciated with the no-arg constructor,
+ - If the [ExtensionInstance](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionInstance.java) annotation is not used, only static method export is allowed. Otherwise, the class is instanciated with the no-arg constructor,
  - Annotations must be set on concrete or abstract classes not on interfaces,
  - If [ExtensionFunction](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionFunction.java) is set on a method, [InvocableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/InvocableMethod.java) and [SubstitutableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/SubstitutableMethod.java) cannot be set,
  - If an annotated method is overridden, it will inherit annotations from original method if no new annotations ([InvocableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/InvocableMethod.java), [SubstitutableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/SubstitutableMethod.java) or [ExtensionFunction](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionFunction.java)) are defined on it,
@@ -123,9 +123,9 @@ Here is an example implementation :
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.filter.devkit.context.annotations.DictionaryAttribute;
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContext;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionFunction;
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance;
 import com.vordel.circuit.filter.devkit.context.annotations.InvocableMethod;
 import com.vordel.circuit.filter.devkit.context.annotations.SelectorExpression;
 import com.vordel.circuit.filter.devkit.context.annotations.SubstitutableMethod;
@@ -133,15 +133,15 @@ import com.vordel.common.Dictionary;
 
 /**
  * sample extension context for API Gateway. This extension will get registered
- * under the 'sample' name. The @ExtensionModulePlugin annotation allows this
+ * under the 'sample' name. The @ExtensionInstance annotation allows this
  * class to be instanciated with the no-arg constructor (but it will not
  * register any interface). Since it does not implements ExtensionModule, there
  * will be no attachModule() or detachModule() initialization calls.
  * 
- * Without @ExtensionModulePlugin all exported methods must be set as static
+ * Without @ExtensionInstance all exported methods must be set as static
  */
-@ExtensionModulePlugin
-@ExtensionContextPlugin("sample")
+@ExtensionInstance
+@ExtensionContext("sample")
 public class ExtensionContextSample {
 	/**
 	 * example export for a invocable method. all parameters are injected

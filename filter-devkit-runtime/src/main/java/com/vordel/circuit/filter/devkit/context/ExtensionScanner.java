@@ -21,8 +21,8 @@ import java.util.Set;
 
 import javax.annotation.Priority;
 
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin;
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContext;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
 import com.vordel.circuit.filter.devkit.script.extension.AbstractScriptExtension;
 import com.vordel.circuit.filter.devkit.script.extension.AbstractScriptExtensionBuilder;
@@ -37,7 +37,7 @@ public class ExtensionScanner {
 	}
 
 	private static void fromClass(ConfigContext ctx, Class<?> clazz) {
-		ExtensionContextPlugin annotation = clazz.getAnnotation(ExtensionContextPlugin.class);
+		ExtensionContext annotation = clazz.getAnnotation(ExtensionContext.class);
 		Object instance = null;
 
 		if (isInstantiable(clazz)) {
@@ -81,11 +81,11 @@ public class ExtensionScanner {
 		}
 	}
 
-	public static ExtensionContext fromClass(Class<?> clazz) {
+	public static ExtensionResourceProvider fromClass(Class<?> clazz) {
 		return register(null, clazz);
 	}
 
-	public static <T> ExtensionContext fromInstance(T object) {
+	public static <T> ExtensionResourceProvider fromInstance(T object) {
 		Class<?> clazz = object == null ? null : object.getClass();
 
 		return register(object, clazz);
@@ -103,7 +103,7 @@ public class ExtensionScanner {
 		}
 	};
 
-	private static List<Class<?>> scanExtensions(ClassLoader loader) {
+	private static List<Class<?>> scanExtensions(ClassLoader loader, Set<String> extensions) {
 		Set<String> clazzes = new HashSet<String>();
 
 		try {
@@ -140,16 +140,18 @@ public class ExtensionScanner {
 		List<Class<?>> scanned = new ArrayList<Class<?>>();
 
 		for (String clazzName : clazzes) {
-			try {
-				/*
-				 * create classes which expose ExtensionContextPlugin or ExtensionModulePlugin
-				 * annotation
-				 */
-				scanned.add(Class.forName(clazzName, false, getClassLoader(loader, clazzName)));
-			} catch (Exception e) {
-				Trace.error(String.format("Got exception loading class '%s'", clazzName), e);
-			} catch (Error e) {
-				Trace.error(String.format("Got error loading class '%s'", clazzName), e);
+			if (extensions.add(clazzName)) {
+				try {
+					/*
+					 * create classes which expose ExtensionContext or ExtensionInstance
+					 * annotation
+					 */
+					scanned.add(Class.forName(clazzName, false, getClassLoader(loader, clazzName)));
+				} catch (Exception e) {
+					Trace.error(String.format("Got exception loading class '%s'", clazzName), e);
+				} catch (Error e) {
+					Trace.error(String.format("Got error loading class '%s'", clazzName), e);
+				}
 			}
 		}
 
@@ -264,21 +266,21 @@ public class ExtensionScanner {
 		return root.isFile() && (name.endsWith(".jar") || name.endsWith(".zip"));
 	}
 
-	public static void scanClasses(ConfigContext ctx, ClassLoader loader) {
-		List<Class<?>> scanned = scanExtensions(loader);
+	static void scanClasses(ConfigContext ctx, ClassLoader loader, Set<String> extensions) {
+		List<Class<?>> scanned = scanExtensions(loader, extensions);
 
 		registerClasses(ctx, scanned);
 	}
 
 	private static boolean isInstantiable(Class<?> clazz) {
 		boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
-		boolean isInstance = (clazz.getAnnotation(ExtensionModulePlugin.class) != null) || (clazz.getAnnotation(ScriptExtension.class) != null);
+		boolean isInstance = (clazz.getAnnotation(ExtensionInstance.class) != null) || (clazz.getAnnotation(ScriptExtension.class) != null);
 		boolean isModule = ExtensionModule.class.isAssignableFrom(clazz);
 		boolean hasEmptyContructor = false;
-		
+
 		try {
 			clazz.getDeclaredConstructor();
-			
+
 			hasEmptyContructor = true;
 		} catch (Exception e) {
 			/* ignore */
@@ -292,10 +294,10 @@ public class ExtensionScanner {
 		boolean isInstance = clazz.getAnnotation(ScriptExtension.class) != null;
 		boolean isEntension = AbstractScriptExtension.class.isAssignableFrom(clazz);
 		boolean hasExtensionContructor = false;
-		
+
 		try {
 			clazz.getDeclaredConstructor(AbstractScriptExtensionBuilder.class);
-			
+
 			hasExtensionContructor = true;
 		} catch (Exception e) {
 			/* ignore */
@@ -309,7 +311,7 @@ public class ExtensionScanner {
 			List<Class<?>> sorted = new ArrayList<Class<?>>();
 
 			for (Class<?> clazz : clazzes) {
-				ExtensionContextPlugin plugin = clazz.getAnnotation(ExtensionContextPlugin.class);
+				ExtensionContext plugin = clazz.getAnnotation(ExtensionContext.class);
 
 				if ((plugin != null) || isInstantiable(clazz) || isScriptExtension(clazz)) {
 					sorted.add(clazz);
@@ -325,11 +327,11 @@ public class ExtensionScanner {
 		}
 	}
 
-	private static <T> ExtensionContext register(T script, Class<? extends T> clazz) {
-		ExtensionContext resources = ExtensionContext.create(script, clazz);
+	private static <T> ExtensionResourceProvider register(T script, Class<? extends T> clazz) {
+		ExtensionResourceProvider resources = ExtensionResourceProvider.create(script, clazz);
 
 		if (resources != null) {
-			ExtensionContextPlugin annotation = clazz.getAnnotation(ExtensionContextPlugin.class);
+			ExtensionContext annotation = clazz.getAnnotation(ExtensionContext.class);
 
 			if (annotation != null) {
 				String name = annotation.value();

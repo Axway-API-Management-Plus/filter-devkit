@@ -15,7 +15,7 @@ import java.util.Set;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
 import com.vordel.circuit.filter.devkit.script.advanced.AdvancedScriptRuntime;
 import com.vordel.circuit.filter.devkit.script.advanced.AdvancedScriptRuntimeBinder;
@@ -39,13 +39,15 @@ import com.vordel.trace.Trace;
  * @author rdesaintleger@axway.com
  */
 public final class ExtensionLoader implements LoadableModule {
-	private static final Map<String, ExtensionContext> LOADED_PLUGINS = new HashMap<String, ExtensionContext>();
+	private static final Map<String, ExtensionResourceProvider> LOADED_PLUGINS = new HashMap<String, ExtensionResourceProvider>();
 	private static final Map<String, ScriptExtensionFactory> LOADED_SCRIPT_EXTENSIONS = new HashMap<String, ScriptExtensionFactory>();
 	private static final Map<Class<?>, Object> LOADED_INTERFACES = new HashMap<Class<?>, Object>();
 
 	private static final List<ExtensionModule> LOADED_MODULES = new LinkedList<ExtensionModule>();
 	private static final List<Runnable> UNLOAD_CALLBACKS = new LinkedList<Runnable>();
 	private static final Object SYNC = new Object();
+
+	private static final Set<String> LOADED = new HashSet<String>();
 
 	/**
 	 * extensions dictionary for selector only access.
@@ -66,8 +68,12 @@ public final class ExtensionLoader implements LoadableModule {
 	public void configure(ConfigContext ctx, Entity entity) throws EntityStoreException, FatalException {
 		Trace.info("scanning services for Extensions");
 
-		/* scan class path for extensions */
-		ExtensionScanner.scanClasses(ctx, Thread.currentThread().getContextClassLoader());
+		synchronized (SYNC) {
+			LOADED.clear();
+
+			/* scan class path for extensions */
+			scanClasses(ctx, Thread.currentThread().getContextClassLoader());
+		}
 
 		Trace.info("services scanned");
 	}
@@ -107,11 +113,25 @@ public final class ExtensionLoader implements LoadableModule {
 				modules.remove();
 			}
 
+			reset();
+		}
+	}
+
+	private void reset() {
+		synchronized (SYNC) {
 			LOADED_MODULES.clear();
 			UNLOAD_CALLBACKS.clear();
 			LOADED_PLUGINS.clear();
 			LOADED_INTERFACES.clear();
 			LOADED_SCRIPT_EXTENSIONS.clear();
+			LOADED.clear();
+		}
+	}
+
+	public static void scanClasses(ConfigContext ctx, ClassLoader loader) {
+		synchronized (SYNC) {
+			/* scan class path for extensions */
+			ExtensionScanner.scanClasses(ctx, loader, LOADED);
 		}
 	}
 
@@ -143,7 +163,7 @@ public final class ExtensionLoader implements LoadableModule {
 	 * @param name      name of context (exposed to global namespace)
 	 * @param resources context to be registered
 	 */
-	static void registerExtensionContext(String name, ExtensionContext resources) {
+	static void registerExtensionContext(String name, ExtensionResourceProvider resources) {
 		if ((name != null) && (resources != null)) {
 			synchronized (SYNC) {
 				LOADED_PLUGINS.put(name, resources);
@@ -154,7 +174,7 @@ public final class ExtensionLoader implements LoadableModule {
 	/**
 	 * package private entry to register a class instance. instance can be any
 	 * object which have a no-arg contructor and annotated with
-	 * {@link ExtensionModulePlugin} or {@link ScriptExtension}. Relevant interfaces
+	 * {@link ExtensionInstance} or {@link ScriptExtension}. Relevant interfaces
 	 * or script extensions get registered at this point.
 	 * 
 	 * @param ctx    configuration argument that will be passed to the
@@ -165,7 +185,7 @@ public final class ExtensionLoader implements LoadableModule {
 	static void registerExtensionInstance(ConfigContext ctx, Object module) {
 		if (module != null) {
 			Class<?> mclazz = module.getClass();
-			ExtensionModulePlugin plugin = mclazz.getAnnotation(ExtensionModulePlugin.class);
+			ExtensionInstance plugin = mclazz.getAnnotation(ExtensionInstance.class);
 			ScriptExtension script = mclazz.getAnnotation(ScriptExtension.class);
 
 			synchronized (SYNC) {
@@ -335,7 +355,7 @@ public final class ExtensionLoader implements LoadableModule {
 			List<Method> methods = new ArrayList<Method>();
 
 			/* reflect invocables/substitutables and extension functions */
-			ExtensionContext.reflect(resources, instance);
+			ExtensionResourceProvider.reflect(resources, instance);
 
 			/* gather interface methods */
 			scanScriptExtensionInterface(factory.getExtensionInterface(), methods);
@@ -398,7 +418,7 @@ public final class ExtensionLoader implements LoadableModule {
 	 * @param name name of the extension
 	 * @return the registered context or <code>null</code> if none.
 	 */
-	public static ExtensionContext getExtensionContext(String name) {
+	public static ExtensionResourceProvider getExtensionContext(String name) {
 		synchronized (SYNC) {
 			return LOADED_PLUGINS.get(name);
 		}

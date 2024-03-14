@@ -16,9 +16,9 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContext;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionLibraries;
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance;
 import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
 
 /**
@@ -29,8 +29,8 @@ import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
  * @author rdesaintleger@axway.com
  */
 @SupportedSourceVersion(SourceVersion.RELEASE_11)
-@SupportedAnnotationTypes({ "com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin",
-		"com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin",
+@SupportedAnnotationTypes({ "com.vordel.circuit.filter.devkit.context.annotations.ExtensionContext",
+		"com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance",
 		"com.vordel.circuit.filter.devkit.script.extension.ScriptExtension", })
 public class ExtensionProviderGenerator extends AbstractProcessor {
 	/**
@@ -52,8 +52,8 @@ public class ExtensionProviderGenerator extends AbstractProcessor {
 			 * retrieve all annotated components for this round and add them to registered
 			 * classes
 			 */
-			Set<? extends Element> plugins = roundEnv.getElementsAnnotatedWith(ExtensionContextPlugin.class);
-			Set<? extends Element> modules = roundEnv.getElementsAnnotatedWith(ExtensionModulePlugin.class);
+			Set<? extends Element> plugins = roundEnv.getElementsAnnotatedWith(ExtensionContext.class);
+			Set<? extends Element> modules = roundEnv.getElementsAnnotatedWith(ExtensionInstance.class);
 			Set<? extends Element> scripts = roundEnv.getElementsAnnotatedWith(ScriptExtension.class);
 
 			registerClasses(plugins);

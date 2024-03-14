@@ -12,7 +12,7 @@ import javax.script.ScriptException;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
-import com.vordel.circuit.filter.devkit.context.ExtensionContext;
+import com.vordel.circuit.filter.devkit.context.ExtensionResourceProvider;
 import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
 import com.vordel.circuit.filter.devkit.context.resources.AbstractContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.CacheResource;
@@ -350,7 +350,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		public void reflectResources(Script script) throws ScriptException {
 			checkState();
 
-			ExtensionContext.reflect(resources, script, getFilterName());
+			ExtensionResourceProvider.reflect(resources, script, getFilterName());
 		}
 
 		@Override

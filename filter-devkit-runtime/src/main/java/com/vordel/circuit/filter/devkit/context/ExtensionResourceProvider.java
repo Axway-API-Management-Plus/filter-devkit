@@ -44,7 +44,7 @@ import groovy.lang.Script;
  * 
  * @author rdesaintleger@axway.com
  */
-public final class ExtensionContext extends AbstractContextResourceProvider {
+public final class ExtensionResourceProvider extends AbstractContextResourceProvider {
 	private final Map<String, ContextResource> resources;
 	private final Class<?> clazz;
 
@@ -54,7 +54,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	 * @param clazz     class which has been reflected
 	 * @param resources exposed resources for this class.
 	 */
-	private ExtensionContext(Class<?> clazz, Map<String, ContextResource> resources) {
+	private ExtensionResourceProvider(Class<?> clazz, Map<String, ContextResource> resources) {
 		this.resources = resources;
 		this.clazz = clazz;
 	}
@@ -68,9 +68,9 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	 *               class
 	 * @param module module instance to be reflected
 	 * @param clazz  class definition of the module instance
-	 * @return ExtensionContext containing exposed methods for the given module
+	 * @return ExtensionResourceProvider containing exposed methods for the given module
 	 */
-	static <T> ExtensionContext create(T module, Class<? extends T> clazz) {
+	static <T> ExtensionResourceProvider create(T module, Class<? extends T> clazz) {
 		return create(module, clazz, null);
 	}
 
@@ -84,14 +84,14 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 	 * @param instance   instance which holds non static exported methods
 	 * @param clazz      Class object corresponding to the given instance
 	 * @param filterName used when the instance is a script
-	 * @return ExtensionContext containing exposed methods for the given instance
+	 * @return ExtensionResourceProvider containing exposed methods for the given instance
 	 */
-	private static <T> ExtensionContext create(T instance, Class<? extends T> clazz, String filterName) {
+	private static <T> ExtensionResourceProvider create(T instance, Class<? extends T> clazz, String filterName) {
 		Map<String, ContextResource> resources = new HashMap<String, ContextResource>();
 
 		reflect(resources, instance, clazz, filterName);
 
-		return new ExtensionContext(clazz, Collections.unmodifiableMap(resources));
+		return new ExtensionResourceProvider(clazz, Collections.unmodifiableMap(resources));
 	}
 
 	/**
@@ -113,7 +113,7 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 			Set<String> duplicates = new HashSet<String>();
 
 			/* retrieve all annotated methods for this class */
-			ExtensionContext.scanAnnotatedMethod(clazz, methods);
+			ExtensionResourceProvider.scanAnnotatedMethod(clazz, methods);
 
 			for (AnnotatedMethod annotated : methods.values()) {
 				InvocableMethod invocable = annotated.getInvocableMethod();
@@ -121,9 +121,9 @@ public final class ExtensionContext extends AbstractContextResourceProvider {
 				SubstitutableMethod substitutable = annotated.getSubstitutableMethod();
 				Method method = annotated.getMethod();
 
-				addAnnotatedMethod(exported, duplicates, method, invocable, ExtensionContext::name);
-				addAnnotatedMethod(exported, duplicates, method, function, ExtensionContext::name);
-				addAnnotatedMethod(exported, duplicates, method, substitutable, ExtensionContext::name);
+				addAnnotatedMethod(exported, duplicates, method, invocable, ExtensionResourceProvider::name);
+				addAnnotatedMethod(exported, duplicates, method, function, ExtensionResourceProvider::name);
+				addAnnotatedMethod(exported, duplicates, method, substitutable, ExtensionResourceProvider::name);
 			}
 
 			if (resources != null) {

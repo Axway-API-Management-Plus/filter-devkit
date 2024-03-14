@@ -6,16 +6,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marker annotation for automatic registration of extensions.
+ * Marker annotation for automatic registration of extension loadable modules
+ * and interfaces.
  * 
  * @author rdesaintleger@axway.com
  */
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ExtensionContextPlugin {
+public @interface ExtensionInstance {
 	/**
-	 * @return name of extension within the global dictionary. if empty, the full
-	 *         class name will be used.
+	 * @return list of interfaces to be registered.
 	 */
-	String value() default "";
+	Class<?>[] value() default {};
 }
