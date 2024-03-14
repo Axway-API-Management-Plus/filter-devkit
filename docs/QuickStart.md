@@ -36,7 +36,7 @@ once started, go to
 - [http://localhost:6080/](http://localhost:6080/) for the VNC server (Policy Studio)
 - [https://localhost:8090/](http://localhost:8090/) for the Admin Node Manager
 
-The filter DevKit sources are available in /home/project/filter-devkit (copied from local clone of git repository). filter-devkit jar and policy studio are deployed in the relevant directories.
+The filter DevKit sources are available in /home/project/filter-devkit (copied from local clone of git repository). filter-devkit jar and policy studio plugins are deployed in the relevant directories.
 
 To correctly setup theia, type the following commands in the terminal :
 
@@ -45,7 +45,7 @@ cd /home/project/filter-devkit
 ./gradlew clean cleanEclipse eclipse build
 ```
 
-This will rebuild jars locally. reload Theia after build has been completed.
+This will rebuild jars locally. reload Theia after the first build has been completed.
 
 ## Exposed services in the base image
 

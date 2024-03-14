@@ -131,7 +131,7 @@ function invoke(circuit, msg) {
 
 ### Reflecting resources from script (groovy only)
 
-Code reuse is generally not applicable in the API Gateway context. The Filter DevKit allows policy developer to implements functions as policies and selectors and share them using the above export runtime function. Strong typing must be used on exported functions (explicit types). See See [Extension Context](Extensions.md) documentation for further information about reflection and injection rules. Goal of exporting functions is to reduce script node count and to reuse existing code instead of making cut'n'paste.
+Code reuse is generally not applicable in the API Gateway context. The Filter DevKit allows policy developer to implements functions as policies and selectors and share them using the above export runtime function. Strong typing must be used on exported functions (explicit types). See See [Extension Context](Extensions.md) documentation for further information about reflection and injection rules. Goal of exporting functions is to reduce script node count and to reuse existing code instead of making cut'n'paste. This runtime function can only be called within the script attachment call.
 
 ```groovy
 import com.vordel.circuit.Message
@@ -171,7 +171,7 @@ public String helloFunction(Message msg, String name) {
 
 ### Unwrapping CircuitAbortException
 
-Unwrapping CircuitAbortException is useful in production when tracking real cause of error. To enable this functionality you can call this function in the script attachment section. It takes either 'true' or 'false' as argument. Setting unwrap to 'true' will be applied to invoke() call and script extensions calls.
+Unwrapping CircuitAbortException is useful in production when tracking real cause of error. To enable this functionality you can call this function in the script attachment section. It takes either 'true' or 'false' as argument. Setting unwrap to 'true' will be applied to invoke() call and script extensions calls. This runtime function can only be called within the script attachment call.
 
 ```javascript
 function attach(ctx, entity) {
@@ -181,7 +181,7 @@ function attach(ctx, entity) {
 
 ### Being called with the filter Circuit argument
 
-This runtime method is here for compatibility with Script Quick Filters. It allows the Script to access to the Circuit provided to the message call.
+This runtime method is here for compatibility with Script Quick Filters. It allows the Script to access to the Circuit provided to the message call. This runtime function can only be called within the script attachment call.
 
 ```javascript
 function attach(ctx, entity) {
@@ -200,7 +200,7 @@ Groovy entry point can be reflected so invoke (and detach) arguments are injecte
  - invoke can accept Circuit, Message and MessageProcessor injection,
  - detach can only accept MessageProcessor injection.
 
-only one invoke function must be defined, and only one detach function must be defined (it remains optional). Strong typing must be used so parameter types are available to the called runtime function. A scriptException is thrown if the runtime is able to detect method but unable to compute injected arguments. When using reflected invoke, CircuitAbortException is implicitely unwrapped, however it remains wrapped when calling extensions unless requested (see above).
+only one invoke function must be defined, and only one detach function must be defined (it remains optional). Strong typing must be used so parameter types are available to the called runtime function. A scriptException is thrown if the runtime is able to detect method but unable to compute injected arguments. When using reflected invoke, CircuitAbortException is implicitely unwrapped, however it remains wrapped when calling extensions unless requested (see above). This runtime function can only be called within the script attachment call.
 
 ```groovy
 import com.vordel.circuit.CircuitAbortException

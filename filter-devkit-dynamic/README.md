@@ -1,6 +1,6 @@
 # Dynamic Compiler
 
-The Dynamic Compiler package  feature allows to compile Java classes on the fly during deployment. Compiled classes are included in modules and plugins discovery. The class loader of compiled classes is isolated and is not accessible from API Gateway ecosystem except from registered filters, modules and plugins.
+The Dynamic Compiler package  feature allows to compile Java classes on the fly during deployment. Compiled classes are included in modules and plugins discovery. The class loader of compiled classes is isolated and is not accessible from API Gateway ecosystem except from modules, plugins and script extensions.
 
 It's purpose is to speed up development cycle locally. Since compilation is done during deployment, there is no need to restart API Gateway when code is modified. A Deployment is sufficient to apply changes.
 

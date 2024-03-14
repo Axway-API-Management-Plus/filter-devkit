@@ -4,7 +4,7 @@ The Filter DevKit uses a Gradle build process. The process of building and insta
 
 ## Prerequisites
 
-As a prerequisite, you need to have API Gateway and Policy Studio installed. A JDK is also required. The required version depends on the installed API Gateway. If developping on Windows, you can inflate an API Gateway installation archive which comes from Linux and use it for building. Otherwise, you may use WSL2 for build.
+As a prerequisite, you need to have API Gateway and Policy Studio installed locally. A JDK is also required. The required version depends on the installed API Gateway. If developping on Windows, you can inflate an API Gateway installation archive which comes from Linux and use it for building. Otherwise, you may use WSL2 for build.
 
 You must set two properties in the global gradle properties file (*Home Directory*/.gradle/gradle.properties).
 
@@ -35,7 +35,7 @@ Once prerequisites are set (api gateway install, gradle global properties and JA
  - *eclipse* : create eclipse project configuration
  - *build* : build all projects without deploy
  - *copyArchives* : Copies all produced jars into the root build directory (filter-devkit/build/archives)
- - *deployRuntime* : Install runtime jars in the local installed API Gateway (in the distribution ext/lib directory)
+ - *deployRuntime* : Install runtime jars in the local installed API Gateway (in the distribution ext/lib directory). Some projects will also install jars in additional directory (like the dynamic compiler)
  - *deployPlugin* : Deploy Filters and filter-devkit runtime in Policy Studio (drop jars in the plugins directory)
 
 When *deployPlugin* task is used, do not forget to restart the Policy Studio with the *-clean* command line argument.

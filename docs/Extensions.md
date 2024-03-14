@@ -118,6 +118,7 @@ Reflection rules :
  - for [ExtensionFunction](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionFunction.java), the first parameter must be the Message. when calling from a selector, the message will be prepended to the argument list prior to function invocation.
  - [InvocableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/InvocableMethod.java) can only return booleans,
  - [SubstitutableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/SubstitutableMethod.java) and [ExtensionFunction](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionFunction.java) can return any object.
+ - It is not possible to export 2 different methods with the same resource name.
 
 For implementing :
  - The programmer start by creating an concrete class annotated with [ExtensionContext](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionContext.java),
@@ -125,7 +126,7 @@ For implementing :
  - The class may also be annotated by [ExtensionInstance](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionInstance.java) if non static methods need to be exported,
  - The class may also be annotated by [ExtensionLibraries](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionLibraries.java) if a child first class loader is needed.
 
-For groovy scripts contexts there is no need ExtensionContext and ExtensionContext. The script is always an instance and a runtime function is provided to reflect exported methods. Also ExtensionLibraries is not available for Groovy.
+For groovy scripts contexts there is no need ExtensionContext and ExtensionInstance. The script is always an instance and a runtime function is provided to reflect exported methods. Also ExtensionLibraries is not available for Groovy.
 
 Here is an example implementation :
 
