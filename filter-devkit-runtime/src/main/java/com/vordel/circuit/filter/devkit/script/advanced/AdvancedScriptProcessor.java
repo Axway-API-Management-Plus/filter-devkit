@@ -253,7 +253,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 				args[index] = exports;
 			} else if (type.isAssignableFrom(Circuit.class)) {
 				args[index] = circuit;
-			} else if (type.equals(AdvancedScriptProcessor.class)) {
+			} else if (type.isAssignableFrom(AdvancedScriptProcessor.class)) {
 				args[index] = this;
 			} else {
 				Trace.error("Unable to resolve arguments for invoke method");
@@ -272,7 +272,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		for (int index = 0; index < types.length; index++) {
 			Class<?> type = types[index];
 
-			if (type.equals(AdvancedScriptProcessor.class)) {
+			if (type.isAssignableFrom(AdvancedScriptProcessor.class)) {
 				args[index] = this;
 			} else {
 				Trace.error("Unable to resolve arguments for detach method");

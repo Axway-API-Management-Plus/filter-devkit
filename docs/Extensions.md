@@ -12,6 +12,8 @@ Extension interfaces and contexts can also be called when the configuration is d
 
 The annotation processor will take care of referencing annotated classes which need to be registered/instanciated by the Filter Devkit (it creates *META-INF/vordel/extensions* which contains the list of classes to be scanned and a file with the class qualified name in *META-INF/vordel/libraries/* for foreign class path)
 
+Extension loading can be ordered using the standard annotation Priority (see [DynamicCompilerModule](../filter-devkit-dynamic/src/main/java/com/vordel/circuit/filter/devkit/dynamic/DynamicCompilerModule.java) as example for priority declaration.
+
 ## Extension interface
 
 Extension interfaces is a mechanism dedicated for custom filters and regular script filter. Main goal if this feature is to instanciate a module from a foreign class loader with a particular interface shared with API Gateway ClassPath and Module ClassPath. Using this feature is quite simple and can be used in other situations since the child first class loader remains optional.
@@ -88,11 +90,11 @@ class ExtentionInterfaceSampleCall {
 Extension Context is a mechanism dedicated to call Java code from selectors. In order to fully use this mechanism, the [Extended Evaluate Selector](../filter-devkit-plugins/filter-devkit-plugins-eval/README.md) is recommended (as this plugin is able to relay CircuitAbortException).
 
 There is 3 kinds of exported selectors
- - [Invocable Selector](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/InvocableMethod.java) : invoke a Java method like a policy shortcut using an (Extented) Eval Selector Filter. Parameters are resolved from annotations and injected.
+ - [Invocable Selector](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/InvocableMethod.java) : invoke a Java method like a policy shortcut using an (Extended) Eval Selector Filter. Parameters are resolved from annotations and injected.
  - [Substitutable Selector](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/SubstitutableMethod.java) : invoke a Java method to return any value. This kind of export can't throw exceptions but can be used anywhere in the API Gateway where selectors are accepted (Set Message, Copy/Modify, Set Attribute, etc...). Parameters are resolved from annotations and injected.
- - [Extension Function](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionFunction.java) : Invoke a Java method using JUEL invoke syntax. Parameters must be provided in the JUEL expression. In this last case parameters coercion may not be accurate. Use with caution (especially with variable arguments or long and double numbers).
+ - [Extension Function](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionFunction.java) : Invoke a Java method using JUEL invoke syntax. Parameters must be provided in the JUEL expression. Use with caution since parameter coercion may be tricky and variable arguments can cause strange behavior when used outside of Java Strong typing system (like Javascript or JUEL).
 
-Selector syntax use an API Gateway global namespace.
+Extension context scanned from class path use an API Gateway global namespace. This is not the case for script exported contexts which typically use a message attribute.
 
 ```
 // syntax for invocable where name is the extension name and exportedInvocable the exported method
@@ -122,6 +124,8 @@ For implementing :
  - according the methods implementation he selects export types for each method using [InvocableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/InvocableMethod.java), [SubstitutableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/SubstitutableMethod.java) or [ExtensionFunction](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionFunction.java).
  - The class may also be annotated by [ExtensionInstance](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionInstance.java) if non static methods need to be exported,
  - The class may also be annotated by [ExtensionLibraries](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionLibraries.java) if a child first class loader is needed.
+
+For groovy scripts contexts there is no need ExtensionContext and ExtensionContext. The script is always an instance and a runtime function is provided to reflect exported methods. Also ExtensionLibraries is not available for Groovy.
 
 Here is an example implementation :
 
