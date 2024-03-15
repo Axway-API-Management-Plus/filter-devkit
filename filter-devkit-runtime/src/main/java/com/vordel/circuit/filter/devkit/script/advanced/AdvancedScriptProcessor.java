@@ -12,13 +12,14 @@ import javax.script.ScriptException;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
-import com.vordel.circuit.filter.devkit.context.ExtensionContext;
+import com.vordel.circuit.filter.devkit.context.ExtensionResourceProvider;
 import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
 import com.vordel.circuit.filter.devkit.context.resources.AbstractContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.CacheResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceFactory;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
+import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
 import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
 import com.vordel.circuit.filter.devkit.context.resources.KPSResource;
 import com.vordel.common.Dictionary;
@@ -252,7 +253,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 				args[index] = exports;
 			} else if (type.isAssignableFrom(Circuit.class)) {
 				args[index] = circuit;
-			} else if (type.equals(AdvancedScriptProcessor.class)) {
+			} else if (type.isAssignableFrom(AdvancedScriptProcessor.class)) {
 				args[index] = this;
 			} else {
 				Trace.error("Unable to resolve arguments for invoke method");
@@ -271,7 +272,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		for (int index = 0; index < types.length; index++) {
 			Class<?> type = types[index];
 
-			if (type.equals(AdvancedScriptProcessor.class)) {
+			if (type.isAssignableFrom(AdvancedScriptProcessor.class)) {
 				args[index] = this;
 			} else {
 				Trace.error("Unable to resolve arguments for detach method");
@@ -319,6 +320,11 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		}
 
 		@Override
+		public FunctionResource getFunctionResource(String name) {
+			return exports.getFunctionResource(name);
+		}
+
+		@Override
 		public KPSResource getKPSResource(String name) {
 			return exports.getKPSResource(name);
 		}
@@ -344,12 +350,14 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		public void reflectResources(Script script) throws ScriptException {
 			checkState();
 
-			ExtensionContext.reflect(resources, script, getFilterName());
+			ExtensionResourceProvider.reflect(resources, script, getFilterName());
 		}
 
 		@Override
 		public void reflectExtension(String name) throws ScriptException {
 			checkState();
+			
+			Trace.info(String.format("attaching extension '%s' in script '%s'", name, getFilterName()));
 
 			ExtensionLoader.bind(resources, engine, this, name);
 		}

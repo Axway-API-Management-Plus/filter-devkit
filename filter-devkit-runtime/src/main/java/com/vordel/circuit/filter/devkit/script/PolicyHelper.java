@@ -12,7 +12,7 @@ import org.glassfish.jersey.uri.UriComponent;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProperties;
 import com.vordel.circuit.filter.devkit.context.annotations.DictionaryAttribute;
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContext;
 import com.vordel.circuit.filter.devkit.context.annotations.SelectorExpression;
 import com.vordel.circuit.filter.devkit.context.annotations.SubstitutableMethod;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
@@ -20,7 +20,7 @@ import com.vordel.el.Selector;
 import com.vordel.mime.Headers;
 import com.vordel.trace.Trace;
 
-@ExtensionContextPlugin("policy.helper")
+@ExtensionContext("policy.helper")
 public class PolicyHelper {
 	private static final Selector<String> RESOLVED_PATH = SelectorResource.fromExpression(MessageProperties.RESOLVED_TO_PATH, String.class);
 	private static final Selector<URI> REQUEST_URI = SelectorResource.fromExpression(MessageProperties.HTTP_REQ_URI, URI.class);

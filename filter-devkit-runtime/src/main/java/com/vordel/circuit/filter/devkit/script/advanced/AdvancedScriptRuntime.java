@@ -5,6 +5,7 @@ import com.vordel.circuit.Message;
 import com.vordel.circuit.filter.devkit.context.resources.CacheResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
+import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
 import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
 import com.vordel.circuit.filter.devkit.context.resources.KPSResource;
 import com.vordel.common.Dictionary;
@@ -31,6 +32,15 @@ public interface AdvancedScriptRuntime {
 	 * @return invocable resource or null if none (if not invocable)
 	 */
 	InvocableResource getInvocableResource(String name);
+
+	/**
+	 * Retrieve a reference to a Function
+	 * 
+	 * @param name name of function resource
+	 * 
+	 * @return function resource or null if none (if not function)
+	 */
+	FunctionResource getFunctionResource(String name);
 
 	/**
 	 * Retrieve a reference to a KPS resource

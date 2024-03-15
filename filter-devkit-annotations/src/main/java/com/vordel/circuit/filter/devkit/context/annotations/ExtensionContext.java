@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  */
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ExtensionContextPlugin {
+public @interface ExtensionContext {
 	/**
 	 * @return name of extension within the global dictionary. if empty, the full
 	 *         class name will be used.
