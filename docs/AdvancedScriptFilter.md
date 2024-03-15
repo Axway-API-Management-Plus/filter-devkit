@@ -16,6 +16,8 @@ Additionally, Groovy script can be reflected to export methods as Selectors (lik
 
 To implement this, functions are added to the script at top level. Technically, those functions are closures of the [AdvancedScriptRuntime](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/script/advanced/AdvancedScriptRuntime.java) class. All functions except reflective ones are available to all supported scripting languages. Since groovy is close to Java, reflection is available and useable as long as strong typing is used.
 
+*Note :* selector expressions in script examples are displayed without the '$' sign (scripts do not work when substitution is applied).
+
 ## Attaching resources to the filter
 
 This filter brings the concept of 'Configuration Resource'. Resources are either references to configuration items (Policies, KPS Table, Cache) or simply a selector expression with explicit type coercion. Selector are made available here because script is substituted with an empty message at policy deployment time. To attach resources to the script, an additional tab 'Resources' is added to the script UI. Each resource must be configured with a name which will be used to use it within the script. A set of resources is configured in a [ContextResourceProvider](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/resources/ContextResourceProvider.java). Top level functions are available within the script to interact with the local set of resources.
@@ -89,13 +91,24 @@ Selectors are used everywhere in Filters but are not available in base script sy
 
 ```javascript
 function invoke(circuit, msg) {
-	// assume that 'querystring.name' has been bound to selector '${http.querystring.name}' with coercion set to String.
+	// assume that 'querystring.name' has been bound to expression '{http.querystring.name}' with coercion set to String.
 	var name = substituteResource("querystring.name");
 
 	// you code to handle name resolution
 	return true;
 }
 ```
+
+### Bind script extension
+
+Script extension is a new mechanism which can add top level functions and resources to the running script. Script Extensions can also interact with current script resources (configured retrieved from an extension or reflected from groovy script). To bind an extension to the current script you call the appropriate runtime function with the script extension interface qualified name as done below :
+
+```javascript
+function attach(ctx, entity) {
+	reflectExtension("com.vordel.circuit.filter.devkit.script.ext.ScriptExtendedRuntime");
+}
+```
+
 
 ### Exporting script attached resources
 
@@ -108,6 +121,8 @@ function invoke(circuit, msg) {
 }
 ```
 
+Script exported resource include all gathered resource (configuration references and selectors, bound extensions and also reflected groovy methods if any)
+
 ### Advanced Script KPS access
 
 This goal of this feature is not to provide a read/write access to KPS (the filter however provide this functionality), but to keep KPS references updated and exported. As a result the Advanced Script Filter will not retrieve the KPS stop using its alias, but its Identity reference. A fragment export of the script with the KPS store will be possible thanks to the KPS reference.
@@ -118,7 +133,7 @@ From a script point of view retrieving the resource returns a [KPSResource](../f
 
 ```javascript
 function invoke(circuit, msg) {
-	// make this script resources available to the message. kps table accessible from ${script.exported.<resource name>}
+	// make this script resources available to the message. kps table accessible from expression {script.exported.<resource name>}
 	msg.put("script.exported", getExportedResources());
 
 	// assume that 'sample.kps' has been bound to an existing KPS table.
@@ -152,19 +167,19 @@ def invoke(msg) {
 
 @InvocableMethod
 public boolean invokeTest(Message msg) {
-	// call this method with ${groovy.export.invokeTest} in an extended eval selector to keep CircuitAbortException relayed
+	// call this method with expression {groovy.export.invokeTest} in an extended eval selector to keep CircuitAbortException relayed
 	return true
 }
 
 @SubstitutableMethod("substituteTest")
 public String helloSubstitution(@SelectorExpression("http.querystring.name") String name) {
-	// call this method with ${groovy.export.substituteTest}
+	// call this method with expression {groovy.export.substituteTest}
 	return String.format("Hello %s !", name)
 }
 
 @ExtensionFunction
 public String helloFunction(Message msg, String name) {
-	// call this method with ${groovy.export.sayHello(http.querystring.name)}
+	// call this method with expression {groovy.export.sayHello(http.querystring.name)}
 	return String.format("Hello %s !", name)
 }
 ```

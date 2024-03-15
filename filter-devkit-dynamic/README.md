@@ -6,7 +6,7 @@ It's purpose is to speed up development cycle locally. Since compilation is done
 
 I can also be used to use Java classes instead of scripts. Using Java classes has many advantages against scripts, starting with strong typing system.
 
-The Dynamic compiler is implemented as a extension module and has the highest priority (last attached module). Compiled classes and modules will get registered within Dynamic Compiler Attachment. It also uses the 'child first' class loader to isolate compiler and annotation processor from the API Gateway main class path. Compiled classes are also isolated from compiler class path.
+The Dynamic compiler is implemented as a extension module and has the highest priority (last attached module). Compiled classes and modules will get registered within Dynamic Compiler Attachment. It also uses the [child first ClassLoader](../docs/ChildFirstClassLoader.md) to isolate compiler and annotation processor from the API Gateway main class path. Compiled classes are also isolated from compiler class path.
 
 ## Compiled directories
 
@@ -26,11 +26,11 @@ Global compiled classes are seen by instance classes.
 
 ## Compiled Modules and Plugins
 
-All compiled classes are scanned by the annotation processor and registered like normal classes by the [Extension](../docs/Extensions.md) process. All Extensions features including 'child first' class loader are available.
+All compiled classes are scanned by the annotation processor and registered like normal classes by the [Extension](../docs/Extensions.md) process. All Extensions features are available except for the [child first ClassLoader](../docs/ChildFirstClassLoader.md) (since the dynamic compiler doesn't know the external class path at compile time).
 
 ## Manual installation
 
-Those steps are not needed if using the deployRuntime gradle task.
+Those steps are not needed if using the deployRuntime gradle task (as it takes care to deploy everything at the right place).
 
  - create the directory ${environment.VDISTDIR}/ext/extra/compiler and copy the ecj compiler jar and the annotation processor (filter-devkit-tools) into the created directory,
  - copy the dynamic plugin (filter-devkit-dynamic) into the ${environment.VDISTDIR}/ext/lib directory

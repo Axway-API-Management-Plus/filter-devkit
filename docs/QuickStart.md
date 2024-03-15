@@ -54,4 +54,4 @@ The following ports are bound by the installation
  - 6080 : noVNC X11 interface
  - 8080 : instance default services (not started on boot)
  - 8090 : Admin Node Manager interface
- - 9777 : Java Debug port for the instance (useeable with 'Debug Remote Java Application' in IDE)
+ - 9777 : Java Debug port for the instance (useable with 'Debug Remote Java Application' in IDE)

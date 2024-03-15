@@ -86,9 +86,11 @@ public class ExtensionScanner {
 	}
 
 	public static <T> ExtensionResourceProvider fromInstance(T object) {
-		Class<?> clazz = object == null ? null : object.getClass();
+		if (object == null) {
+			throw new IllegalArgumentException("null cannot be reflected as resource provider");
+		}
 
-		return register(object, clazz);
+		return register(object, object.getClass());
 	}
 
 	private static Comparator<Class<?>> PRIORITY_COMPARATOR = new Comparator<Class<?>>() {
@@ -207,7 +209,6 @@ public class ExtensionScanner {
 					} finally {
 						reader.close();
 					}
-
 				} finally {
 					in.close();
 				}
@@ -258,7 +259,6 @@ public class ExtensionScanner {
 					} finally {
 						reader.close();
 					}
-
 				} finally {
 					in.close();
 				}

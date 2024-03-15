@@ -174,8 +174,8 @@ public final class ExtensionLoader implements LoadableModule {
 	/**
 	 * package private entry to register a class instance. instance can be any
 	 * object which have a no-arg contructor and annotated with
-	 * {@link ExtensionInstance} or {@link ScriptExtension}. Relevant interfaces
-	 * or script extensions get registered at this point.
+	 * {@link ExtensionInstance} or {@link ScriptExtension}. Relevant interfaces or
+	 * script extensions get registered at this point.
 	 * 
 	 * @param ctx    configuration argument that will be passed to the
 	 *               {@link ExtensionModule#attachModule(ConfigContext)} if
@@ -349,8 +349,13 @@ public final class ExtensionLoader implements LoadableModule {
 				throw new ScriptException(String.format("script extension '%s' is not registered", name));
 			}
 
-			AbstractScriptExtensionBuilder builder = new AbstractScriptExtensionBuilder(runtime);
 			AdvancedScriptRuntimeBinder binder = AdvancedScriptRuntimeBinder.getScriptBinder(engine);
+
+			if (binder == null) {
+				throw new ScriptException("Unsupported script engine");
+			}
+
+			AbstractScriptExtensionBuilder builder = new AbstractScriptExtensionBuilder(runtime);
 			Object instance = factory.createExtensionInstance(builder);
 			List<Method> methods = new ArrayList<Method>();
 

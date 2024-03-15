@@ -1,4 +1,4 @@
-package com.vordel.circuit.filter.devkit.script.extension;
+package com.vordel.circuit.filter.devkit.context.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,15 +6,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marker annotation for automatic registration of script extensions.
+ * Inicates to the annotation processor that this class must be loaded in the
+ * same class loader of the specified class
  * 
  * @author rdesaintleger@axway.com
  */
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ScriptExtension {
+public @interface ExtensionLink {
 	/**
-	 * @return list of interfaces to be registered.
+	 * @return class annotated with {@link ExtensionLibraries}
 	 */
-	Class<?>[] value();
+	Class<?> value();
 }

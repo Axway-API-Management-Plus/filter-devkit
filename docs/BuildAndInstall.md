@@ -68,3 +68,13 @@ Open a configuration in the Policy Studio and choose File -> Import -> Import Cu
 ### Quick Filter activation
 
 Each QuickFilter archive embeds the typesets for Policy Studio. Prior to filter registration, you must inflate those files. Once typesets are inflated, Open a configuration in the Policy Studio and choose File -> Import -> Import Custom Filter and choose the typeset.xml inflated file (which is the root typeset for each QuickFilter archive).
+
+### Enable Java Debug Agent
+
+If you're using your instance for extension development purpose ensure the [Dynamic compilation support](../filter-devkit-dynamic/README.md) is installed and activated and adds the following jwm.xml file in your instance configuration subdirectory (adapt the port number according to your needs)
+
+```xml
+<ConfigurationFragment>
+        <VMArg name="-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9777"/>
+</ConfigurationFragment>
+```
