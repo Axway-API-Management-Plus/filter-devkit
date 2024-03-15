@@ -163,6 +163,8 @@ def attach(ctx, entity) {
 def invoke(msg) {
 	// export script context to message
 	msg.put("groovy.export", getExportedResources())
+
+	return true
 }
 
 @InvocableMethod
