@@ -1,8 +1,0 @@
-<ui>
-	<panel columns="2">
-		<panel columns="2" fill="false">
-			<!-- filter name attribute -->
-			<NameAttribute />
-		</panel>
-	</panel>
-</ui>

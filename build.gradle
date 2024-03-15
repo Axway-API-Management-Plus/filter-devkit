@@ -1,0 +1,20 @@
+apply plugin: 'base'
+
+group = 'com.axway.apigw'
+version = '7.7.0.20240228-1'
+
+subprojects {
+	apply plugin: 'eclipse'
+
+	group = 'com.axway.apigw'
+	version = '7.7.0.20240228-1'
+}
+
+task copyArchives(type: Copy) {
+	from subprojects.collect { it.tasks.withType(AbstractArchiveTask) }
+	into "$buildDir/archives"
+}
+
+clean {
+	delete "${buildDir}"
+}

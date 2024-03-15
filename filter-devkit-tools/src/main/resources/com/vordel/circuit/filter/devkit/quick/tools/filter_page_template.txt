@@ -1,0 +1,46 @@
+package <exportedPackageName>;
+
+import java.io.InputStream;
+
+import org.eclipse.swt.widgets.Composite;
+
+import <resourcesQualifiedName>;
+import com.vordel.client.manager.filter.devkit.studio.VordelLegacyPage;
+import com.vordel.common.ResourceBase;
+
+public class <pageSimpleName> extends VordelLegacyPage {
+	public <pageSimpleName>() {
+		super(getPageID());
+
+		// Set resources from private package
+		setResourceBase(new ResourceBase(<resourcesSimpleName>.class, ".<resourcesFile>"));
+
+		setTitle(<resourcesSimpleName>.FILTER_DISPLAYNAME);
+		setDescription(<resourcesSimpleName>.FILTER_DESCRIPTION);
+
+		setPageComplete(true);
+	}
+
+	@Override
+	public void createControl(Composite parent) {
+		// retrieve UI from private package
+		InputStream is = <resourcesSimpleName>.class.getResourceAsStream("<uiFile>");
+
+		try {
+			Composite container = render(parent, is);
+
+			setControl(container);
+		} finally {
+			closeQuietly(is);
+		}
+	}
+
+	@Override
+	public String getHelpID() {
+		return String.format("%s.help", getPageID());
+	}
+
+	private static String getPageID() {
+		return <pageSimpleName>.class.getSimpleName().toLowerCase();
+	}
+}

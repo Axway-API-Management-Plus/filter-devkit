@@ -1,0 +1,14 @@
+apply plugin: 'java-library'
+
+java {
+    sourceCompatibility = '8'
+    targetCompatibility = '11'
+
+	withJavadocJar()
+	withSourcesJar()
+}
+
+apply from: rootProject.file('apigateway.gradle')
+
+deployRuntime.enabled = true
+

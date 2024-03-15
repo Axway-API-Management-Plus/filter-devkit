@@ -1,6 +1,0 @@
-<panel columns="2">
-	<panel columns="2" span="2" fill="false">
-		<TextAttribute field="name" label="PROPERTY_NAME" required="true" />
-		<TextAttribute field="value" label="PROPERTY_VALUE" required="true" />
-	</panel>
-</panel>

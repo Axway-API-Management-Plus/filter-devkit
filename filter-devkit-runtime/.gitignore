@@ -1,6 +1,8 @@
 .DS_Store
+/.gradle
+/.mvn
 /.project
 /.settings
+/bin
+/build
 /.classpath
-/target/
-/dependency-reduced-pom.xml

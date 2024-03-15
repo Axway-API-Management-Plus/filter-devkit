@@ -1,0 +1,49 @@
+plugins {
+	id 'biz.aQute.bnd.builder' version '6.4.0'
+}
+
+java {
+	sourceCompatibility = '8'
+	targetCompatibility = '11'
+}
+
+apply from: rootProject.file('apigateway.gradle')
+apply from: rootProject.file('policystudio.gradle')
+
+deployRuntime.enabled = true
+deployPlugin.enabled = true
+
+configurations {
+	compileOnly.extendsFrom(apigw_central, studio_plugins)
+	osgi.extendsFrom(studio_dist);
+}
+
+dependencies {
+	annotationProcessor project(':filter-devkit-tools')
+	implementation project(':filter-devkit-annotations')
+	implementation project(':filter-devkit-runtime')
+	implementation project(':filter-devkit-studio')
+
+	osgi project(':filter-devkit-studio')
+}
+
+tasks.withType(JavaCompile) {
+	options.sourcepath = sourceSets.main.resources.getSourceDirectories()
+	options.compilerArgs += [
+		"-AprojectName=${project.name}",
+		"-AprojectExportedPackage=com.vordel.client.manager.filter.devkit.eval"
+	]
+}
+
+tasks.withType(Zip) {
+	classpath += configurations.osgi
+}
+
+jar {
+	manifest {
+		// to be recognized as filter, symbolic name MUST start with 'com.vordel.filter.'
+		// or 'com.vordel.policystudio.ext.' and it must not end with '.help'
+		attributes("Bundle-SymbolicName": "com.vordel.filter.${project.name};singleton:=true",
+		"-include": "src/main/bundle/bundle.bnd")
+	}
+}

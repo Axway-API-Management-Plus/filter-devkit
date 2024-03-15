@@ -1,8 +1,0 @@
-.DS_Store
-/.project
-/.settings
-/.classpath
-/target/
-/.pydevproject
-/src/main/quickfilters/*/build
-

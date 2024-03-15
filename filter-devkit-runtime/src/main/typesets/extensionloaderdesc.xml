@@ -1,0 +1,10 @@
+<entityStoreData xmlns="http://www.vordel.com/2005/06/24/entityStore">
+	<entityType extends="LoadableModule" name="DevKitExtensionLoader">
+		<constant name="_version" type="integer" value="1" />
+		<constant name="class" type="string" value="com.vordel.circuit.filter.devkit.context.ExtensionLoader" />
+		<!-- load before API Manager (5000) -->
+		<constant name="loadorder" type="integer" value="4999" />
+
+		<field cardinality="1" isKey="true" name="name" type="string"/>
+	</entityType>
+</entityStoreData>

@@ -1,0 +1,31 @@
+<entityStoreData>
+	<entityType extends="Filter" name="AdvancedScriptFilter">
+		<constant name="_version" type="integer" value="1" />
+		<constant name="class" type="string" value="com.vordel.client.manager.filter.devkit.runtime.AdvancedScriptFilter" />
+
+		<!-- Define a set of function resources which will be binded at deploy time -->
+		<componentType cardinality="*" name="ScriptResource" />
+		
+		<field cardinality="1" default="groovy" name="engineName" type="string"/>
+		<field cardinality="1" default="import com.vordel.circuit.CircuitAbortException&#10;import com.vordel.circuit.Message&#10;import com.vordel.config.ConfigContext&#10;import com.vordel.es.Entity&#10;import com.vordel.es.EntityStoreException&#10;&#10;void attach(ConfigContext ctx, Entity entity) throws EntityStoreException {&#10;}&#10;&#10;boolean invoke(Message m) throws CircuitAbortException {&#10;&#9;return true&#10;}&#10;&#10;void detach() {&#10;}&#10;" name="script" type="string"/>
+		
+		<!-- required, generated and consumed properties -->
+		<field cardinality="*" name="requiredProperties" type="string"/>
+        <field cardinality="*" name="generatedProperties" type="string"/>
+        <field cardinality="*" name="consumedProperties" type="string"/>
+	</entityType>
+	<entityType extends="Entity" name="ScriptResource">
+		<constant name="_version" type="integer" value="1" />
+
+		<!-- resource name and type -->		
+		<field isKey="true" name="name" type="string"/>
+		<field name="resourceType" type="string" default="CONFIGURATION_RESOURCE" />
+
+		<!-- configuration resource -->
+		<field cardinality="?" name="configurationReference" type="^Entity"/>
+
+		<!-- selector resource -->
+		<field cardinality="?" name="selectorExpression" type="string"/>
+		<field cardinality="?" name="selectorClazz" type="string" default="java.lang.Object" />
+	</entityType>
+</entityStoreData>

@@ -1,0 +1,23 @@
+rootProject.name = 'filter-devkit'
+include 'filter-devkit-annotations'
+include 'filter-devkit-tools'
+include 'filter-devkit-runtime'
+include 'filter-devkit-studio'
+include 'filter-devkit-dynamic'
+include 'filter-devkit-plugins-eval'
+include 'filter-devkit-plugins-jaxrs'
+include 'filter-devkit-plugins-httpsig'
+include 'filter-devkit-plugins-lambda'
+include 'filter-devkit-plugins-oauth'
+include 'filter-devkit-plugins-loop'
+include 'filter-devkit-plugins-scriptextensions'
+
+include 'filter-devkit-playground'
+
+project(':filter-devkit-plugins-eval').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-eval')
+project(':filter-devkit-plugins-jaxrs').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-jaxrs')
+project(':filter-devkit-plugins-httpsig').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-httpsig')
+project(':filter-devkit-plugins-lambda').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-lambda')
+project(':filter-devkit-plugins-oauth').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-oauth')
+project(':filter-devkit-plugins-loop').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-loop')
+project(':filter-devkit-plugins-scriptextensions').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-scriptextensions')

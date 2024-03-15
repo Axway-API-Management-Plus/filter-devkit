@@ -1,12 +1,8 @@
 <typeSet>
-	<!-- Assertion Filter Typedoc -->
-	<typedoc file="assertionfilterdesc.xml" />
-	<!-- Groovy Script Filter Typedoc -->
-	<typedoc file="groovyscriptfilterdesc.xml" />
-	<!-- Initializer Shortcut Filter Typedoc -->
-	<typedoc file="initializershortcutdesc.xml" />
-	<!-- MessageContextModule Typedoc -->
-	<typedoc file="contexttrackerdesc.xml" />
-	<!-- MessageContextModule Instance -->
-	<typedoc file="contexttrackerinstance.xml" />
+	<!-- Advanced Script Filter Typedoc -->
+	<typedoc file="advancedscriptfilterdesc.xml" />
+	<!-- Extension Loader Typedoc -->
+	<typedoc file="extensionloaderdesc.xml" />
+	<!-- Extension Loader Instance -->
+	<typedoc file="extensionloaderinstance.xml" />
 </typeSet>

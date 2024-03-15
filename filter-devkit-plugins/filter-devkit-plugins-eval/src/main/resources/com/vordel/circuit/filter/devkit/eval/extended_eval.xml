@@ -1,0 +1,6 @@
+<ui>
+    <panel columns="2">
+        <NameAttribute />
+        <TextAttribute field="expression" label="EXPRESSION_LABEL" required="true" />
+    </panel>
+</ui>

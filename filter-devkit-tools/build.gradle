@@ -1,0 +1,30 @@
+apply plugin: 'java'
+
+java {
+	sourceCompatibility = '8'
+	targetCompatibility = '11'
+
+	withJavadocJar()
+	withSourcesJar()
+}
+
+repositories {
+    // include your repositories here
+    // maven { url "https://internal.central.mirror/"; }
+    // maven { url "http://internal.central.mirror/";setAllowInsecureProtocol(true); }
+    mavenCentral()
+}
+
+dependencies {
+	implementation project(':filter-devkit-annotations')
+	
+	// dependencies for the mavenizer
+	implementation('org.apache.maven:maven-embedder:3.6.3')
+	implementation('org.apache.maven.resolver:maven-resolver-connector-basic:1.4.2')
+	implementation('org.apache.maven.resolver:maven-resolver-transport-file:1.4.2')
+	implementation('org.apache.maven.resolver:maven-resolver-transport-classpath:1.4.2')
+	implementation('org.apache.maven.resolver:maven-resolver-transport-http:1.4.2') {
+		exclude group: 'org.slf4j', module: 'jcl-over-slf4j'
+	}
+	implementation('commons-logging:commons-logging:1.1.2')
+}

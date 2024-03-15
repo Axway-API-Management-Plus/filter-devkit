@@ -1,0 +1,30 @@
+plugins {
+	id 'biz.aQute.bnd.builder' version '6.4.0'
+}
+
+java {
+	sourceCompatibility = '8'
+	targetCompatibility = '11'
+}
+
+jar {
+	manifest {
+		// to be recognized as filter, symbolic name MUST start with 'com.vordel.filter.'
+		// or 'com.vordel.policystudio.ext.' and it must not end with '.help'
+		attributes("Bundle-SymbolicName": "com.vordel.filter.${project.name};singleton:=true",
+		"-include": "src/main/bundle/bundle.bnd")
+	}
+}
+
+apply from: rootProject.file('policystudio.gradle')
+
+deployPlugin.enabled = true
+
+configurations {
+	compileOnly.extendsFrom(studio_dist)
+}
+
+dependencies {
+	implementation project(':filter-devkit-annotations')
+	implementation project(':filter-devkit-runtime')
+}

@@ -1,0 +1,65 @@
+// List of Apigateway dependencies
+
+repositories {
+    // include your repositories here
+    // maven { url "https://internal.central.mirror/"; }
+    // maven { url "http://internal.central.mirror/";setAllowInsecureProtocol(true); }
+    mavenCentral()
+}
+
+def checkPolicyStudioProperties() {
+    if (!project.hasProperty('studio_vdistdir')) {
+        throw new RuntimeException("Could not find 'studio_vdistdir'. Did you forget to specify it in ~/.gradle/gradle.properties ?")
+    }
+}
+
+checkPolicyStudioProperties()
+
+configurations {
+	studio_deploy
+	studio_plugins
+	studio_dist.extendsFrom(studio_plugins)
+}
+
+task deployPlugin(type: Copy) {
+	from jar, configurations.studio_deploy
+    into file("${studio_vdistdir}/plugins")
+}
+
+deployPlugin.enabled = false
+
+def rcpClasses(prefix) {
+    def matchingDirs = []
+
+    file("${studio_vdistdir}/plugins").eachDir { dir ->
+        if (dir.name.startsWith(prefix)) {
+            matchingDirs.add(dir)
+        }
+    }
+
+    // Create a FileCollection from the matching directories
+    return files(matchingDirs)
+}
+
+dependencies {
+    studio_plugins rcpClasses("com.vordel.rcp.common.resources")
+    studio_plugins rcpClasses("com.vordel.rcp.filterbase")
+    studio_plugins rcpClasses("com.vordel.rcp.navigator")
+    studio_plugins rcpClasses("com.vordel.rcp.policystudio.resources")
+
+    studio_plugins fileTree("${studio_vdistdir}").matching {
+        include 'plugins/com.vordel.rcp.common*.jar'
+        include 'plugins/com.vordel.rcp.policystudio*.jar'
+        include 'plugins/org.eclipse.swt*.jar'
+        include 'plugins/org.eclipse.jface*.jar'
+        include 'plugins/org.eclipse.core*.jar'
+        include 'plugins/org.eclipse.gef*.jar'
+        include 'plugins/org.eclipse.emf*.jar'
+        include 'plugins/org.eclipse.equinox*.jar'
+        include 'plugins/org.eclipse.osgi*.jar'
+    }
+
+    studio_dist fileTree("${studio_vdistdir}").matching {
+        include 'plugins/com.vordel.rcp.filterbase*/lib/apigw-libraries.jar'
+    }
+}

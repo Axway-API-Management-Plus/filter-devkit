@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         id="com.vordel.ui.filterGUI.AssertionFilter"
+         name="Filter-DevKit Filters"
+         point="com.vordel.rcp.filterbase.filterGUI">
+      <filter
+            class="com.vordel.client.manager.filter.devkit.runtime.AdvancedScriptFilter"
+            icon="javascript"
+            name="Advanced Script Filter"
+            page="com.vordel.client.manager.filter.devkit.studio.script.advanced.AdvancedScriptPage">
+         <category
+               id="com.vordel.ui.filter.category.utility" />
+      </filter>
+   </extension>
+</plugin>
