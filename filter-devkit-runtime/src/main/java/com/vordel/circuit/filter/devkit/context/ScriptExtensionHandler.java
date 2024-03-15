@@ -42,12 +42,6 @@ public class ScriptExtensionHandler implements InvocationHandler {
 			}
 
 			return result;
-		} catch (IllegalAccessException e) {
-			/* should not occur */
-			throw e;
-		} catch (IllegalArgumentException e) {
-			/* should not occur */
-			throw e;
 		} catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
 

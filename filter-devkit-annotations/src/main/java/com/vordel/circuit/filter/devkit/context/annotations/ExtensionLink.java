@@ -6,16 +6,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marker annotation for automatic registration of extension loadable modules
- * and interfaces.
+ * Inicates to the annotation processor that this class must be loaded in the
+ * same class loader of the specified class
  * 
  * @author rdesaintleger@axway.com
  */
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ExtensionModulePlugin {
+public @interface ExtensionLink {
 	/**
-	 * @return list of interfaces to be registered.
+	 * @return class annotated with {@link ExtensionLibraries}
 	 */
-	Class<?>[] value() default {};
+	Class<?> value();
 }

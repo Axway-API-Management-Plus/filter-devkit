@@ -16,7 +16,7 @@ import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProperties;
 import com.vordel.circuit.filter.devkit.context.annotations.DictionaryAttribute;
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContext;
 import com.vordel.circuit.filter.devkit.context.annotations.InvocableMethod;
 import com.vordel.circuit.filter.devkit.context.annotations.SelectorExpression;
 import com.vordel.circuit.filter.devkit.httpsig.DigestAlgorithm;
@@ -28,7 +28,7 @@ import com.vordel.security.cert.PersonalInfo;
 import com.vordel.store.cert.CertStore;
 import com.vordel.trace.Trace;
 
-@ExtensionContextPlugin("http.signature")
+@ExtensionContext("http.signature")
 public class HttpSignatureModule {
 	@InvocableMethod("Authenticate")
 	public static boolean validateHttpAuthorization(Message msg) throws CircuitAbortException {

@@ -10,6 +10,8 @@ import com.vordel.es.EntityStoreException;
 import com.vordel.es.EntityType;
 import com.vordel.kps.Model;
 import com.vordel.kps.Store;
+import com.vordel.kps.impl.KPS;
+import com.vordel.persistence.kps.KPSInterface;
 
 public class KPSStoreResource extends KPSResource {
 	private final Store store;
@@ -34,6 +36,12 @@ public class KPSStoreResource extends KPSResource {
 		this(getStoreByAlias(alias));
 	}
 
+	public static Model getModel() {
+		KPSInterface instance = KPS.getInstance();
+
+		return instance.getModel();
+	}
+
 	public static Store getStoreByIdentity(String identity) {
 		Model model = getModel();
 		Map<String, Store> stores = model.getStores();
@@ -46,17 +54,6 @@ public class KPSStoreResource extends KPSResource {
 		Map<String, Store> stores = model.getAliases();
 
 		return stores.get(alias);
-	}
-
-	private static String getStoreIdentity(ConfigContext ctx, ESPK storePK) throws EntityStoreException {
-		EntityStore es = ctx.getStore();
-		Entity storeEntity = es.getEntity(storePK);
-		Entity packageEntity = getParentPackage(es, storeEntity.getParentPK());
-
-		String storeName = storeEntity.getStringValue("name");
-		String packageName = packageEntity.getStringValue("name");
-
-		return getStoreIdentity(packageName, storeName);
 	}
 
 	public static String getStoreIdentity(String packageName, String storeName) {
@@ -73,6 +70,17 @@ public class KPSStoreResource extends KPSResource {
 		}
 
 		return result.toString();
+	}
+
+	private static String getStoreIdentity(ConfigContext ctx, ESPK storePK) throws EntityStoreException {
+		EntityStore es = ctx.getStore();
+		Entity storeEntity = es.getEntity(storePK);
+		Entity packageEntity = getParentPackage(es, storeEntity.getParentPK());
+	
+		String storeName = storeEntity.getStringValue("name");
+		String packageName = packageEntity.getStringValue("name");
+	
+		return getStoreIdentity(packageName, storeName);
 	}
 
 	private static Entity getParentPackage(EntityStore es, ESPK parentPK) {

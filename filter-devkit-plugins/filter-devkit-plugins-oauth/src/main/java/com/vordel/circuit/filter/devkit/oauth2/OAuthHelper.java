@@ -1,13 +1,13 @@
 package com.vordel.circuit.filter.devkit.oauth2;
 
 import com.vordel.circuit.Message;
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContextPlugin;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContext;
 import com.vordel.circuit.filter.devkit.context.annotations.SelectorExpression;
 import com.vordel.circuit.filter.devkit.context.annotations.SubstitutableMethod;
 import com.vordel.circuit.filter.devkit.oauth2.jaxrs.OAuthException;
 import com.vordel.circuit.oauth.kps.ApplicationDetails;
 
-@ExtensionContextPlugin("oauth.helper")
+@ExtensionContext("oauth.helper")
 public class OAuthHelper {
 	@SubstitutableMethod("OAuthException")
 	public static OAuthException createOAuthException(@SelectorExpression("oauth.error") String error, @SelectorExpression("oauth.error_uri") String error_uri, @SelectorExpression("oauth.error_description") String error_description) {

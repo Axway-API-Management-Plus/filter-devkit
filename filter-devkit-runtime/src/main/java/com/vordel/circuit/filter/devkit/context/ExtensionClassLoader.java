@@ -100,11 +100,16 @@ public class ExtensionClassLoader extends URLClassLoader {
 	private static byte[] toByteArray(URL url) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		InputStream in = url.openStream();
-		byte[] buffer = new byte[1024];
-		int read = 0;
 
-		while ((read = (in.read(buffer, 0, buffer.length))) > 0) {
-			out.write(buffer, 0, read);
+		try {
+			byte[] buffer = new byte[1024];
+			int read = 0;
+
+			while ((read = (in.read(buffer, 0, buffer.length))) > 0) {
+				out.write(buffer, 0, read);
+			}
+		} finally {
+			in.close();
 		}
 
 		return out.toByteArray();
