@@ -10,12 +10,13 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Priority;
 import javax.tools.Diagnostic;
-import javax.tools.Diagnostic.Kind;
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
@@ -25,11 +26,13 @@ import javax.tools.StandardLocation;
 
 import org.eclipse.jdt.internal.compiler.tool.EclipseCompiler;
 
+import com.vordel.circuit.filter.devkit.context.ExtensionClassLoader;
+import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
 import com.vordel.circuit.filter.devkit.context.ExtensionModule;
-import com.vordel.circuit.filter.devkit.context.ExtensionScanner;
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionModulePlugin;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionLibraries;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionLink;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
-import com.vordel.circuit.filter.devkit.dynamic.compiler.CompilerClassLoader;
 import com.vordel.circuit.filter.devkit.dynamic.compiler.CompilerFileManager;
 import com.vordel.circuit.filter.devkit.dynamic.compiler.DynamicJavaSource;
 import com.vordel.common.Dictionary;
@@ -39,17 +42,26 @@ import com.vordel.es.EntityStoreException;
 import com.vordel.trace.Trace;
 
 /**
- * Deploy time compiler module. This module should not be used in production.
- * its purpose is to make fast tests on a local gateway. Compilation is
- * automatically activated if class files are detected in the right directory.
+ * Deploy time compiler module. Main purpose of this module is to make tests on
+ * a local API Gateway. It compiles classes on the fly to a dedicated directory.
+ * Annotation processing is supported and a 'child first' class loader is used
+ * to hide annotation processors and compiler libraries from the API Gateway
+ * class path.
+ * 
+ * Once compilation is done classes are scanned using the regular extension
+ * mechanism.
  * 
  * @author rdesaintleger@axway.com
  */
 @Priority(Integer.MAX_VALUE)
-@ExtensionModulePlugin
+@ExtensionInstance
+@ExtensionLibraries("${environment.VDISTDIR}/ext/extra/compiler")
 public class DynamicCompilerModule implements ExtensionModule {
 	private static final Selector<String> DIST_RESOURCES = SelectorResource.fromLiteral("${environment.VDISTDIR}/ext/dynamic", String.class, true);
 	private static final Selector<String> INST_RESOURCES = SelectorResource.fromLiteral("${environment.VINSTDIR}/ext/dynamic", String.class, true);
+
+	private static final Selector<String> DIST_CLASSES = SelectorResource.fromLiteral("${environment.VDISTDIR}/ext/extra/compiled", String.class, true);
+	private static final Selector<String> INST_CLASSES = SelectorResource.fromLiteral("${environment.VINSTDIR}/ext/extra/compiled", String.class, true);
 
 	private DynamicCompilerModule() {
 		/* inform the module is loaded */
@@ -58,98 +70,247 @@ public class DynamicCompilerModule implements ExtensionModule {
 
 	@Override
 	public void attachModule(ConfigContext ctx) throws EntityStoreException {
-		/* compile and register classes */
-		ExtensionScanner.registerClasses(ctx, compile());
+		/* assume extension class loader is the base class loader */
+		ClassLoader loader = ExtensionLoader.class.getClassLoader();
+
+		/* retrieve source directories */
+		File distsrc = new File(DIST_RESOURCES.substitute(Dictionary.empty));
+		File instsrc = new File(INST_RESOURCES.substitute(Dictionary.empty));
+
+		/* cleanup output directories */
+		File distclasses = new File(DIST_CLASSES.substitute(Dictionary.empty));
+		File instclasses = new File(INST_CLASSES.substitute(Dictionary.empty));
+
+		deleteClasses(distclasses);
+		deleteClasses(instclasses);
+
+		/* try to compile installation wide dynamic classes */
+		ClassLoader compiled = compile(loader, distsrc, distclasses);
+
+		if (compiled != null) {
+			Trace.info("Global dynamic classes compiled");
+
+			/* scan newly discovered classes */
+			ExtensionLoader.scanClasses(ctx, loader = compiled);
+		} else {
+			/* no classloader returned directory does not exists */
+			Trace.info("Global dynamic compiler disabled");
+		}
+
+		if (distsrc.equals(instsrc)) {
+			Trace.info("Instance dynamic compiler running on Node Manager");
+		} else {
+			/* try to compile instance specific dynamic classes */
+			compiled = compile(loader, instsrc, instclasses);
+
+			if (compiled != null) {
+				Trace.info("Instance dynamic classes compiled");
+
+				/* scan newly discovered classes */
+				ExtensionLoader.scanClasses(ctx, compiled);
+			} else {
+				/* no classloader returned directory does not exists */
+				Trace.info("Instance dynamic compiler disabled");
+			}
+		}
 	}
 
 	@Override
 	public void detachModule() {
+		/* removing compiled classes when detaching */
+		File distclasses = new File(DIST_CLASSES.substitute(Dictionary.empty));
+		File instclasses = new File(INST_CLASSES.substitute(Dictionary.empty));
+
+		deleteClasses(distclasses);
+		deleteClasses(instclasses);
+
 		/*
 		 * since this module does not keep any information, there is nothing more to do
 		 */
 		Trace.info("Dynamic compiler module unloaded");
 	}
 
-	public static List<Class<?>> compile() {
-		ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		File dist = new File(DIST_RESOURCES.substitute(Dictionary.empty));
-		File inst = new File(INST_RESOURCES.substitute(Dictionary.empty));
-		List<Class<?>> clazzes = new ArrayList<Class<?>>();
-
-		ClassLoader compiled = compile(loader, dist, clazzes);
-
-		if (compiled != null) {
-			loader = compiled;
-
-			Trace.info("Global dynamic classes compiled");
-		} else {
-			Trace.info("Global dynamic compiler disabled");
-		}
-
-		if (dist.equals(inst)) {
-			Trace.info("Instance dynamic compiler running on Node Manager");
-		} else {
-			compiled = compile(loader, inst, clazzes);
-
-			if (compiled != null) {
-				Trace.info("Instance dynamic classes compiled");
-			} else {
-				Trace.info("Instance dynamic compiler disabled");
+	/**
+	 * recursively delete a file or directory
+	 * 
+	 * @param classes file to be deleted
+	 */
+	private static void deleteClasses(File classes) {
+		if (classes.isDirectory()) {
+			for (File file : classes.listFiles()) {
+				deleteClasses(file);
 			}
 		}
 
-		return clazzes;
+		classes.delete();
 	}
 
-	public static ClassLoader compile(ClassLoader loader, File root, List<Class<?>> clazzes) {
-		if ((clazzes != null) && (root != null) && root.exists() && root.isDirectory()) {
-			Trace.info(String.format("compile classes from directory %s", root.getAbsolutePath()));
+	/**
+	 * compile entry point. check if source directory exists and create output
+	 * directory.
+	 * 
+	 * @param loader parent class loader
+	 * @param src    source directory
+	 * @param output output class directory
+	 * @return a classloader with compiled classes or null if source directory does
+	 *         not exists.
+	 */
+	private static ClassLoader compile(ClassLoader loader, File src, File output) {
+		if ((src != null) && src.exists() && src.isDirectory()) {
+			if (!output.mkdirs()) {
+				Trace.error(String.format("unable to create directory %s", output.getAbsolutePath()));
+			} else {
+				try {
+					Trace.info(String.format("compile classes from directory %s", src.getAbsolutePath()));
 
-			try {
-				/* compile classes */
-				CompilerClassLoader compiled = compile(loader, root);
-
-				clazzes = compiled.loadClasses(clazzes);
-				return compiled;
-			} catch (IOException e) {
-				Trace.error(String.format("can't compile classes from directory %s", root.getAbsolutePath()), e);
+					/* compile classes */
+					return runCompiler(loader, src, output);
+				} catch (IOException e) {
+					Trace.error(String.format("can't compile classes from directory %s", src.getAbsolutePath()), e);
+				}
 			}
 		}
 
 		return null;
 	}
 
-	public static CompilerClassLoader compile(ClassLoader parent, File root) throws IOException {
+	/**
+	 * create and run the compiler task. compilation is done using the full class
+	 * path (tools, compiler and api gateway). returned class loader can't access
+	 * tools and compiler.
+	 * 
+	 * @param parent parent class loader
+	 * @param src    source directory
+	 * @param output output class directory
+	 * @return a classloader with compiled classes or null if source directory does
+	 *         not exists.
+	 * @throws IOException if unable to read source files
+	 */
+	private static ClassLoader runCompiler(ClassLoader parent, File src, File output) throws IOException {
 		JavaCompiler javac = new EclipseCompiler();
 		CompilerListener diagnostic = new CompilerListener();
 		StandardJavaFileManager sjfm = javac.getStandardFileManager(diagnostic, null, null);
-		CompilerClassLoader loader = new CompilerClassLoader(root, parent);
-		CompilerFileManager fileManager = new CompilerFileManager(sjfm, loader);
+		ClassLoader loader = getCompiledClassLoader(parent, src, output);
+		CompilerFileManager fileManager = new CompilerFileManager(sjfm, loader, DynamicCompilerModule.class.getClassLoader());
 		List<String> options = new ArrayList<String>();
+		List<File> jars = new ArrayList<File>();
 
 		/* keep line numbers and variables names for debug */
 		options.add("-g");
 
-		/* set target to java 11 */
+		/* set target to java 8 */
 		options.add("-target");
-		options.add("11");
+		options.add("1.8");
 
-		sjfm.setLocation(StandardLocation.CLASS_PATH, getClassPath(loader, new ArrayList<File>()));
+		/* gather all jars on class path */
+		getClassPath(DynamicCompilerModule.class.getClassLoader(), parent, jars, src, output);
 
-		List<SimpleJavaFileObject> compilationUnits = scanFiles(new ArrayList<SimpleJavaFileObject>(), root, Collections.singleton("java"));
+		/* sets compiler class path with tools class loader */
+		sjfm.setLocation(StandardLocation.CLASS_PATH, jars);
+		sjfm.setLocation(StandardLocation.SOURCE_PATH, Collections.singleton(src));
+		sjfm.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(output));
+		sjfm.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(output));
+
+		/* scan files to be compiled */
+		List<SimpleJavaFileObject> compilationUnits = scanFiles(new ArrayList<SimpleJavaFileObject>(), src, Collections.singleton("java"));
 
 		Writer out = new StringWriter();
 		JavaCompiler.CompilationTask compile = javac.getTask(out, fileManager, diagnostic, options, null, compilationUnits);
-
 		boolean res = compile.call();
 
 		if (!res) {
 			Trace.error(out.toString());
 
-			throw new EntityStoreException("Unable to compile !");
+			return null;
 		}
 
 		return loader;
+	}
+
+	/**
+	 * create a class loader suitable for dynamic compiled classes
+	 * 
+	 * @param parent parent class loader.
+	 * @param files  set of directories to be added to the returned class loader
+	 *               (usualy source for resource and output for class files).
+	 * @return class loader for dynamic compiled classes
+	 */
+	private static ClassLoader getCompiledClassLoader(ClassLoader parent, File... files) {
+		List<URL> urls = new ArrayList<URL>();
+
+		for (int index = 0; index < files.length; index++) {
+			File file = files[index];
+
+			if ((file != null) && file.isDirectory()) {
+				try {
+					urls.add(file.toURI().toURL());
+				} catch (Exception e) {
+					Trace.error(String.format("unable to add file URL '%s' to classpath", files[index]), e);
+				}
+			}
+		}
+
+		return new ExtensionClassLoader(urls.toArray(new URL[0]), parent);
+	}
+
+	/**
+	 * retrieve class path set of URLs
+	 * 
+	 * @param tools  tools class loader
+	 * @param loader api gateway class loader
+	 * @param jars   list of discovered jars
+	 * @param files  directories to be added to class path (usually source for
+	 *               resources and output for classes)
+	 */
+	private static void getClassPath(ClassLoader tools, ClassLoader loader, List<File> jars, File... files) {
+		Set<File> seen = new HashSet<File>();
+
+		getClassPath(tools, jars, seen);
+		getClassPath(loader, jars, seen);
+
+		for (int index = 0; index < files.length; index++) {
+			File file = files[index];
+
+			if ((file != null) && file.isDirectory() && seen.add(file)) {
+				jars.add(file);
+			}
+		}
+	}
+
+	private static void getClassPath(ClassLoader loader, List<File> jars, Set<File> seen) {
+		if (loader != null) {
+			getClassPath(loader.getParent(), jars, seen);
+		}
+
+		if (loader instanceof URLClassLoader) {
+			for (URL url : ((URLClassLoader) loader).getURLs()) {
+				addJarURL(jars, url, seen);
+			}
+		}
+	}
+
+	private static void addJarURL(List<File> jars, URL url, Set<File> seen) {
+		String protocol = url.getProtocol();
+
+		if ("file".equals(protocol)) {
+			try {
+				File file = new File(url.toURI());
+
+				if (seen.add(file)) {
+					if (file.isFile()) {
+						String name = file.getName();
+
+						if ((name.endsWith(".jar") || name.endsWith(".zip")) && (!jars.contains(file))) {
+							jars.add(file);
+						}
+					} else if (file.isDirectory()) {
+						jars.add(file);
+					}
+				}
+			} catch (URISyntaxException e) {
+				Trace.error(String.format("URL '%s' can't be translated into a local file", url), e);
+			}
+		}
 	}
 
 	private static List<SimpleJavaFileObject> scanFiles(List<SimpleJavaFileObject> output, File root, Collection<String> suffixes) throws IOException {
@@ -179,37 +340,19 @@ public class DynamicCompilerModule implements ExtensionModule {
 		return output;
 	}
 
-	public static List<File> getClassPath(ClassLoader loader, List<File> jars) {
-		if (loader != null) {
-			jars = getClassPath(loader.getParent(), jars);
-		}
-
-		if (loader instanceof URLClassLoader) {
-			for (URL url : ((URLClassLoader) loader).getURLs()) {
-				String protocol = url.getProtocol();
-
-				if ("file".equals(protocol)) {
-					try {
-						File file = new File(url.toURI());
-
-						if (file.isFile() && file.getName().endsWith(".jar") && (!jars.contains(file))) {
-							jars.add(file);
-						}
-					} catch (URISyntaxException e) {
-						Trace.error(String.format("URL '%s' can't be translated into a local file", url), e);
-					}
-				}
-			}
-		}
-
-		return jars;
-	}
-
-	public static class CompilerListener implements DiagnosticListener<JavaFileObject> {
+	/**
+	 * private inner class which must me loaded in the same class loder of parent
+	 * class. The {@link ExtensionLink} allow this class to be forwarded to the
+	 * 'child first' class loader.
+	 * 
+	 * @author rdesaintleger@axway.com
+	 */
+	@ExtensionLink(DynamicCompilerModule.class)
+	private final static class CompilerListener implements DiagnosticListener<JavaFileObject> {
 		@Override
 		public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
 			if (diagnostic != null) {
-				Kind kind = diagnostic.getKind();
+				Diagnostic.Kind kind = diagnostic.getKind();
 				JavaFileObject source = diagnostic.getSource();
 				String message = diagnostic.getMessage(null);
 
@@ -217,6 +360,7 @@ public class DynamicCompilerModule implements ExtensionModule {
 				case ERROR:
 				case WARNING:
 				case MANDATORY_WARNING:
+					/* report all warnings as errors */
 					Trace.error(String.format("%s: %s line %d", source.getName(), kind.name(), diagnostic.getLineNumber()));
 					Trace.error(message);
 					break;

@@ -46,7 +46,7 @@ import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterRequired;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterType;
 
 @SupportedOptions({ "projectName", "projectExportedPackage" })
-@SupportedSourceVersion(SourceVersion.RELEASE_11)
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes({ "com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterType" })
 public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 	private final Map<String, AnnotatedQuickFilter> filters = new HashMap<String, AnnotatedQuickFilter>();
@@ -76,17 +76,17 @@ public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 				AnnotatedTypeDoc typedoc = getAnnotatedTypeSet(typesets, filter.filterDefinition);
 				String typedocName = typedoc.getTypeDocName();
 
-				FileObject typedocFile = filer.createResource(StandardLocation.CLASS_OUTPUT, "", String.format("typeset/%s", typedocName));
+				FileObject typedocFile = filer.createResource(StandardLocation.CLASS_OUTPUT, "", String.format("typesets/%s", typedocName));
 
 				typedoc.generateTypeDoc(typedocFile.openOutputStream(), filter);
 				typedocs.add(typedoc);
 			}
 
-			FileObject typesetFile = filer.createResource(StandardLocation.CLASS_OUTPUT, "", "typeset/typeset.xml");
+			FileObject typesetFile = filer.createResource(StandardLocation.CLASS_OUTPUT, "", "typesets/typeset.xml");
 
 			AbstractAnnotatedTypeDoc.generateTypeSet(typesetFile.openOutputStream(), typedocs);
 		} catch (IOException e) {
-			throw new IllegalStateException("Unable to write typeset files", e);
+			throw new IllegalStateException("Unable to write typesets files", e);
 		}
 	}
 

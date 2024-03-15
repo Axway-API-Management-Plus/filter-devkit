@@ -15,8 +15,7 @@ public abstract class ScriptExtensionFactory {
 		Class<?> clazz = getExtensionInterface();
 		ClassLoader loader = clazz.getClassLoader();
 		ScriptExtensionHandler handler = new ScriptExtensionHandler(instance);
-		Object proxy = Proxy.newProxyInstance(loader, new Class<?>[] { clazz }, handler);
-		
-		return proxy;
+
+		return Proxy.newProxyInstance(loader, new Class<?>[] { clazz }, handler);
 	}
 }

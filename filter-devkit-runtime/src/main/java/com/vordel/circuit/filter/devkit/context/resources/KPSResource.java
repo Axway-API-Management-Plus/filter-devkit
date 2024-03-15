@@ -6,22 +6,13 @@ import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.vordel.kps.Model;
 import com.vordel.kps.ObjectExists;
 import com.vordel.kps.ObjectNotFound;
 import com.vordel.kps.Store;
 import com.vordel.kps.Transaction;
-import com.vordel.kps.impl.KPS;
 import com.vordel.kps.query.KeyQuery;
-import com.vordel.persistence.kps.KPSInterface;
 
 public abstract class KPSResource implements ContextResource, ViewableResource {
-	public static Model getModel() {
-		KPSInterface instance = KPS.getInstance();
-		
-		return instance.getModel();
-	}
-
 	public abstract Store getStore();
 
 	public String getPrimaryKey() {
@@ -126,6 +117,7 @@ public abstract class KPSResource implements ContextResource, ViewableResource {
 
 	@Override
 	public KPSDictionaryView getResourceView() {
+		/* return the Selector special view object */
 		return new KPSDictionaryView(this);
 	}
 
