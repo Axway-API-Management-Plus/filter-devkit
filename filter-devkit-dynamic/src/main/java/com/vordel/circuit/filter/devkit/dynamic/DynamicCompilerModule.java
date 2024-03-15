@@ -198,9 +198,9 @@ public class DynamicCompilerModule implements ExtensionModule {
 		/* keep line numbers and variables names for debug */
 		options.add("-g");
 
-		/* set target to java 8 */
+		/* set target to java 11 */
 		options.add("-target");
-		options.add("1.8");
+		options.add("11");
 
 		/* gather all jars on class path */
 		getClassPath(DynamicCompilerModule.class.getClassLoader(), parent, jars, src, output);

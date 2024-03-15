@@ -46,7 +46,7 @@ import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterRequired;
 import com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterType;
 
 @SupportedOptions({ "projectName", "projectExportedPackage" })
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedSourceVersion(SourceVersion.RELEASE_11)
 @SupportedAnnotationTypes({ "com.vordel.circuit.filter.devkit.quick.annotations.QuickFilterType" })
 public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 	private final Map<String, AnnotatedQuickFilter> filters = new HashMap<String, AnnotatedQuickFilter>();

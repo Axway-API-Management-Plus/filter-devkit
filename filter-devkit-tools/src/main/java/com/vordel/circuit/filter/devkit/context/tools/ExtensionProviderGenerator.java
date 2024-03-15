@@ -40,7 +40,7 @@ import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
  * 
  * @author rdesaintleger@axway.com
  */
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedSourceVersion(SourceVersion.RELEASE_11)
 @SupportedAnnotationTypes({ "com.vordel.circuit.filter.devkit.context.annotations.ExtensionContext",
 	"com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance",
 	"com.vordel.circuit.filter.devkit.context.annotations.ExtensionLink",
