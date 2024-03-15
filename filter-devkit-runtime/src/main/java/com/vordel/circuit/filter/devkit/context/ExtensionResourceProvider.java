@@ -773,7 +773,7 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 		}
 	}
 
-	private static abstract class InjectableParameter<T> {
+	private abstract static class InjectableParameter<T> {
 		protected abstract T resolve(MethodDictionary dictionary);
 
 		protected abstract String debug(T resolved);
@@ -878,7 +878,7 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 		private final String filterName;
 		private final Class<T> returnType;
 
-		private ReflectedResource(Object instance, Class<?> clazz, AnnotatedMethod annotated, Class<T> returnType, String name, String filterName) {
+		private ReflectedResource(Object instance, AnnotatedMethod annotated, Class<T> returnType, String name, String filterName) {
 			this.parameters = processInjectableParameters(annotated);
 			this.method = annotated.getMethod();
 
@@ -942,7 +942,7 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 
 	private static class ReflectedInvocableResource extends ReflectedResource<Boolean> implements InvocableResource {
 		private ReflectedInvocableResource(Object instance, Class<?> clazz, AnnotatedMethod annotated, String name, String filterName) {
-			super(instance, clazz, annotated, Boolean.class, name, filterName);
+			super(instance, annotated, Boolean.class, name, filterName);
 		}
 
 		@Override
@@ -982,7 +982,7 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 
 	private static class ReflectedSubstitutableResource<T> extends ReflectedResource<T> implements SubstitutableResource<T> {
 		private ReflectedSubstitutableResource(Object instance, Class<?> clazz, AnnotatedMethod annotated, Class<T> returnType, String name, String filterName) {
-			super(instance, clazz, annotated, returnType, name, filterName);
+			super(instance, annotated, returnType, name, filterName);
 		}
 
 		@Override

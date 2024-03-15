@@ -2,7 +2,11 @@ package com.vordel.circuit.filter.devkit.context.tools;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -11,14 +15,22 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContext;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionLibraries;
+import com.vordel.circuit.filter.devkit.context.annotations.ExtensionLink;
 import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
 
 /**
@@ -30,13 +42,16 @@ import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
  */
 @SupportedSourceVersion(SourceVersion.RELEASE_11)
 @SupportedAnnotationTypes({ "com.vordel.circuit.filter.devkit.context.annotations.ExtensionContext",
-		"com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance",
-		"com.vordel.circuit.filter.devkit.script.extension.ScriptExtension", })
+	"com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance",
+	"com.vordel.circuit.filter.devkit.context.annotations.ExtensionLink",
+	"com.vordel.circuit.filter.devkit.script.extension.ScriptExtension", })
 public class ExtensionProviderGenerator extends AbstractProcessor {
 	/**
 	 * Set of discovered classes
 	 */
 	private final Set<TypeElement> extensions = new HashSet<TypeElement>();
+
+	private final Map<TypeElement, Set<TypeElement>> links = new HashMap<TypeElement, Set<TypeElement>>();
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -55,13 +70,76 @@ public class ExtensionProviderGenerator extends AbstractProcessor {
 			Set<? extends Element> plugins = roundEnv.getElementsAnnotatedWith(ExtensionContext.class);
 			Set<? extends Element> modules = roundEnv.getElementsAnnotatedWith(ExtensionInstance.class);
 			Set<? extends Element> scripts = roundEnv.getElementsAnnotatedWith(ScriptExtension.class);
+			Set<? extends Element> links = roundEnv.getElementsAnnotatedWith(ExtensionLink.class);
 
 			registerClasses(plugins);
 			registerClasses(modules);
 			registerClasses(scripts);
+			registerLinks(links);
 		}
 
 		return true;
+	}
+
+	/**
+	 * process classloader links
+	 * 
+	 * @param classes set of classes to be processed.
+	 */
+	private void registerLinks(Set<? extends Element> classes) {
+		Elements elements = processingEnv.getElementUtils();
+		Types types = processingEnv.getTypeUtils();
+
+		TypeElement typeElement = elements.getTypeElement(ExtensionLink.class.getCanonicalName());
+
+		for (Element element : classes) {
+			if (element instanceof TypeElement) {
+				List<? extends AnnotationMirror> annotations = element.getAnnotationMirrors();
+
+				for (AnnotationMirror annotation : annotations) {
+					if (annotation.getAnnotationType().asElement().equals(typeElement)) {
+						/* found a link annotation */
+						for (Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : annotation.getElementValues().entrySet()) {
+							if ("value".equals(entry.getKey().getSimpleName().toString())) {
+								/* found the value method */
+								AnnotationValue value = entry.getValue();
+
+								if (value instanceof TypeMirror) {
+									/* register found class */
+									registerLink((TypeElement) element, (TypeElement) types.asElement((TypeMirror) value));
+								} else {
+									String className = value.toString();
+
+									if (className.endsWith(".class")) {
+										className = className.substring(0, className.lastIndexOf('.'));
+									}
+
+									/* register found class */
+									registerLink((TypeElement) element, elements.getTypeElement(className));
+								}
+								break;
+							}
+						}
+
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	private void registerLink(TypeElement sibbling, TypeElement key) {
+		if (key != null) {
+			Set<TypeElement> linked = links.get(key);
+
+			if (linked == null) {
+				linked = new HashSet<TypeElement>();
+
+				links.put(key, linked);
+			}
+
+			linked.add(sibbling);
+		}
 	}
 
 	/**
@@ -86,6 +164,7 @@ public class ExtensionProviderGenerator extends AbstractProcessor {
 	private void writeExtensionsFile() throws IOException {
 		if (!extensions.isEmpty()) {
 			Filer filer = processingEnv.getFiler();
+			Elements elements = processingEnv.getElementUtils();
 			FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "", "META-INF/vordel/extensions");
 			Writer services = file.openWriter();
 
@@ -99,7 +178,7 @@ public class ExtensionProviderGenerator extends AbstractProcessor {
 
 					if (libraries != null) {
 						writeLibrariesFile(filer, element, libraries.value());
-						writeForceLoadFile(filer, element, libraries.classes());
+						writeForceLoadFile(filer, elements, element, libraries.classes());
 					}
 
 					services.append(String.format("%s\n", element.getQualifiedName().toString()));
@@ -136,12 +215,27 @@ public class ExtensionProviderGenerator extends AbstractProcessor {
 	 * 
 	 * @param filer   compiler standard filer.
 	 * @param element annotated class
-	 * @param entries list of classes to be loaded
+	 * @param classes list of classes to be loaded
 	 * @throws IOException if any error occurs
 	 */
-	private void writeForceLoadFile(Filer filer, TypeElement element, String[] entries) throws IOException {
+	private void writeForceLoadFile(Filer filer, Elements elements, TypeElement element, String[] classes) throws IOException {
 		FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "", String.format("META-INF/vordel/forceLoad/%s", element.getQualifiedName().toString()));
 		Writer libraries = file.openWriter();
+
+		Set<TypeElement> linked = links.get(element);
+		Set<String> entries = new HashSet<String>();
+
+		for (String entry : classes) {
+			entries.add(entry);
+		}
+
+		if (linked != null) {
+			for (TypeElement entry : linked) {
+				Name name = elements.getBinaryName(entry);
+
+				entries.add(name.toString());
+			}
+		}
 
 		try {
 			for (String entry : entries) {

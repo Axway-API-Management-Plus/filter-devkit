@@ -42,7 +42,7 @@ public abstract class AdvancedScriptRuntimeBinder {
 		return body.toString();
 	}
 
-	public static AdvancedScriptRuntimeBinder getScriptBinder(ScriptEngine engine) throws ScriptException {
+	public static AdvancedScriptRuntimeBinder getScriptBinder(ScriptEngine engine) {
 		/*
 		 * singe engine may be registered under multiple names, retrieve language name
 		 * from factory
@@ -81,7 +81,7 @@ public abstract class AdvancedScriptRuntimeBinder {
 					String name = method.getName();
 
 					if (method.isVarArgs()) {
-						Trace.error(String.format("this script engine does not support varriable arguments for functions. script function '%' skipped", name));
+						Trace.error(String.format("this script engine does not support variable arguments for functions. script function '%s' skipped", name));
 					} else {
 						String template = getJavascriptClosureTemplate(method.getParameterCount());
 
