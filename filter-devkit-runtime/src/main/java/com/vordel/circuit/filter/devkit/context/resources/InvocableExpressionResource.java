@@ -22,7 +22,7 @@ public class InvocableExpressionResource implements InvocableResource, Substitut
 	}
 
 	@Override
-	public Boolean invoke(Message m) throws CircuitAbortException {
+	public boolean invoke(Message m) throws CircuitAbortException {
 		return SelectorResource.invoke(m, selector);
 	}
 }

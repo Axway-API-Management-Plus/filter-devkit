@@ -53,7 +53,7 @@ public final class PolicyResource implements InvocableResource {
 	}
 
 	@Override
-	public Boolean invoke(Message message) throws CircuitAbortException {
+	public boolean invoke(Message message) throws CircuitAbortException {
 		Circuit circuit = getCircuit();
 
 		if (circuit == null) {

@@ -962,7 +962,7 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 		}
 
 		@Override
-		public Boolean invoke(Message m) throws CircuitAbortException {
+		public boolean invoke(Message m) throws CircuitAbortException {
 			try {
 				Boolean result = super.invokeMethod(m);
 
