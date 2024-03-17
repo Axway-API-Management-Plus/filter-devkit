@@ -177,16 +177,16 @@ public final class ScriptContextBuilder {
 	}
 
 	/**
-	 * Attach a Policy resource using its short handkey. Used only for context
+	 * Attach a Policy resource using its shorthand key. Used only for context
 	 * creation without Advanced Script Filter reference binding.
 	 * 
 	 * @param name name of resource to be created
-	 * @param key  policy short handkey
+	 * @param key  policy shorthand key
 	 * @return this instance of builder
 	 * @throws ScriptException if any parameter is missing or if key does not
 	 *                         resolves to anything.
 	 */
-	public ScriptContextBuilder attachPolicyByShortHandKey(String name, String key) throws ScriptException {
+	public ScriptContextBuilder attachPolicyByShorthandKey(String name, String key) throws ScriptException {
 		checkName(name);
 
 		if (key == null) {
