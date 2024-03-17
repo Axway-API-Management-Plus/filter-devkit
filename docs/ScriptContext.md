@@ -9,12 +9,12 @@ As Policy Studio references are not available, resource binding is done with tex
 ```groovy
 import com.vordel.circuit.Message
 import com.vordel.circuit.filter.devkit.context.annotations.InvocableMethod
-import com.vordel.circuit.filter.devkit.script.ScriptContext
 import com.vordel.circuit.filter.devkit.script.ScriptContextBuilder
 
-import groovy.transform.Field
-
-@Field private final ScriptContext CTX = ScriptContextBuilder.createGroovyScriptContext(this, { builder ->
+// binds base script runtime methods into groovy script
+// also reflect groovy script exportable methods
+ScriptContextBuilder.bindGroovyScriptContext(this, { builder ->
+	// binds 3 resources to this script
 	builder.attachSelectorResourceByExpression("name", "http.querystring.name", String.class)
 	builder.attachPolicyByPortableESPK("policy.healthcheck1", "<key type='CircuitContainer'><id field='name' value='Policy Library'/><key type='FilterCircuit'><id field='name' value='Health Check'/></key></key>")
 	builder.attachPolicyByShorthandKey("policy.healthcheck2", "/[CircuitContainer]name=Policy Library/[FilterCircuit]name=Health Check")
@@ -22,15 +22,15 @@ import groovy.transform.Field
 
 def invoke(msg) {
 	// export script context to message
-	msg.put("groovy.export", CTX.getExportedResources())
+	msg.put("groovy.export", getExportedResources())
 	
 	// invoke local exported method
-	return CTX.invokeResource(msg, "healthCheck")
+	return invokeResource(msg, "healthCheck")
 }
 
 @InvocableMethod
 boolean healthCheck(Message msg) {
 	// invoke locally bound methods
-	return CTX.invokeResource(msg, "policy.healthcheck1") && CTX.invokeResource(msg, "policy.healthcheck2")
+	return invokeResource(msg, "policy.healthcheck1") && invokeResource(msg, "policy.healthcheck2")
 }
 ```

@@ -177,11 +177,11 @@ public class ExtensionProviderGenerator extends AbstractProcessor {
 					ExtensionLibraries libraries = element.getAnnotation(ExtensionLibraries.class);
 
 					if (libraries != null) {
-						writeLibrariesFile(filer, element, libraries.value());
+						writeLibrariesFile(filer, elements, element, libraries.value());
 						writeForceLoadFile(filer, elements, element, libraries.classes());
 					}
 
-					services.append(String.format("%s\n", element.getQualifiedName().toString()));
+					services.append(String.format("%s\n", elements.getBinaryName(element).toString()));
 				}
 			} finally {
 				services.close();
@@ -197,8 +197,8 @@ public class ExtensionProviderGenerator extends AbstractProcessor {
 	 * @param entries list of class path selector expression
 	 * @throws IOException if any error occurs
 	 */
-	private void writeLibrariesFile(Filer filer, TypeElement element, String[] entries) throws IOException {
-		FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "", String.format("META-INF/vordel/libraries/%s", element.getQualifiedName().toString()));
+	private void writeLibrariesFile(Filer filer, Elements elements, TypeElement element, String[] entries) throws IOException {
+		FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "", String.format("META-INF/vordel/libraries/%s", elements.getBinaryName(element).toString()));
 		Writer libraries = file.openWriter();
 
 		try {
@@ -219,7 +219,7 @@ public class ExtensionProviderGenerator extends AbstractProcessor {
 	 * @throws IOException if any error occurs
 	 */
 	private void writeForceLoadFile(Filer filer, Elements elements, TypeElement element, String[] classes) throws IOException {
-		FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "", String.format("META-INF/vordel/forceLoad/%s", element.getQualifiedName().toString()));
+		FileObject file = filer.createResource(StandardLocation.CLASS_OUTPUT, "", String.format("META-INF/vordel/forceLoad/%s", elements.getBinaryName(element).toString()));
 		Writer libraries = file.openWriter();
 
 		Set<TypeElement> linked = links.get(element);

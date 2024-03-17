@@ -1,10 +1,13 @@
 package com.vordel.circuit.filter.devkit.script;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
 import javax.script.ScriptException;
+
+import org.codehaus.groovy.runtime.MethodClosure;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.filter.devkit.context.ExtensionResourceProvider;
@@ -31,6 +34,8 @@ import com.vordel.es.xes.PortableESPKFactory;
 import com.vordel.kps.Store;
 import com.vordel.precipitate.SolutionPack;
 
+import groovy.lang.Closure;
+import groovy.lang.MissingPropertyException;
 import groovy.lang.Script;
 
 /**
@@ -94,19 +99,15 @@ public final class ScriptContextBuilder {
 			throw new ScriptException("alias parameter cannot be null");
 		}
 
-		Service service = Service.getInstance();
+		Store store = KPSStoreResource.getStoreByAlias(alias);
 
-		if (service != null) {
-			Store store = KPSStoreResource.getStoreByAlias(alias);
-
-			if (store == null) {
-				throw new ScriptException(String.format("KPS Store '%s' does not exists", alias));
-			}
-
-			KPSStoreResource resource = new KPSStoreResource(store);
-
-			resources.put(name, resource);
+		if (store == null) {
+			throw new ScriptException(String.format("KPS Store '%s' does not exists", alias));
 		}
+
+		KPSStoreResource resource = new KPSStoreResource(store);
+
+		resources.put(name, resource);
 
 		return this;
 	}
@@ -127,23 +128,19 @@ public final class ScriptContextBuilder {
 			throw new ScriptException("cache name parameter cannot be null");
 		}
 
-		Service service = Service.getInstance();
+		try {
+			EHCacheResource.getCache(cacheName);
+		} catch (CircuitAbortException e) {
+			ScriptException error = new ScriptException(String.format("cache '%s' does not exists", cacheName));
 
-		if (service != null) {
-			try {
-				EHCacheResource.getCache(cacheName);
-			} catch (CircuitAbortException e) {
-				ScriptException error = new ScriptException(String.format("cache '%s' does not exists", cacheName));
+			error.initCause(e);
 
-				error.initCause(e);
-
-				throw error;
-			}
-
-			EHCacheResource resource = new EHCacheResource(cacheName);
-
-			resources.put(name, resource);
+			throw error;
 		}
+
+		EHCacheResource resource = new EHCacheResource(cacheName);
+
+		resources.put(name, resource);
 
 		return this;
 	}
@@ -194,19 +191,14 @@ public final class ScriptContextBuilder {
 		}
 
 		Service service = Service.getInstance();
+		EntityStore es = service.getStore();
+		Entity entity = new ShorthandKeyFinder(es).getEntity(key);
 
-		if (service != null) {
-			EntityStore es = service.getStore();
-			Entity entity = new ShorthandKeyFinder(es).getEntity(key);
-
-			if (entity == null) {
-				throw new ScriptException("short hand key is not valid");
-			}
-
-			return attachPolicyByESPK(name, entity.getPK());
-		} else {
-			return this;
+		if (entity == null) {
+			throw new ScriptException("shorthand key is not valid");
 		}
+
+		return attachPolicyByESPK(name, entity.getPK());
 	}
 
 	/**
@@ -251,19 +243,17 @@ public final class ScriptContextBuilder {
 		Service service = Service.getInstance();
 		Circuit circuit = null;
 
-		if (service != null) {
-			if (EntityStore.ES_NULL_PK.equals(circuitPK)) {
-				circuitPK = null;
-			} else {
-				SolutionPack config = service.getLocalPack();
+		if (EntityStore.ES_NULL_PK.equals(circuitPK)) {
+			circuitPK = null;
+		} else {
+			SolutionPack config = service.getLocalPack();
 
-				circuit = config.getCircuit(circuitPK);
-			}
-
-			PolicyResource resource = new PolicyResource(circuit, circuitPK);
-
-			resources.put(name, resource);
+			circuit = config.getCircuit(circuitPK);
 		}
+
+		PolicyResource resource = new PolicyResource(circuit, circuitPK);
+
+		resources.put(name, resource);
 
 		return this;
 	}
@@ -291,23 +281,12 @@ public final class ScriptContextBuilder {
 	}
 
 	/**
-	 * Builds the resulting script context
-	 * 
-	 * @return newly created script context
-	 */
-	private ScriptContext build() {
-		return new ScriptContextAdapter(resources);
-	}
-
-	/**
 	 * Static entry point for reflecting an instance of a Groovy Script.
 	 * 
 	 * @param script existing groovy script.
-	 * @return a {@link ScriptContext} object containing annotated exports of
-	 *         script.
 	 */
-	public static final ScriptContext reflectGroovyScriptContext(Script script) {
-		return createGroovyScriptContext(script, null);
+	public static final void bindGroovyScriptContext(Script script) {
+		bindGroovyScriptContext(script, null);
 	}
 
 	/**
@@ -320,7 +299,14 @@ public final class ScriptContextBuilder {
 	 *         configurator callback
 	 */
 	public static final ScriptContext createScriptContext(Consumer<ScriptContextBuilder> configurator) {
-		return createGroovyScriptContext(null, configurator);
+		Map<String, ContextResource> resources = new HashMap<String, ContextResource>();
+		ScriptContextBuilder builder = new ScriptContextBuilder(resources);
+
+		if (configurator != null) {
+			configurator.accept(builder);
+		}
+
+		return new ScriptContextAdapter(resources);
 	}
 
 	/**
@@ -330,20 +316,58 @@ public final class ScriptContextBuilder {
 	 * @param script       existing groovy script to be reflected
 	 * @param configurator callback which will be applied to add resource to the
 	 *                     resulting context.
-	 * @return a {@link ScriptContext} object containing resources created using the
-	 *         configurator callback and reflected groovy script.
 	 */
-	public static final ScriptContext createGroovyScriptContext(Script script, Consumer<ScriptContextBuilder> configurator) {
-		Map<String, ContextResource> resources = new HashMap<String, ContextResource>();
-		ScriptContextBuilder builder = new ScriptContextBuilder(resources);
+	public static final void bindGroovyScriptContext(Script script, Consumer<ScriptContextBuilder> configurator) {
+		/* check if calling from policy studio */
+		Service service = Service.getInstance();
 
-		builder.reflectGroovyScript(script);
+		if ((script != null) && (service != null)) {
+			Closure<?> attach = getGroovyClosure(script, "attachResources");
+			Closure<?> reflect = getGroovyClosure(script, "reflectResources");
 
-		if (configurator != null) {
-			configurator.accept(builder);
+			if ((attach != null) && (reflect != null)) {
+				/* keep compatibility with full install */
+				((Closure<?>) reflect).invokeMethod("reflectResources", script);
+				((Closure<?>) attach).invokeMethod("attachResources", configurator);
+			} else {
+				/* create runtime context */
+				Map<String, ContextResource> resources = new HashMap<String, ContextResource>();
+				ScriptContextBuilder builder = new ScriptContextBuilder(resources);
+				ScriptContextAdapter runtime = new ScriptContextAdapter(resources);
+
+				/* add runtime closures to script */
+				bindGroovyClosures(script, runtime, ScriptRuntime.class.getDeclaredMethods());
+
+				/* reflect groovy script for runtime */
+				builder.reflectGroovyScript(script);
+
+				if (configurator != null) {
+					/* and apply configurator closure */
+					configurator.accept(builder);
+				}
+			}
+		}
+	}
+
+	private static final void bindGroovyClosures(Script script, ScriptContext context, Method[] methods) {
+		for (Method method : methods) {
+			String name = method.getName();
+			MethodClosure closure = new MethodClosure(context, name);
+
+			script.setProperty(name, closure);
+		}
+	}
+
+	private static final Closure<?> getGroovyClosure(Script script, String name) {
+		try {
+			Object closure = script.getProperty("attachResources");
+
+			return closure instanceof Closure ? (Closure<?>) closure : null;
+		} catch (MissingPropertyException e) {
+			// ignore
 		}
 
-		return builder.build();
+		return null;
 	}
 
 	private static final class ScriptContextAdapter extends ScriptContext {

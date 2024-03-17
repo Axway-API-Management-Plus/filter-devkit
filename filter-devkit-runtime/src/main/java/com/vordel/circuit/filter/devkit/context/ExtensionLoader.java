@@ -68,7 +68,9 @@ public final class ExtensionLoader implements LoadableModule {
 	@Override
 	public void configure(ConfigContext ctx, Entity entity) throws EntityStoreException, FatalException {
 		synchronized (SYNC) {
-			checkLoadState();
+			reset();
+			
+			loaded = true;
 
 			Trace.info("scanning services for Extensions");
 
@@ -89,9 +91,7 @@ public final class ExtensionLoader implements LoadableModule {
 
 	@Override
 	public void load(LoadableModule l, String type) throws FatalException {
-		synchronized (SYNC) {
-			loaded = true;
-		}
+		/* nothing to load */
 	}
 
 	private static final void checkLoadState() {
@@ -105,47 +105,49 @@ public final class ExtensionLoader implements LoadableModule {
 	@Override
 	public void unload() {
 		synchronized (SYNC) {
-			Iterator<ExtensionModule> modules = new ArrayList<ExtensionModule>(LOADED_MODULES).iterator();
-			Iterator<Runnable> callbacks = new ArrayList<Runnable>(UNLOAD_CALLBACKS).iterator();
-
-			while (callbacks.hasNext()) {
-				try {
-					callbacks.next().run();
-				} catch (Exception e) {
-					Trace.error("got error with unload callback", e);
-				}
-
-				callbacks.remove();
-			}
-
-			while (modules.hasNext()) {
-				try {
-					ExtensionModule module = modules.next();
-
-					module.detachModule();
-
-					Trace.info(String.format("unloaded '%s'", module.getClass().getName()));
-				} catch (Exception e) {
-					Trace.error("got error calling detach", e);
-				}
-
-				modules.remove();
-			}
-
 			reset();
 		}
 	}
 
 	private void reset() {
 		synchronized (SYNC) {
+			if (loaded) {
+				Iterator<ExtensionModule> modules = new ArrayList<ExtensionModule>(LOADED_MODULES).iterator();
+				Iterator<Runnable> callbacks = new ArrayList<Runnable>(UNLOAD_CALLBACKS).iterator();
+
+				while (callbacks.hasNext()) {
+					try {
+						callbacks.next().run();
+					} catch (Exception e) {
+						Trace.error("got error with unload callback", e);
+					}
+
+					callbacks.remove();
+				}
+
+				while (modules.hasNext()) {
+					try {
+						ExtensionModule module = modules.next();
+
+						module.detachModule();
+
+						Trace.info(String.format("unloaded '%s'", module.getClass().getName()));
+					} catch (Exception e) {
+						Trace.error("got error calling detach", e);
+					}
+
+					modules.remove();
+				}
+
+				loaded = false;
+			}
+
 			LOADED_MODULES.clear();
 			UNLOAD_CALLBACKS.clear();
 			LOADED_PLUGINS.clear();
 			LOADED_INTERFACES.clear();
 			LOADED_SCRIPT_EXTENSIONS.clear();
 			REGISTERED.clear();
-
-			loaded = false;
 		}
 	}
 

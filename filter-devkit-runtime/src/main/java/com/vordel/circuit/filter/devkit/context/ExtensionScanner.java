@@ -105,7 +105,7 @@ public class ExtensionScanner {
 		}
 	};
 
-	private static List<Class<?>> scanExtensions(ClassLoader loader, Set<String> extensions) {
+	private static List<Class<?>> scanExtensions(ClassLoader loader, Set<String> registered, Set<String> allowed) {
 		Set<String> clazzes = new HashSet<String>();
 
 		try {
@@ -140,9 +140,13 @@ public class ExtensionScanner {
 		}
 
 		List<Class<?>> scanned = new ArrayList<Class<?>>();
+		
+		if (allowed != null) {
+			clazzes.retainAll(allowed);
+		}
 
 		for (String clazzName : clazzes) {
-			if (extensions.add(clazzName)) {
+			if (registered.add(clazzName)) {
 				try {
 					/*
 					 * create classes which expose ExtensionContext or ExtensionInstance annotation
@@ -304,8 +308,8 @@ public class ExtensionScanner {
 		return root.isFile() && (name.endsWith(".jar") || name.endsWith(".zip"));
 	}
 
-	static void scanClasses(ConfigContext ctx, ClassLoader loader, Set<String> extensions) {
-		List<Class<?>> scanned = scanExtensions(loader, extensions);
+	static void scanClasses(ConfigContext ctx, ClassLoader loader, Set<String> registered) {
+		List<Class<?>> scanned = scanExtensions(loader, registered, null);
 
 		registerClasses(ctx, scanned);
 	}
