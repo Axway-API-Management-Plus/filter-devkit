@@ -45,9 +45,10 @@ public final class ExtensionLoader implements LoadableModule {
 
 	private static final List<ExtensionModule> LOADED_MODULES = new LinkedList<ExtensionModule>();
 	private static final List<Runnable> UNLOAD_CALLBACKS = new LinkedList<Runnable>();
+	private static final Set<String> REGISTERED = new HashSet<String>();
 	private static final Object SYNC = new Object();
 
-	private static final Set<String> LOADED = new HashSet<String>();
+	private static boolean loaded = false;
 
 	/**
 	 * extensions dictionary for selector only access.
@@ -66,10 +67,12 @@ public final class ExtensionLoader implements LoadableModule {
 
 	@Override
 	public void configure(ConfigContext ctx, Entity entity) throws EntityStoreException, FatalException {
-		Trace.info("scanning services for Extensions");
-
 		synchronized (SYNC) {
-			LOADED.clear();
+			checkLoadState();
+
+			Trace.info("scanning services for Extensions");
+
+			REGISTERED.clear();
 
 			/* scan class path for extensions */
 			scanClasses(ctx, Thread.currentThread().getContextClassLoader());
@@ -78,9 +81,25 @@ public final class ExtensionLoader implements LoadableModule {
 		Trace.info("services scanned");
 	}
 
+	public static final boolean isLoaded() {
+		synchronized (SYNC) {
+			return loaded;
+		}
+	}
+
 	@Override
 	public void load(LoadableModule l, String type) throws FatalException {
-		/* nothing more to load */
+		synchronized (SYNC) {
+			loaded = true;
+		}
+	}
+
+	private static final void checkLoadState() {
+		synchronized (SYNC) {
+			if (!loaded) {
+				throw new IllegalStateException("ExtensionLoader module is not available");
+			}
+		}
 	}
 
 	@Override
@@ -124,14 +143,16 @@ public final class ExtensionLoader implements LoadableModule {
 			LOADED_PLUGINS.clear();
 			LOADED_INTERFACES.clear();
 			LOADED_SCRIPT_EXTENSIONS.clear();
-			LOADED.clear();
+			REGISTERED.clear();
+
+			loaded = false;
 		}
 	}
 
-	public static void scanClasses(ConfigContext ctx, ClassLoader loader) {
+	public static final void scanClasses(ConfigContext ctx, ClassLoader loader) {
 		synchronized (SYNC) {
 			/* scan class path for extensions */
-			ExtensionScanner.scanClasses(ctx, loader, LOADED);
+			ExtensionScanner.scanClasses(ctx, loader, REGISTERED);
 		}
 	}
 
@@ -140,9 +161,11 @@ public final class ExtensionLoader implements LoadableModule {
 	 * 
 	 * @param callback action to be executed before shutdown.
 	 */
-	public static void registerUndeployCallback(Runnable callback) {
+	public static final void registerUndeployCallback(Runnable callback) {
 		if (callback != null) {
 			synchronized (SYNC) {
+				checkLoadState();
+
 				Iterator<Runnable> iterator = UNLOAD_CALLBACKS.iterator();
 				boolean contained = false;
 
@@ -163,9 +186,11 @@ public final class ExtensionLoader implements LoadableModule {
 	 * @param name      name of context (exposed to global namespace)
 	 * @param resources context to be registered
 	 */
-	static void registerExtensionContext(String name, ExtensionResourceProvider resources) {
+	static final void registerExtensionContext(String name, ExtensionResourceProvider resources) {
 		if ((name != null) && (resources != null)) {
 			synchronized (SYNC) {
+				checkLoadState();
+
 				LOADED_PLUGINS.put(name, resources);
 			}
 		}
@@ -182,8 +207,10 @@ public final class ExtensionLoader implements LoadableModule {
 	 *               applicable
 	 * @param module instance of the object to be registered.
 	 */
-	static void registerExtensionInstance(ConfigContext ctx, Object module) {
+	static final void registerExtensionInstance(ConfigContext ctx, Object module) {
 		if (module != null) {
+			checkLoadState();
+
 			Class<?> mclazz = module.getClass();
 			ExtensionInstance plugin = mclazz.getAnnotation(ExtensionInstance.class);
 			ScriptExtension script = mclazz.getAnnotation(ScriptExtension.class);
@@ -251,9 +278,11 @@ public final class ExtensionLoader implements LoadableModule {
 	 * @param <T>         represent the contructor declaring class.
 	 * @param constructor reflected contructor for the extension.
 	 */
-	static <T extends AbstractScriptExtension> void registerScriptExtension(Constructor<T> constructor) {
+	static final <T extends AbstractScriptExtension> void registerScriptExtension(Constructor<T> constructor) {
 		if (constructor != null) {
 			synchronized (SYNC) {
+				checkLoadState();
+
 				Class<T> mclazz = constructor.getDeclaringClass();
 				ScriptExtension script = mclazz.getAnnotation(ScriptExtension.class);
 
@@ -314,7 +343,7 @@ public final class ExtensionLoader implements LoadableModule {
 	 *               {@link ExtensionModule#attachModule(ConfigContext)}
 	 * @param module module to be registered
 	 */
-	private static void registerExtensionModule(ConfigContext ctx, ExtensionModule module) {
+	private static final void registerExtensionModule(ConfigContext ctx, ExtensionModule module) {
 		Iterator<ExtensionModule> iterator = LOADED_MODULES.iterator();
 		boolean contained = false;
 
@@ -341,8 +370,10 @@ public final class ExtensionLoader implements LoadableModule {
 	 * @param name      name of the script extension interface
 	 * @throws ScriptException if any error occurs which binding the class
 	 */
-	public static void bind(Map<String, ContextResource> resources, ScriptEngine engine, AdvancedScriptRuntime runtime, String name) throws ScriptException {
+	public static final void bind(Map<String, ContextResource> resources, ScriptEngine engine, AdvancedScriptRuntime runtime, String name) throws ScriptException {
 		synchronized (SYNC) {
+			checkLoadState();
+
 			ScriptExtensionFactory factory = LOADED_SCRIPT_EXTENSIONS.get(name);
 
 			if (factory == null) {
@@ -360,7 +391,7 @@ public final class ExtensionLoader implements LoadableModule {
 			List<Method> methods = new ArrayList<Method>();
 
 			/* reflect invocables/substitutables and extension functions */
-			ExtensionResourceProvider.reflect(resources, instance);
+			ExtensionResourceProvider.reflectInstance(resources, instance);
 
 			/* gather interface methods */
 			scanScriptExtensionInterface(factory.getExtensionInterface(), methods);
@@ -376,7 +407,7 @@ public final class ExtensionLoader implements LoadableModule {
 	 * @param clazz   class to be scanned
 	 * @param methods aggregated methods for all super interfaces found
 	 */
-	private static void scanScriptExtensionInterface(Class<?> clazz, List<Method> methods) {
+	private static final void scanScriptExtensionInterface(Class<?> clazz, List<Method> methods) {
 		Set<Method> seen = new HashSet<Method>();
 
 		scanScriptExtensionInterface(clazz, clazz, methods, seen);
@@ -391,7 +422,7 @@ public final class ExtensionLoader implements LoadableModule {
 	 * @param methods aggregated methods for all super interfaces found
 	 * @param seen    methods which are already aggregated
 	 */
-	private static void scanScriptExtensionInterface(Class<?> base, Class<?> clazz, List<Method> methods, Set<Method> seen) {
+	private static final void scanScriptExtensionInterface(Class<?> base, Class<?> clazz, List<Method> methods, Set<Method> seen) {
 		Class<?> superClazz = clazz.getSuperclass();
 		Class<?>[] interfaces = clazz.getInterfaces();
 
@@ -423,8 +454,10 @@ public final class ExtensionLoader implements LoadableModule {
 	 * @param name name of the extension
 	 * @return the registered context or <code>null</code> if none.
 	 */
-	public static ExtensionResourceProvider getExtensionContext(String name) {
+	public static final ExtensionResourceProvider getExtensionContext(String name) {
 		synchronized (SYNC) {
+			checkLoadState();
+
 			return LOADED_PLUGINS.get(name);
 		}
 	}
@@ -436,8 +469,10 @@ public final class ExtensionLoader implements LoadableModule {
 	 * @param clazz interface class definition
 	 * @return registered instance or <code>null</code> if none
 	 */
-	public static <T> T getExtensionInstance(Class<T> clazz) {
+	public static final <T> T getExtensionInstance(Class<T> clazz) {
 		synchronized (SYNC) {
+			checkLoadState();
+
 			Object instance = LOADED_INTERFACES.get(clazz);
 
 			return instance == null ? null : clazz.cast(instance);
