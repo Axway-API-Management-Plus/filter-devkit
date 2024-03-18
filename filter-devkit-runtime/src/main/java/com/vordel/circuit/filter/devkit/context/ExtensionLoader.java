@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -11,14 +12,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
-import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance;
-import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
-import com.vordel.circuit.filter.devkit.script.advanced.AdvancedScriptRuntime;
-import com.vordel.circuit.filter.devkit.script.advanced.AdvancedScriptRuntimeBinder;
 import com.vordel.circuit.filter.devkit.script.extension.AbstractScriptExtension;
 import com.vordel.circuit.filter.devkit.script.extension.AbstractScriptExtensionBuilder;
 import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
@@ -69,7 +67,7 @@ public final class ExtensionLoader implements LoadableModule {
 	public void configure(ConfigContext ctx, Entity entity) throws EntityStoreException, FatalException {
 		synchronized (SYNC) {
 			reset();
-			
+
 			loaded = true;
 
 			Trace.info("scanning services for Extensions");
@@ -154,7 +152,10 @@ public final class ExtensionLoader implements LoadableModule {
 	public static final void scanClasses(ConfigContext ctx, ClassLoader loader) {
 		synchronized (SYNC) {
 			/* scan class path for extensions */
-			ExtensionScanner.scanClasses(ctx, loader, REGISTERED);
+			List<Class<?>> scanned = ExtensionScanner.scanExtensions(loader, REGISTERED, null);
+
+			/* register scanned classes */
+			ExtensionScanner.registerClasses(ctx, scanned);
 		}
 	}
 
@@ -236,38 +237,14 @@ public final class ExtensionLoader implements LoadableModule {
 							} else {
 								Trace.error(String.format("'%s' is not a valid interface for '%s'", iclazz.getName(), mclazz.getName()));
 							}
+						} else {
+							Trace.error(String.format("'%s' is not an interface", iclazz.getName()));
 						}
 					}
 				}
 
 				if (script != null) {
-					for (Class<?> iclazz : script.value()) {
-						String name = iclazz.getName();
-
-						if (iclazz.isInterface()) {
-							Object pred = LOADED_SCRIPT_EXTENSIONS.get(name);
-
-							if (pred != null) {
-								Trace.error(String.format("Duplicate instance for script extension '%s'", name));
-							} else if (iclazz.isAssignableFrom(mclazz)) {
-								Trace.info(String.format("registering script extension '%s'", name));
-
-								LOADED_SCRIPT_EXTENSIONS.put(name, new ScriptExtensionFactory() {
-									@Override
-									public Object createExtensionInstance(AbstractScriptExtensionBuilder builder) throws ScriptException {
-										return module;
-									}
-
-									@Override
-									public Class<?> getExtensionInterface() {
-										return iclazz;
-									}
-								});
-							} else {
-								Trace.error(String.format("'%s' is not a valid interface for '%s'", iclazz.getName(), mclazz.getName()));
-							}
-						}
-					}
+					registerScriptExtension(LOADED_SCRIPT_EXTENSIONS, mclazz, (iclazz) -> createScriptExtensionFactory(module, iclazz));
 				}
 			}
 		}
@@ -286,54 +263,102 @@ public final class ExtensionLoader implements LoadableModule {
 				checkLoadState();
 
 				Class<T> mclazz = constructor.getDeclaringClass();
-				ScriptExtension script = mclazz.getAnnotation(ScriptExtension.class);
 
-				if (script != null) {
-					for (Class<?> iclazz : script.value()) {
-						String name = iclazz.getName();
-
-						if (iclazz.isInterface()) {
-							Object pred = LOADED_SCRIPT_EXTENSIONS.get(name);
-
-							if (pred != null) {
-								Trace.error(String.format("Duplicate instance for script extension '%s'", name));
-							} else if (iclazz.isAssignableFrom(mclazz)) {
-								Trace.info(String.format("registering script extension '%s'", name));
-
-								LOADED_SCRIPT_EXTENSIONS.put(name, new ScriptExtensionFactory() {
-									@Override
-									public Object createExtensionInstance(AbstractScriptExtensionBuilder builder) throws ScriptException {
-										AbstractScriptExtension instance = null;
-
-										try {
-											constructor.setAccessible(true);
-											instance = constructor.newInstance(builder);
-										} catch (InvocationTargetException e) {
-											Throwable cause = e.getCause();
-
-											throw (ScriptException) new ScriptException(String.format("unable to instanciate script extension '%s'", name)).initCause(cause);
-										} catch (Exception e) {
-											throw (ScriptException) new ScriptException(String.format("unable to instanciate script extension '%s'", name)).initCause(e);
-										} finally {
-											constructor.setAccessible(false);
-										}
-
-										return instance;
-									}
-
-									@Override
-									public Class<?> getExtensionInterface() {
-										return iclazz;
-									}
-								});
-							} else {
-								Trace.error(String.format("'%s' is not a valid interface for '%s'", iclazz.getName(), mclazz.getName()));
-							}
-						}
-					}
-				}
+				registerScriptExtension(LOADED_SCRIPT_EXTENSIONS, mclazz, (iclazz) -> createScriptExtensionFactory(constructor, iclazz));
 			}
 		}
+	}
+
+	private static final void registerScriptExtension(Map<String, ScriptExtensionFactory> registry, Class<?> mclazz, Function<Class<?>[], ScriptExtensionFactory> builder) {
+		ScriptExtension script = mclazz.getAnnotation(ScriptExtension.class);
+
+		if (script != null) {
+			List<Class<?>> factories = new ArrayList<Class<?>>();
+
+			for (Class<?> iclazz : script.value()) {
+				String name = iclazz.getName();
+
+				if (iclazz.isInterface()) {
+					Object pred = registry.get(name);
+
+					if (pred != null) {
+						Trace.error(String.format("Duplicate instance for script extension '%s'", name));
+					} else if (iclazz.isAssignableFrom(mclazz)) {
+						ScriptExtensionFactory factory = builder.apply(new Class<?>[] { iclazz });
+
+						Trace.info(String.format("registering script extension interface '%s'", name));
+
+						registry.put(name, factory);
+						factories.add(iclazz);
+					} else {
+						Trace.error(String.format("'%s' is not a valid interface for '%s'", iclazz.getName(), mclazz.getName()));
+					}
+				} else {
+					Trace.error(String.format("'%s' is not an interface", iclazz.getName()));
+				}
+			}
+
+			registry.put(mclazz.getName(), builder.apply(factories.toArray(new Class<?>[0])));
+		}
+	}
+
+	private static final ScriptExtensionFactory createScriptExtensionFactory(Object instance, Class<?>... iclazz) {
+		return new ScriptExtensionFactory() {
+			@Override
+			public Object createExtensionInstance(AbstractScriptExtensionBuilder builder) throws ScriptException {
+				return instance;
+			}
+
+			@Override
+			public void scanScriptExtension(List<Method> methods) {
+				scanScriptExtensionInterfaces(methods, iclazz);
+			}
+
+			@Override
+			public Object proxify(Object instance) {
+				ClassLoader loader = ScriptExtension.class.getClassLoader();
+
+				return proxify(instance, loader, iclazz);
+			}
+		};
+	}
+
+	private static final ScriptExtensionFactory createScriptExtensionFactory(Constructor<?> constructor, Class<?>... iclazz) {
+		return new ScriptExtensionFactory() {
+			@Override
+			public Object createExtensionInstance(AbstractScriptExtensionBuilder builder) throws ScriptException {
+				Object instance = null;
+				Class<?> mclazz = constructor.getDeclaringClass();
+				String name = mclazz.getName();
+
+				try {
+					constructor.setAccessible(true);
+					instance = constructor.newInstance(builder);
+				} catch (InvocationTargetException e) {
+					Throwable cause = e.getCause();
+
+					throw (ScriptException) new ScriptException(String.format("unable to instanciate script extension '%s'", name)).initCause(cause);
+				} catch (Exception e) {
+					throw (ScriptException) new ScriptException(String.format("unable to instanciate script extension '%s'", name)).initCause(e);
+				} finally {
+					constructor.setAccessible(false);
+				}
+
+				return instance;
+			}
+
+			@Override
+			public Object proxify(Object instance) {
+				ClassLoader loader = ScriptExtension.class.getClassLoader();
+
+				return proxify(instance, loader, iclazz);
+			}
+
+			@Override
+			public void scanScriptExtension(List<Method> methods) {
+				scanScriptExtensionInterfaces(methods, iclazz);
+			}
+		};
 	}
 
 	/**
@@ -362,91 +387,63 @@ public final class ExtensionLoader implements LoadableModule {
 		}
 	}
 
-	/**
-	 * Bind a script extension to an evaluated script
-	 * 
-	 * @param resources current script resources (extension may add resources to
-	 *                  this map)
-	 * @param engine    evaluated script
-	 * @param runtime   current runtime for the script
-	 * @param name      name of the script extension interface
-	 * @throws ScriptException if any error occurs which binding the class
-	 */
-	public static final void bind(Map<String, ContextResource> resources, ScriptEngine engine, AdvancedScriptRuntime runtime, String name) throws ScriptException {
+	public static final ScriptExtensionFactory getScriptExtensionFactory(String name) throws ScriptException {
 		synchronized (SYNC) {
-			checkLoadState();
+			ScriptExtensionFactory factory = null;
 
-			ScriptExtensionFactory factory = LOADED_SCRIPT_EXTENSIONS.get(name);
+			if (isLoaded()) {
+				factory = LOADED_SCRIPT_EXTENSIONS.get(name);
+			} else {
+				Set<String> allowed = Collections.singleton(name);
+				ClassLoader loader = ScriptExtension.class.getClassLoader();
 
-			if (factory == null) {
-				throw new ScriptException(String.format("script extension '%s' is not registered", name));
+				/* scan extension for this specific class only */
+				List<Class<?>> scanned = ExtensionScanner.scanExtensions(loader, new HashSet<String>(), allowed);
+				Map<String, ScriptExtensionFactory> registry = new HashMap<String, ScriptExtensionFactory>();
+
+				for (Class<?> mclazz : scanned) {
+					if (ExtensionModule.class.isAssignableFrom(mclazz)) {
+						throw new ScriptException(String.format("unable to initialize script extension '%s', ExtensionLoader is not active", name));
+					}
+
+					ScriptExtension script = mclazz.getAnnotation(ScriptExtension.class);
+
+					if (script == null) {
+						throw new ScriptException(String.format("'%s' is not a script extension", name));
+					}
+
+					try {
+						try {
+							/* create a new instance and register it now */
+							Object instance = ExtensionScanner.newInstance(mclazz);
+
+							registerScriptExtension(registry, mclazz, (iclazz) -> createScriptExtensionFactory(instance, iclazz));
+						} catch (NoSuchMethodException e) {
+							/* ignore */
+						}
+
+						try {
+							/* fallback to the abstract script extension mechanism */
+							Constructor<?> constructor = mclazz.getDeclaredConstructor(AbstractScriptExtensionBuilder.class);
+
+							registerScriptExtension(registry, mclazz, (iclazz) -> createScriptExtensionFactory(constructor, iclazz));
+						} catch (NoSuchMethodException e) {
+							/* ignore */
+						}
+					} catch (InvocationTargetException e) {
+						Throwable cause = e.getCause();
+
+						throw (ScriptException) new ScriptException(String.format("unable to instanciate script extension '%s'", name)).initCause(cause);
+					} catch (Exception e) {
+						throw (ScriptException) new ScriptException(String.format("unable to instanciate script extension '%s'", name)).initCause(e);
+					}
+				}
+
+				/* finally, retrieve extension factory */
+				factory = registry.get(name);
 			}
 
-			AdvancedScriptRuntimeBinder binder = AdvancedScriptRuntimeBinder.getScriptBinder(engine);
-
-			if (binder == null) {
-				throw new ScriptException("Unsupported script engine");
-			}
-
-			AbstractScriptExtensionBuilder builder = new AbstractScriptExtensionBuilder(runtime);
-			Object instance = factory.createExtensionInstance(builder);
-			List<Method> methods = new ArrayList<Method>();
-
-			/* reflect invocables/substitutables and extension functions */
-			ExtensionResourceProvider.reflectInstance(resources, instance);
-
-			/* gather interface methods */
-			scanScriptExtensionInterface(factory.getExtensionInterface(), methods);
-
-			/* bind proxy interface to script */
-			binder.bind(engine, factory.proxify(instance), methods.toArray(new Method[0]));
-		}
-	}
-
-	/**
-	 * scan all super interfaces for a given script extension
-	 * 
-	 * @param clazz   class to be scanned
-	 * @param methods aggregated methods for all super interfaces found
-	 */
-	private static final void scanScriptExtensionInterface(Class<?> clazz, List<Method> methods) {
-		Set<Method> seen = new HashSet<Method>();
-
-		scanScriptExtensionInterface(clazz, clazz, methods, seen);
-	}
-
-	/**
-	 * scan all super interfaces for a given script extension. ignoring overidden
-	 * methods
-	 * 
-	 * @param base    base interface
-	 * @param clazz   current interface
-	 * @param methods aggregated methods for all super interfaces found
-	 * @param seen    methods which are already aggregated
-	 */
-	private static final void scanScriptExtensionInterface(Class<?> base, Class<?> clazz, List<Method> methods, Set<Method> seen) {
-		Class<?> superClazz = clazz.getSuperclass();
-		Class<?>[] interfaces = clazz.getInterfaces();
-
-		for (Method method : clazz.getDeclaredMethods()) {
-			try {
-				/* retrieve base method according to base class */
-				method = base.getMethod(method.getName(), method.getParameterTypes());
-			} catch (NoSuchMethodException e) {
-				/* ignore */
-			}
-
-			if (seen.add(method)) {
-				methods.add(method);
-			}
-		}
-
-		for (Class<?> impl : interfaces) {
-			scanScriptExtensionInterface(base, impl, methods, seen);
-		}
-
-		if ((superClazz != null) && (superClazz.isInterface())) {
-			scanScriptExtensionInterface(base, superClazz, methods, seen);
+			return factory;
 		}
 	}
 

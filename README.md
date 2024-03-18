@@ -32,7 +32,7 @@ The Filter Devkit can be installed in two ways :
 
  - [Filter Code Generator (Java Quick Filters)](docs/QuickJavaFilter.md)
  - [Script context](docs/ScriptContext.md) creation for groovies
- - Static only reflection of [extension context](docs/ExtensionContext.md)
+ - Static only reflection of [extension context](docs/ExtensionContext.md) within script context creation.
 
 ## Building and Installing
 

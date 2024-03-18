@@ -15,6 +15,7 @@ import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
 import com.vordel.circuit.filter.devkit.context.ExtensionResourceProvider;
+import com.vordel.circuit.filter.devkit.context.ScriptExtensionFactory;
 import com.vordel.circuit.filter.devkit.context.resources.AbstractContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceFactory;
@@ -323,10 +324,16 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		@Override
 		public void reflectExtension(String name) throws ScriptException {
 			checkState();
-			
+
 			Trace.info(String.format("attaching extension '%s' in script '%s'", name, getFilterName()));
 
-			ExtensionLoader.bind(resources, engine, this, name);
+			ScriptExtensionFactory factory = ExtensionLoader.getScriptExtensionFactory(name);
+
+			if (factory != null) {
+				factory.bind(resources, engine, this);
+			} else {
+				throw new ScriptException(String.format("script extension '%s' is not registered", name));
+			}
 		}
 
 		@Override
@@ -366,8 +373,8 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 			checkState();
 
 			if (configurator != null) {
-				ScriptContextBuilder builder = new ScriptContextBuilder(resources);
-				
+				ScriptContextBuilder builder = new ScriptContextBuilder(resources, this::reflectExtension);
+
 				configurator.accept(builder);
 			}
 		}

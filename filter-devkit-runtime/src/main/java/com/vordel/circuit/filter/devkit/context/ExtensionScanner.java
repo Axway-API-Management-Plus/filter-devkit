@@ -42,22 +42,11 @@ public class ExtensionScanner {
 
 		if (isInstantiable(clazz)) {
 			try {
-				/* class is annotated is an extension module */
-				Constructor<?> constructor = clazz.getDeclaredConstructor();
+				instance = newInstance(clazz);
 
-				try {
-					constructor.setAccessible(true);
-					instance = constructor.newInstance();
-
-					/* attach module */
-					ExtensionLoader.registerExtensionInstance(ctx, instance);
-				} finally {
-					constructor.setAccessible(false);
-				}
+				ExtensionLoader.registerExtensionInstance(ctx, instance);
 			} catch (InstantiationException e) {
 				Trace.error(String.format("the class '%s' can't be instantiated", clazz.getName()), e);
-			} catch (IllegalAccessException e) {
-				Trace.error(String.format("the no-arg constructor for class '%s' is not accessible", clazz.getName()), e);
 			} catch (InvocationTargetException e) {
 				Throwable cause = e.getCause();
 
@@ -105,7 +94,7 @@ public class ExtensionScanner {
 		}
 	};
 
-	private static List<Class<?>> scanExtensions(ClassLoader loader, Set<String> registered, Set<String> allowed) {
+	static List<Class<?>> scanExtensions(ClassLoader loader, Set<String> registered, Set<String> allowed) {
 		Set<String> clazzes = new HashSet<String>();
 
 		try {
@@ -308,12 +297,6 @@ public class ExtensionScanner {
 		return root.isFile() && (name.endsWith(".jar") || name.endsWith(".zip"));
 	}
 
-	static void scanClasses(ConfigContext ctx, ClassLoader loader, Set<String> registered) {
-		List<Class<?>> scanned = scanExtensions(loader, registered, null);
-
-		registerClasses(ctx, scanned);
-	}
-
 	private static boolean isInstantiable(Class<?> clazz) {
 		boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
 		boolean isInstance = (clazz.getAnnotation(ExtensionInstance.class) != null) || (clazz.getAnnotation(ScriptExtension.class) != null);
@@ -348,7 +331,7 @@ public class ExtensionScanner {
 		return (!isAbstract) && isInstance && isEntension && hasExtensionContructor;
 	}
 
-	public static void registerClasses(ConfigContext ctx, Iterable<Class<?>> clazzes) {
+	static void registerClasses(ConfigContext ctx, Iterable<Class<?>> clazzes) {
 		if (clazzes != null) {
 			List<Class<?>> sorted = new ArrayList<Class<?>>();
 
@@ -389,5 +372,23 @@ public class ExtensionScanner {
 		}
 
 		return resources;
+	}
+	
+	static Object newInstance(Class<?> clazz) throws NoSuchMethodException, InstantiationException, InvocationTargetException {
+		/* class is annotated is an extension module */
+		Constructor<?> constructor = clazz.getDeclaredConstructor();
+
+		try {
+			constructor.setAccessible(true);
+
+			return constructor.newInstance();
+		} catch (IllegalAccessException e) {
+			Trace.error(String.format("the no-arg constructor for class '%s' is not accessible", clazz.getName()), e);
+			
+			/* should not occur because of the setAccessible() call */
+			throw new IllegalStateException("unexpected access exception", e);
+		} finally {
+			constructor.setAccessible(false);
+		}
 	}
 }

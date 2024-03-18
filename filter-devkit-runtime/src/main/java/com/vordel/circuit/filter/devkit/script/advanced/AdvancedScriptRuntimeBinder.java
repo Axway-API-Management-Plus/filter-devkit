@@ -105,7 +105,7 @@ public abstract class AdvancedScriptRuntimeBinder {
 	private static AdvancedScriptRuntimeBinder getPythonBinder() {
 		return new AdvancedScriptRuntimeBinder() {
 			@Override
-			public void bind(ScriptEngine engine, Object instance, Method[] methods) throws ScriptException {
+			public void bind(ScriptEngine engine, Object instance, Method[] methods) {
 				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
 				PyObject pyobj = Py.java2py(instance);
 
@@ -129,7 +129,7 @@ public abstract class AdvancedScriptRuntimeBinder {
 			}
 
 			@Override
-			public void bind(ScriptEngine engine, Object instance, Method[] methods) throws ScriptException {
+			public void bind(ScriptEngine engine, Object instance, Method[] methods) {
 				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
 
 				for (Method method : methods) {
