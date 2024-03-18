@@ -16,8 +16,8 @@ public interface InvocableResource extends ContextResource {
 	 * @param m current Message
 	 * 
 	 * @return 'true' to signal success, 'false' to signal failure, 'null' if no resource exists. interpretation
-	 *         or result depends of underlying object
+	 *         of result depends of underlying object
 	 * @throws CircuitAbortException thrown by underlying object in case of error.
 	 */
-	public Boolean invoke(Message m) throws CircuitAbortException;
+	public boolean invoke(Message m) throws CircuitAbortException;
 }

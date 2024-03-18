@@ -68,7 +68,8 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 	 *               class
 	 * @param module module instance to be reflected
 	 * @param clazz  class definition of the module instance
-	 * @return ExtensionResourceProvider containing exposed methods for the given module
+	 * @return ExtensionResourceProvider containing exposed methods for the given
+	 *         module
 	 */
 	static <T> ExtensionResourceProvider create(T module, Class<? extends T> clazz) {
 		return create(module, clazz, null);
@@ -84,7 +85,8 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 	 * @param instance   instance which holds non static exported methods
 	 * @param clazz      Class object corresponding to the given instance
 	 * @param filterName used when the instance is a script
-	 * @return ExtensionResourceProvider containing exposed methods for the given instance
+	 * @return ExtensionResourceProvider containing exposed methods for the given
+	 *         instance
 	 */
 	private static <T> ExtensionResourceProvider create(T instance, Class<? extends T> clazz, String filterName) {
 		Map<String, ContextResource> resources = new HashMap<String, ContextResource>();
@@ -373,16 +375,19 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 	}
 
 	/**
-	 * package private entry to register script extension methods as api gateway
-	 * resources.
+	 * entry to register resources from an object instance
 	 * 
 	 * @param resources script attached resources
 	 * @param instance  extension to be bound to the script
 	 */
-	static void reflect(Map<String, ContextResource> resources, Object instance) {
+	public static void reflectInstance(Map<String, ContextResource> resources, Object instance) {
 		Class<?> clazz = instance.getClass();
 
 		reflect(resources, instance, clazz, null);
+	}
+
+	public static void reflectClass(Map<String, ContextResource> resources, Class<?> clazz) {
+		reflect(resources, null, clazz, null);
 	}
 
 	/**
@@ -957,7 +962,7 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 		}
 
 		@Override
-		public Boolean invoke(Message m) throws CircuitAbortException {
+		public boolean invoke(Message m) throws CircuitAbortException {
 			try {
 				Boolean result = super.invokeMethod(m);
 

@@ -21,7 +21,7 @@ public final class PolicyResource implements InvocableResource {
 	}
 
 	public PolicyResource(ConfigContext ctx, ESPK delegatedPK) throws EntityStoreException {
-		DelayedESPK delayedPK = delegatedPK instanceof DelayedESPK ? (DelayedESPK) delegatedPK: new DelayedESPK(delegatedPK);
+		DelayedESPK delayedPK = delegatedPK instanceof DelayedESPK ? (DelayedESPK) delegatedPK : new DelayedESPK(delegatedPK);
 		ESPK circuitPK = delayedPK.substitute(Dictionary.empty);
 		Circuit circuit = null;
 
@@ -30,7 +30,12 @@ public final class PolicyResource implements InvocableResource {
 		} else {
 			circuit = ctx.getCircuit(circuitPK);
 		}
-		
+
+		this.circuitPK = circuitPK;
+		this.circuit = circuit;
+	}
+
+	public PolicyResource(Circuit circuit, ESPK circuitPK) {
 		this.circuitPK = circuitPK;
 		this.circuit = circuit;
 	}
@@ -48,7 +53,7 @@ public final class PolicyResource implements InvocableResource {
 	}
 
 	@Override
-	public Boolean invoke(Message message) throws CircuitAbortException {
+	public boolean invoke(Message message) throws CircuitAbortException {
 		Circuit circuit = getCircuit();
 
 		if (circuit == null) {

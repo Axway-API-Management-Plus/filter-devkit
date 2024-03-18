@@ -1,9 +1,12 @@
 package com.vordel.circuit.filter.devkit.script.advanced;
 
+import java.util.function.Consumer;
+
 import javax.script.ScriptException;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
+import com.vordel.circuit.filter.devkit.script.ScriptContextBuilder;
 import com.vordel.config.Circuit;
 
 /**
@@ -49,4 +52,12 @@ public interface AdvancedScriptConfigurator {
 	 *                         phase
 	 */
 	void reflectExtension(String extension) throws ScriptException;
+
+	/**
+	 * Attach resources to a script using legacy mechanisms
+	 * 
+	 * @param configurator consumer for {@link ScriptContextBuilder}
+	 * @throws ScriptException if called outside the attach call
+	 */
+	void attachResources(Consumer<ScriptContextBuilder> configurator) throws ScriptException;
 }

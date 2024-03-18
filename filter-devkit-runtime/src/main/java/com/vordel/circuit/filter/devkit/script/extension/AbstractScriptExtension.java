@@ -8,7 +8,7 @@ import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvide
 import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
 import com.vordel.circuit.filter.devkit.context.resources.KPSResource;
 import com.vordel.circuit.filter.devkit.context.resources.SubstitutableResource;
-import com.vordel.circuit.filter.devkit.script.advanced.AdvancedScriptRuntime;
+import com.vordel.circuit.filter.devkit.script.ScriptRuntime;
 import com.vordel.common.Dictionary;
 
 /**
@@ -18,8 +18,8 @@ import com.vordel.common.Dictionary;
  * 
  * @author rdesaintleger@axway.com
  */
-public abstract class AbstractScriptExtension implements AdvancedScriptRuntime {
-	private final AdvancedScriptRuntime runtime;
+public abstract class AbstractScriptExtension implements ScriptRuntime {
+	private final ScriptRuntime runtime;
 
 	/**
 	 * Protected contructor. Called by the script runtime binder. Once this class
@@ -65,10 +65,5 @@ public abstract class AbstractScriptExtension implements AdvancedScriptRuntime {
 	@Override
 	public final ContextResourceProvider getExportedResources() {
 		return runtime.getExportedResources();
-	}
-
-	@Override
-	public final String getFilterName() {
-		return runtime.getFilterName();
 	}
 }
