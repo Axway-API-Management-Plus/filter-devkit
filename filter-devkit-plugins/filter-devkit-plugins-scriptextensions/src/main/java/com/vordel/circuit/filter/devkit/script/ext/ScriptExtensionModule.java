@@ -3,7 +3,7 @@ package com.vordel.circuit.filter.devkit.script.ext;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProperties;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
-import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
+import com.vordel.circuit.filter.devkit.script.extension.annotations.ScriptExtension;
 import com.vordel.dwe.http.HTTPPlugin;
 import com.vordel.el.Selector;
 

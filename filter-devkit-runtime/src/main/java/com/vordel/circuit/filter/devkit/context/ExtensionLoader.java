@@ -3,6 +3,7 @@ package com.vordel.circuit.filter.devkit.context;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,8 +19,9 @@ import javax.script.ScriptException;
 
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance;
 import com.vordel.circuit.filter.devkit.script.extension.AbstractScriptExtension;
-import com.vordel.circuit.filter.devkit.script.extension.AbstractScriptExtensionBuilder;
-import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
+import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionBuilder;
+import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionFactory;
+import com.vordel.circuit.filter.devkit.script.extension.annotations.ScriptExtension;
 import com.vordel.common.Dictionary;
 import com.vordel.config.ConfigContext;
 import com.vordel.config.LoadableModule;
@@ -244,7 +246,7 @@ public final class ExtensionLoader implements LoadableModule {
 				}
 
 				if (script != null) {
-					registerScriptExtension(LOADED_SCRIPT_EXTENSIONS, mclazz, (iclazz) -> createScriptExtensionFactory(module, iclazz));
+					registerScriptExtension(LOADED_SCRIPT_EXTENSIONS, mclazz, (iclazz) -> createScriptExtensionInstanceFactory(module, iclazz), true);
 				}
 			}
 		}
@@ -264,12 +266,12 @@ public final class ExtensionLoader implements LoadableModule {
 
 				Class<T> mclazz = constructor.getDeclaringClass();
 
-				registerScriptExtension(LOADED_SCRIPT_EXTENSIONS, mclazz, (iclazz) -> createScriptExtensionFactory(constructor, iclazz));
+				registerScriptExtension(LOADED_SCRIPT_EXTENSIONS, mclazz, (iclazz) -> createScriptExtensionFactory(constructor, iclazz), true);
 			}
 		}
 	}
 
-	private static final void registerScriptExtension(Map<String, ScriptExtensionFactory> registry, Class<?> mclazz, Function<Class<?>[], ScriptExtensionFactory> builder) {
+	private static final void registerScriptExtension(Map<String, ScriptExtensionFactory> registry, Class<?> mclazz, Function<Class<?>[], ScriptExtensionFactory> builder, boolean global) {
 		ScriptExtension script = mclazz.getAnnotation(ScriptExtension.class);
 
 		if (script != null) {
@@ -286,7 +288,10 @@ public final class ExtensionLoader implements LoadableModule {
 					} else if (iclazz.isAssignableFrom(mclazz)) {
 						ScriptExtensionFactory factory = builder.apply(new Class<?>[] { iclazz });
 
-						Trace.info(String.format("registering script extension interface '%s'", name));
+						if (global) {
+							/* do not display register message is global registry is not available */
+							Trace.info(String.format("registering script extension interface '%s'", name));
+						}
 
 						registry.put(name, factory);
 						factories.add(iclazz);
@@ -302,10 +307,10 @@ public final class ExtensionLoader implements LoadableModule {
 		}
 	}
 
-	private static final ScriptExtensionFactory createScriptExtensionFactory(Object instance, Class<?>... iclazz) {
+	private static final ScriptExtensionFactory createScriptExtensionInstanceFactory(Object instance, Class<?>... iclazz) {
 		return new ScriptExtensionFactory() {
 			@Override
-			public Object createExtensionInstance(AbstractScriptExtensionBuilder builder) throws ScriptException {
+			public Object createExtensionInstance(ScriptExtensionBuilder builder) throws ScriptException {
 				return instance;
 			}
 
@@ -320,13 +325,21 @@ public final class ExtensionLoader implements LoadableModule {
 
 				return proxify(instance, loader, iclazz);
 			}
+
+			@Override
+			public boolean isLoaded(Set<String> loaded) {
+				/* if iclazz has a single entry use its name */
+				Class<?> clazz = iclazz.length == 1 ? iclazz[0] : instance.getClass();
+
+				return !loaded.add(clazz.getName());
+			}
 		};
 	}
 
 	private static final ScriptExtensionFactory createScriptExtensionFactory(Constructor<?> constructor, Class<?>... iclazz) {
 		return new ScriptExtensionFactory() {
 			@Override
-			public Object createExtensionInstance(AbstractScriptExtensionBuilder builder) throws ScriptException {
+			public Object createExtensionInstance(ScriptExtensionBuilder builder) throws ScriptException {
 				Object instance = null;
 				Class<?> mclazz = constructor.getDeclaringClass();
 				String name = mclazz.getName();
@@ -357,6 +370,14 @@ public final class ExtensionLoader implements LoadableModule {
 			@Override
 			public void scanScriptExtension(List<Method> methods) {
 				scanScriptExtensionInterfaces(methods, iclazz);
+			}
+
+			@Override
+			public boolean isLoaded(Set<String> loaded) {
+				/* if iclazz has a single entry use its name */
+				Class<?> clazz = iclazz.length == 1 ? iclazz[0] : constructor.getDeclaringClass();
+
+				return !loaded.add(clazz.getName());
 			}
 		};
 	}
@@ -406,6 +427,10 @@ public final class ExtensionLoader implements LoadableModule {
 						throw new ScriptException(String.format("unable to initialize script extension '%s', ExtensionLoader is not active", name));
 					}
 
+					if (Modifier.isAbstract(mclazz.getModifiers())) {
+						throw new ScriptException(String.format("unable to initialize script extension '%s', class is abstract", name));
+					}
+
 					ScriptExtension script = mclazz.getAnnotation(ScriptExtension.class);
 
 					if (script == null) {
@@ -413,27 +438,23 @@ public final class ExtensionLoader implements LoadableModule {
 					}
 
 					try {
-						try {
+						if (AbstractScriptExtension.class.isAssignableFrom(mclazz)) {
+							/* fallback to the abstract script extension mechanism */
+							Constructor<?> constructor = mclazz.getDeclaredConstructor(ScriptExtensionBuilder.class);
+
+							registerScriptExtension(registry, mclazz, (iclazz) -> createScriptExtensionFactory(constructor, iclazz), false);
+						} else {
 							/* create a new instance and register it now */
 							Object instance = ExtensionScanner.newInstance(mclazz);
 
-							registerScriptExtension(registry, mclazz, (iclazz) -> createScriptExtensionFactory(instance, iclazz));
-						} catch (NoSuchMethodException e) {
-							/* ignore */
-						}
-
-						try {
-							/* fallback to the abstract script extension mechanism */
-							Constructor<?> constructor = mclazz.getDeclaredConstructor(AbstractScriptExtensionBuilder.class);
-
-							registerScriptExtension(registry, mclazz, (iclazz) -> createScriptExtensionFactory(constructor, iclazz));
-						} catch (NoSuchMethodException e) {
-							/* ignore */
+							registerScriptExtension(registry, mclazz, (iclazz) -> createScriptExtensionInstanceFactory(instance, iclazz), false);
 						}
 					} catch (InvocationTargetException e) {
 						Throwable cause = e.getCause();
 
 						throw (ScriptException) new ScriptException(String.format("unable to instanciate script extension '%s'", name)).initCause(cause);
+					} catch (NoSuchMethodException e) {
+						throw (ScriptException) new ScriptException(String.format("no suitable constructo found for script extension '%s'", name)).initCause(e);
 					} catch (Exception e) {
 						throw (ScriptException) new ScriptException(String.format("unable to instanciate script extension '%s'", name)).initCause(e);
 					}

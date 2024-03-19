@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import javax.script.ScriptException;
@@ -15,13 +16,13 @@ import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
 import com.vordel.circuit.filter.devkit.context.ExtensionResourceProvider;
-import com.vordel.circuit.filter.devkit.context.ScriptExtensionFactory;
 import com.vordel.circuit.filter.devkit.context.resources.AbstractContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceFactory;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
-import com.vordel.circuit.filter.devkit.script.ScriptContext;
-import com.vordel.circuit.filter.devkit.script.ScriptContextBuilder;
+import com.vordel.circuit.filter.devkit.script.context.ScriptContext;
+import com.vordel.circuit.filter.devkit.script.context.ScriptContextBuilder;
+import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionFactory;
 import com.vordel.common.Dictionary;
 import com.vordel.config.Circuit;
 import com.vordel.config.ConfigContext;
@@ -323,16 +324,24 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 
 		@Override
 		public void reflectExtension(String name) throws ScriptException {
+			ScriptContextBuilder builder = new ScriptContextBuilder(resources, this::reflectExtension);
+
+			builder.reflectExtension(name);
+		}
+
+		private void reflectExtension(ScriptContextBuilder builder, Set<String> loaded, String className) throws ScriptException {
 			checkState();
 
-			Trace.info(String.format("attaching extension '%s' in script '%s'", name, getFilterName()));
+			ScriptExtensionFactory factory = ExtensionLoader.getScriptExtensionFactory(className);
 
-			ScriptExtensionFactory factory = ExtensionLoader.getScriptExtensionFactory(name);
+			if (factory == null) {
+				throw new ScriptException(String.format("script extension '%s' is not registered", className));
+			}
 
-			if (factory != null) {
-				factory.bind(resources, engine, this);
-			} else {
-				throw new ScriptException(String.format("script extension '%s' is not registered", name));
+			if (!factory.isLoaded(loaded)) {
+				Trace.info(String.format("attaching extension '%s' to script '%s'", className, getFilterName()));
+
+				factory.bind(builder, resources, engine, this);
 			}
 		}
 

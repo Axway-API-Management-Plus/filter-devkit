@@ -7,7 +7,7 @@ import javax.script.ScriptException;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
-import com.vordel.circuit.filter.devkit.script.ScriptContextBuilder;
+import com.vordel.circuit.filter.devkit.script.context.ScriptContextBuilder;
 import com.vordel.config.Circuit;
 
 /**

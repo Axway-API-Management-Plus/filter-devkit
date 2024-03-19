@@ -18,6 +18,12 @@ ScriptContextBuilder.bindGroovyScriptContext(this, { builder ->
 	builder.attachSelectorResourceByExpression("name", "http.querystring.name", String.class)
 	builder.attachPolicyByPortableESPK("policy.healthcheck1", "<key type='CircuitContainer'><id field='name' value='Policy Library'/><key type='FilterCircuit'><id field='name' value='Health Check'/></key></key>")
 	builder.attachPolicyByShorthandKey("policy.healthcheck2", "/[CircuitContainer]name=Policy Library/[FilterCircuit]name=Health Check")
+
+	// you can also add resource by reflecting static invocable and substitutable from existing class
+	//builder.reflectClass(<java class object>.class)
+
+	// you can also bind extensions to this script
+	//builder.reflectExtension("java.class.fqdn.as.string")
 })
 
 def invoke(msg) {

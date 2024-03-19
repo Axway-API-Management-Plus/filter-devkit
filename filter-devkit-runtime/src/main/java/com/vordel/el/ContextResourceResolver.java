@@ -19,7 +19,7 @@ import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
 import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
 import com.vordel.circuit.filter.devkit.context.resources.SubstitutableResource;
 import com.vordel.circuit.filter.devkit.context.resources.ViewableResource;
-import com.vordel.circuit.filter.devkit.script.ScriptRuntime;
+import com.vordel.circuit.filter.devkit.script.context.ScriptContextRuntime;
 import com.vordel.common.Dictionary;
 
 import de.odysseus.el.misc.TypeConverter;
@@ -59,8 +59,8 @@ public class ContextResourceResolver extends ELResolver {
 	public Object getValue(ELContext context, Object base, Object property) {
 		Object result = null;
 
-		if (base instanceof ScriptRuntime) {
-			base = ((ScriptRuntime) base).getExportedResources();
+		if (base instanceof ScriptContextRuntime) {
+			base = ((ScriptContextRuntime) base).getExportedResources();
 		}
 		
 		if (isResolvable(base)) {
@@ -84,8 +84,8 @@ public class ContextResourceResolver extends ELResolver {
 
 	@Override
 	public Class<?> getType(ELContext context, Object base, Object property) {
-		if (base instanceof ScriptRuntime) {
-			base = ((ScriptRuntime) base).getExportedResources();
+		if (base instanceof ScriptContextRuntime) {
+			base = ((ScriptContextRuntime) base).getExportedResources();
 		}
 		
 		if (isResolvable(base)) {
@@ -97,8 +97,8 @@ public class ContextResourceResolver extends ELResolver {
 
 	@Override
 	public void setValue(ELContext context, Object base, Object property, Object value) {
-		if (base instanceof ScriptRuntime) {
-			base = ((ScriptRuntime) base).getExportedResources();
+		if (base instanceof ScriptContextRuntime) {
+			base = ((ScriptContextRuntime) base).getExportedResources();
 		}
 		
 		if (isResolvable(base)) {
@@ -108,8 +108,8 @@ public class ContextResourceResolver extends ELResolver {
 
 	@Override
 	public boolean isReadOnly(ELContext context, Object base, Object property) {
-		if (base instanceof ScriptRuntime) {
-			base = ((ScriptRuntime) base).getExportedResources();
+		if (base instanceof ScriptContextRuntime) {
+			base = ((ScriptContextRuntime) base).getExportedResources();
 		}
 		
 		if (isResolvable(base)) {
@@ -126,8 +126,8 @@ public class ContextResourceResolver extends ELResolver {
 
 	@Override
 	public Class<?> getCommonPropertyType(ELContext context, Object base) {
-		if (base instanceof ScriptRuntime) {
-			base = ((ScriptRuntime) base).getExportedResources();
+		if (base instanceof ScriptContextRuntime) {
+			base = ((ScriptContextRuntime) base).getExportedResources();
 		}
 		
 		return isResolvable(base) ? String.class : null;
@@ -138,8 +138,8 @@ public class ContextResourceResolver extends ELResolver {
 		Object target = null;
 		Object result = null;
 
-		if (base instanceof ScriptRuntime) {
-			base = ((ScriptRuntime) base).getExportedResources();
+		if (base instanceof ScriptContextRuntime) {
+			base = ((ScriptContextRuntime) base).getExportedResources();
 		}
 		
 		/*

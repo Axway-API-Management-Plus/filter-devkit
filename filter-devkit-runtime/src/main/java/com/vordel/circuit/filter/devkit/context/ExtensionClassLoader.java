@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -16,9 +18,9 @@ import java.util.Set;
  */
 public class ExtensionClassLoader extends URLClassLoader {
 	/**
-	 * set of classes which must be loaded locally
+	 * set of classes which must be loaded locally. also map qualified names to binary names
 	 */
-	private final Set<String> forceLocal;
+	private final Map<String,String> forceLocal = new HashMap<String,String>();
 
 	public ExtensionClassLoader(URL[] urls, ClassLoader parent) {
 		this(Collections.emptySet(), urls, parent);
@@ -31,7 +33,12 @@ public class ExtensionClassLoader extends URLClassLoader {
 	public ExtensionClassLoader(Set<String> forceLocal, URL[] urls, ClassLoader parent) {
 		super(urls, parent);
 
-		this.forceLocal = forceLocal;
+		for(String binaryName : forceLocal) {
+			String qualifiedName = binaryName.replace('$', '.');
+			
+			this.forceLocal.put(binaryName, binaryName);
+			this.forceLocal.put(qualifiedName, binaryName);
+		}
 	}
 
 	@Override
@@ -44,12 +51,14 @@ public class ExtensionClassLoader extends URLClassLoader {
 					/* find class from local jars/directories */
 					loaded = findClass(name);
 				} catch (ClassNotFoundException e) {
-					if (forceLocal.contains(name)) {
+					String binaryName = forceLocal.get(name);
+					
+					if (binaryName != null) {
 						/*
 						 * class not found. try to retrieve class file in parent classpath and define in
 						 * this classloader
 						 */
-						loaded = findParentClassAsLocal(name);
+						loaded = findParentClassAsLocal(binaryName);
 
 						if (loaded == null) {
 							throw e;

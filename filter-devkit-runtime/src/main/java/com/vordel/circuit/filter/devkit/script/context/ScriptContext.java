@@ -1,4 +1,4 @@
-package com.vordel.circuit.filter.devkit.script;
+package com.vordel.circuit.filter.devkit.script.context;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
@@ -16,7 +16,7 @@ import com.vordel.trace.Trace;
  * 
  * @author rdesaintleger@axway.com
  */
-public abstract class ScriptContext implements ScriptRuntime {
+public abstract class ScriptContext implements ScriptContextRuntime {
 	@Override
 	public final InvocableResource getInvocableResource(String name) {
 		ContextResource resource = getContextResource(name);

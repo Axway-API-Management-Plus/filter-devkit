@@ -1,8 +1,10 @@
-package com.vordel.circuit.filter.devkit.script;
+package com.vordel.circuit.filter.devkit.script.context;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import javax.script.ScriptException;
@@ -12,7 +14,6 @@ import org.codehaus.groovy.runtime.MethodClosure;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
 import com.vordel.circuit.filter.devkit.context.ExtensionResourceProvider;
-import com.vordel.circuit.filter.devkit.context.ScriptExtensionFactory;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionFunction;
 import com.vordel.circuit.filter.devkit.context.annotations.InvocableMethod;
 import com.vordel.circuit.filter.devkit.context.annotations.SubstitutableMethod;
@@ -23,6 +24,8 @@ import com.vordel.circuit.filter.devkit.context.resources.EHCacheResource;
 import com.vordel.circuit.filter.devkit.context.resources.KPSStoreResource;
 import com.vordel.circuit.filter.devkit.context.resources.PolicyResource;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
+import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionBinder;
+import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionFactory;
 import com.vordel.common.Dictionary;
 import com.vordel.config.Circuit;
 import com.vordel.dwe.DelayedESPK;
@@ -50,8 +53,18 @@ import groovy.lang.Script;
  * @author rdesaintleger@axway.com
  */
 public final class ScriptContextBuilder {
+	/**
+	 * current script's set of resources
+	 */
 	private final Map<String, ContextResource> resources;
+	/**
+	 * loaded extensions for this builder
+	 */
+	private final Set<String> loaded = new HashSet<String>();
 
+	/**
+	 * extension binder implementation
+	 */
 	private final ScriptExtensionBinder extensionBinder;
 
 	/**
@@ -269,15 +282,12 @@ public final class ScriptContextBuilder {
 	 * Reflect existing loaded class for static method exports if
 	 * {@link InvocableMethod}, {@link SubstitutableMethod} or
 	 * {@link ExtensionFunction}
-	 * 
-	 * @param name  name of resource to be created
 	 * @param clazz class to be reflected
+	 * 
 	 * @return this instance of builder
 	 * @throws ScriptException if any parameter is missing.
 	 */
-	public ScriptContextBuilder reflectClass(String name, Class<?> clazz) throws ScriptException {
-		checkName(name);
-
+	public ScriptContextBuilder reflectClass(Class<?> clazz) throws ScriptException {
 		if (clazz == null) {
 			throw new ScriptException("class parameter cannot be null");
 		}
@@ -309,9 +319,7 @@ public final class ScriptContextBuilder {
 			throw new ScriptException("extension loader is not available");
 		}
 
-		Trace.info(String.format("attaching script extension '%s'", className));
-
-		extensionBinder.reflectExtension(className);
+		extensionBinder.reflectExtension(this, loaded, className);
 
 		return this;
 	}
@@ -370,19 +378,23 @@ public final class ScriptContextBuilder {
 				Map<String, ContextResource> resources = new HashMap<String, ContextResource>();
 				ScriptContextAdapter runtime = new ScriptContextAdapter(resources);
 
-				ScriptContextBuilder builder = new ScriptContextBuilder(resources, (className) -> {
+				ScriptContextBuilder builder = new ScriptContextBuilder(resources, (instance, loaded, className) -> {
 					/* special case for extensions, need a binder to access the script object */
 					ScriptExtensionFactory factory = ExtensionLoader.getScriptExtensionFactory(className);
 
-					if (factory != null) {
-						factory.bind(resources, script, runtime);
-					} else {
+					if (factory == null) {
 						throw new ScriptException(String.format("script extension '%s' is not available", className));
+					}
+
+					if (!factory.isLoaded(loaded)) {
+						factory.bind(instance, resources, script, runtime);
+
+						Trace.info(String.format("attached script extension '%s'", className));
 					}
 				});
 
 				/* add base runtime closures to script */
-				bindGroovyClosures(script, runtime, ScriptRuntime.class.getDeclaredMethods());
+				bindGroovyClosures(script, runtime, ScriptContextRuntime.class.getDeclaredMethods());
 
 				/* reflect groovy script for runtime */
 				builder.reflectGroovyScript(script);
