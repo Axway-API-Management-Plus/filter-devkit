@@ -828,8 +828,22 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 		private final String attributeName;
 
 		private AttributeParameter(String attributeName, Class<T> type) {
-			this.selector = SelectorResource.fromExpression(String.format("dictionary[\"%s\"]", attributeName), type);
+			this.selector = SelectorResource.fromExpression(String.format("dictionary[\"%s\"]", escapeQuotes(attributeName)), type);
 			this.attributeName = attributeName;
+		}
+		
+		private static final String escapeQuotes(String attributeName) {
+			StringBuilder out = new StringBuilder();
+			
+			for(char c : attributeName.toCharArray()) {
+				if (c == '"') {
+					out.append('\\');
+				}
+				
+				out.append(c);
+			}
+			
+			return out.toString();
 		}
 
 		@Override

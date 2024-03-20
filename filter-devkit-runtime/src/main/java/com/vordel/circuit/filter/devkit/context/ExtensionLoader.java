@@ -326,7 +326,9 @@ public final class ExtensionLoader implements LoadableModule {
 
 			@Override
 			public Object proxify(Object instance) {
-				ClassLoader loader = ScriptExtension.class.getClassLoader();
+				/* if iclazz has a single entry use its loader */
+				Class<?> clazz = iclazz.length == 1 ? iclazz[0] : instance.getClass();
+				ClassLoader loader = clazz.getClassLoader();
 
 				return proxify(instance, loader, iclazz);
 			}
@@ -367,7 +369,9 @@ public final class ExtensionLoader implements LoadableModule {
 
 			@Override
 			public Object proxify(Object instance) {
-				ClassLoader loader = ScriptExtension.class.getClassLoader();
+				/* if iclazz has a single entry use its loader */
+				Class<?> clazz = iclazz.length == 1 ? iclazz[0] : instance.getClass();
+				ClassLoader loader = clazz.getClassLoader();
 
 				return proxify(instance, loader, iclazz);
 			}
