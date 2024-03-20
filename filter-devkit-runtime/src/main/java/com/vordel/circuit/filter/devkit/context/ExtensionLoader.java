@@ -303,6 +303,11 @@ public final class ExtensionLoader implements LoadableModule {
 				}
 			}
 
+			if (global) {
+				/* do not display register message is global registry is not available */
+				Trace.info(String.format("registering script extension implementation '%s'", mclazz.getName()));
+			}
+
 			registry.put(mclazz.getName(), builder.apply(factories.toArray(new Class<?>[0])));
 		}
 	}

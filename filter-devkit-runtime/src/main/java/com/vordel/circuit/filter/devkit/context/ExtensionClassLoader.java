@@ -35,7 +35,7 @@ public class ExtensionClassLoader extends URLClassLoader {
 
 		for(String binaryName : forceLocal) {
 			String qualifiedName = binaryName.replace('$', '.');
-			
+
 			this.forceLocal.put(binaryName, binaryName);
 			this.forceLocal.put(qualifiedName, binaryName);
 		}
@@ -51,8 +51,8 @@ public class ExtensionClassLoader extends URLClassLoader {
 					/* find class from local jars/directories */
 					loaded = findClass(name);
 				} catch (ClassNotFoundException e) {
-					String binaryName = forceLocal.get(name);
-					
+					String binaryName = getLocalClassName(name);
+
 					if (binaryName != null) {
 						/*
 						 * class not found. try to retrieve class file in parent classpath and define in
@@ -76,6 +76,25 @@ public class ExtensionClassLoader extends URLClassLoader {
 
 			return loaded;
 		}
+	}
+
+	private String getLocalClassName(String name) {
+		String local = forceLocal.get(name);
+
+		if (local == null) {
+			int inner = name.lastIndexOf('$');
+
+			if (inner > -1) {
+				/* check if enclosing class is handled by this ClassLoader */
+				String enclosing = getLocalClassName(name.substring(0, inner));
+
+				if (enclosing != null) {
+					return name;
+				}
+			}
+		}
+
+		return local;
 	}
 
 	private Class<?> findParentClassAsLocal(String name) throws ClassNotFoundException {

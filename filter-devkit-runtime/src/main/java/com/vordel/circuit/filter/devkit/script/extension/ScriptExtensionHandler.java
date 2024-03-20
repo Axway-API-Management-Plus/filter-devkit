@@ -30,7 +30,11 @@ public class ScriptExtensionHandler implements InvocationHandler {
 			Object result = method.invoke(module, args);
 
 			if (Trace.isDebugEnabled()) {
-				if (result instanceof String) {
+				Class<?> returnType = method.getReturnType();
+
+				if (returnType.equals(void.class) || returnType.equals(Void.class)) {
+					Trace.debug(String.format("method '%s' did not return result (void)", method.getName()));
+				} else if (result instanceof String) {
 					Trace.debug(String.format("method '%s' returned \"%s\"", method.getName(), ScriptHelper.encodeLiteral((String) result)));
 				} else if ((result instanceof Boolean) || (result instanceof Number)) {
 					Trace.debug(String.format("method '%s' returned '%s'", method.getName(), result.toString()));

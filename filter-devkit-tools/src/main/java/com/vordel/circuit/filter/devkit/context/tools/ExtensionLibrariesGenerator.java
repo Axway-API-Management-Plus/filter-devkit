@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,7 +36,7 @@ import com.vordel.circuit.filter.devkit.context.annotations.ExtensionLink;
  */
 @SupportedSourceVersion(SourceVersion.RELEASE_11)
 @SupportedAnnotationTypes({ "com.vordel.circuit.filter.devkit.context.annotations.ExtensionLibraries",
-		"com.vordel.circuit.filter.devkit.context.annotations.ExtensionLink" })
+"com.vordel.circuit.filter.devkit.context.annotations.ExtensionLink" })
 public class ExtensionLibrariesGenerator extends AbstractProcessor {
 	/**
 	 * Set of discovered classes
@@ -181,16 +182,40 @@ public class ExtensionLibrariesGenerator extends AbstractProcessor {
 		Set<TypeElement> linked = links.get(element);
 		Set<String> entries = new HashSet<String>();
 
+		Set<TypeElement> aggregated = new HashSet<TypeElement>();
+		
+		/* adds requested class */
+		aggregateInnerTypes(aggregated, element);
+
 		for (String entry : classes) {
-			entries.add(entry);
+			TypeElement entryType = null;
+
+			try {
+				/* try to lookup entry */
+				String qualifiedName = entry.replace('$', '.');
+
+				entryType = elements.getTypeElement(qualifiedName);
+			} catch(RuntimeException e) {
+				// ignore
+			}
+
+			if (entryType != null) {
+				aggregateInnerTypes(aggregated, entryType);
+			} else {
+				entries.add(entry);
+			}
 		}
 
 		if (linked != null) {
 			for (TypeElement entry : linked) {
-				Name name = elements.getBinaryName(entry);
-
-				entries.add(name.toString());
+				aggregateInnerTypes(aggregated, entry);
 			}
+		}
+		
+		for (TypeElement entry : aggregated) {
+			Name name = elements.getBinaryName(entry);
+
+			entries.add(name.toString());
 		}
 
 		try {
@@ -200,5 +225,17 @@ public class ExtensionLibrariesGenerator extends AbstractProcessor {
 		} finally {
 			libraries.close();
 		}
+	}
+
+	private void aggregateInnerTypes(Set<TypeElement> aggregated, TypeElement element) {
+		List<? extends Element> enclosed = element.getEnclosedElements();
+
+		for(Element inner : enclosed) {
+			if (inner instanceof TypeElement) {
+				aggregateInnerTypes(aggregated, (TypeElement) inner);
+			}
+		}
+
+		aggregated.add(element);
 	}
 }
