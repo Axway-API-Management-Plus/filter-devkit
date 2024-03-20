@@ -16,7 +16,7 @@ Additionally if the implementation contains methods annotated with [InvocableMet
 
 Avoid mixing methods exported for both resources and script top level function.
 
-Here is a script extension sample implementation :
+## Simple Example
 
 ```java
 import com.vordel.circuit.filter.devkit.script.extension.annotations.ScriptExtension;
@@ -62,6 +62,84 @@ def invoke(msg) {
 	Trace.info(sayHello())
 
 	return true
+}
+```
+
+## Interacting example
+
+In this example, the groovy script export a resource usable by the extension.
+
+Class implementation :
+
+```java
+import com.vordel.circuit.Message;
+import com.vordel.circuit.filter.devkit.script.extension.AbstractScriptExtension;
+import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionBuilder;
+import com.vordel.circuit.filter.devkit.script.extension.annotations.ScriptExtension;
+
+public interface InteractingScriptExtensionSampleInterface {
+	String sayHello(Message msg);
+}
+
+@ScriptExtension(InteractingScriptExtensionSampleInterface.class)
+class InteractingScriptExtensionSampleModule extends AbstractScriptExtension implements InteractingScriptExtensionSampleInterface {
+	protected InteractingScriptExtensionSampleModule(ScriptExtensionBuilder builder) {
+		super(builder);
+	}
+
+	@Override
+	public String sayHello(Message msg) {
+		// substitute 'who' resource from the script
+		Object who = substituteResource(msg, "who");
+		
+		return String.format("hello %s !", who);
+	}
+}
+```
+
+Groovy script (using [Advanced script filter](AdvancedScriptFilter.md)) :
+
+```groovy
+import com.vordel.circuit.filter.devkit.context.annotations.SubstitutableMethod
+import com.vordel.trace.Trace
+
+def attach(ctx, entity) {
+	reflectResources(this)
+	attachExtension("InteractingScriptExtensionSampleInterface")
+}
+
+def invoke(msg) {
+	Trace.info(sayHello(msg))
+
+	return true
+}
+
+@SubstitutableMethod("who")
+String getWorld() {
+	return "world"
+}
+```
+
+Groovy (using default script filter) :
+
+```groovy
+import com.vordel.circuit.filter.devkit.context.annotations.SubstitutableMethod
+import com.vordel.circuit.filter.devkit.script.context.ScriptContextBuilder
+import com.vordel.trace.Trace
+
+ScriptContextBuilder.bindGroovyScriptContext(this, { builder ->
+	builder.attachExtension("InteractingScriptExtensionSampleInterface")
+})
+
+def invoke(msg) {
+	Trace.info(sayHello(msg))
+
+	return true
+}
+
+@SubstitutableMethod("who")
+String getWorld() {
+	return "world"
 }
 ```
 
