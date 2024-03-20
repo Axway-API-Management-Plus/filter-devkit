@@ -2,73 +2,23 @@ package com.vordel.circuit.filter.devkit.script.extension;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import org.codehaus.groovy.runtime.MethodClosure;
-
-import com.vordel.circuit.filter.devkit.context.ExtensionResourceProvider;
-import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
-import com.vordel.circuit.filter.devkit.script.advanced.AdvancedScriptRuntime;
-import com.vordel.circuit.filter.devkit.script.advanced.AdvancedScriptRuntimeBinder;
 import com.vordel.circuit.filter.devkit.script.context.ScriptContextBuilder;
 import com.vordel.circuit.filter.devkit.script.context.ScriptContextRuntime;
 
-import groovy.lang.Script;
-
 public abstract class ScriptExtensionFactory {
-	public abstract Object createExtensionInstance(ScriptExtensionBuilder builder) throws ScriptException;
+	protected abstract Object createExtensionInstance(ScriptExtensionBuilder builder) throws ScriptException;
 
 	public abstract Object proxify(Object instance);
 
 	public abstract void scanScriptExtension(List<Method> methods);
 	
 	public abstract boolean isLoaded(Set<String> loaded);
-
-	public final void bind(ScriptContextBuilder builder, Map<String, ContextResource> resources, ScriptEngine engine, AdvancedScriptRuntime runtime) throws ScriptException {
-		AdvancedScriptRuntimeBinder binder = AdvancedScriptRuntimeBinder.getScriptBinder(engine);
-
-		if (binder == null) {
-			throw new ScriptException("Unsupported script engine");
-		}
-
-		Object instance = createExtensionInstance(builder, runtime);
-		List<Method> methods = new ArrayList<Method>();
-
-		/* reflect invocables/substitutables and extension functions */
-		ExtensionResourceProvider.reflectInstance(resources, instance);
-
-		scanScriptExtension(methods);
-
-		/* bind proxy interface to script */
-		binder.bind(engine, proxify(instance), methods.toArray(new Method[0]));
-	}
-
-	public final void bind(ScriptContextBuilder builder, Map<String, ContextResource> resources, Script script, ScriptContextRuntime runtime) throws ScriptException {
-		Object instance = createExtensionInstance(builder, runtime);
-		List<Method> methods = new ArrayList<Method>();
-
-		/* reflect invocables/substitutables and extension functions */
-		ExtensionResourceProvider.reflectInstance(resources, instance);
-
-		scanScriptExtension(methods);
-
-		/* proxify instance for debug traces */
-		Object proxy = proxify(instance);
-
-		for (Method method : methods) {
-			String name = method.getName();
-			MethodClosure closure = new MethodClosure(proxy, name);
-
-			script.setProperty(name, closure);
-		}
-	}
 
 	public final Object createExtensionInstance(ScriptContextBuilder builder, ScriptContextRuntime runtime) throws ScriptException {
 		ScriptExtensionBuilder holder = new ScriptExtensionBuilder(runtime);

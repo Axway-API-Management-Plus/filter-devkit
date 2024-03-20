@@ -14,7 +14,7 @@ A playground Dockerfile is provided. It provides an on-premise API Gateway, Poli
 
 The Filter Devkit can be installed in two ways :
  - Full feature set by importing the runtime typeset ([ExtensionLoader](filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/ExtensionLoader.java) loadable module and [Advanced script](docs/AdvancedScriptFilter.md) custom filter,
- - Minimal feature set with only [extension contexts]()
+ - Groovy Script only [context](docs/ScriptContext.md) and [extensions](docs/ScriptExtensions.md)
 
 ## Basic Features
 

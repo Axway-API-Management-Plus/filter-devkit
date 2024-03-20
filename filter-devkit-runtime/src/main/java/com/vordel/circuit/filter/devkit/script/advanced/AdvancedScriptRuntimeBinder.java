@@ -12,6 +12,7 @@ import org.codehaus.groovy.runtime.MethodClosure;
 import org.python.core.Py;
 import org.python.core.PyObject;
 
+import com.vordel.circuit.filter.devkit.script.context.GroovyContextRuntime;
 import com.vordel.circuit.filter.devkit.script.context.ScriptContextRuntime;
 import com.vordel.trace.Trace;
 
@@ -125,7 +126,9 @@ public abstract class AdvancedScriptRuntimeBinder {
 			protected void bind(ScriptEngine engine, AdvancedScriptRuntime runtime) throws ScriptException {
 				super.bind(engine, runtime);
 
+				/* add groovy specific bindings */
 				bind(engine, runtime, GroovyScriptConfigurator.class.getDeclaredMethods());
+				bind(engine, runtime, GroovyContextRuntime.class.getDeclaredMethods());
 			}
 
 			@Override

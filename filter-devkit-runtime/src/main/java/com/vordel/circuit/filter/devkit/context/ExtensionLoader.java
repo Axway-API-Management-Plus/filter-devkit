@@ -310,7 +310,7 @@ public final class ExtensionLoader implements LoadableModule {
 	private static final ScriptExtensionFactory createScriptExtensionInstanceFactory(Object instance, Class<?>... iclazz) {
 		return new ScriptExtensionFactory() {
 			@Override
-			public Object createExtensionInstance(ScriptExtensionBuilder builder) throws ScriptException {
+			protected Object createExtensionInstance(ScriptExtensionBuilder builder) throws ScriptException {
 				return instance;
 			}
 
@@ -339,7 +339,7 @@ public final class ExtensionLoader implements LoadableModule {
 	private static final ScriptExtensionFactory createScriptExtensionFactory(Constructor<?> constructor, Class<?>... iclazz) {
 		return new ScriptExtensionFactory() {
 			@Override
-			public Object createExtensionInstance(ScriptExtensionBuilder builder) throws ScriptException {
+			protected Object createExtensionInstance(ScriptExtensionBuilder builder) throws ScriptException {
 				Object instance = null;
 				Class<?> mclazz = constructor.getDeclaringClass();
 				String name = mclazz.getName();

@@ -54,7 +54,7 @@ public interface AdvancedScriptConfigurator {
 	 * @throws ScriptException if this method is called outside script attachment
 	 *                         phase or if extension does not exists.
 	 */
-	void reflectExtension(String extension) throws ScriptException;
+	void attachExtension(String extension) throws ScriptException;
 
 	/**
 	 * Attach resources to a script using legacy mechanisms

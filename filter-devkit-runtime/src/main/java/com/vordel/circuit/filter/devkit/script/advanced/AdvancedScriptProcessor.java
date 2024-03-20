@@ -7,22 +7,21 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 
 import javax.script.ScriptException;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
-import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
 import com.vordel.circuit.filter.devkit.context.ExtensionResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.AbstractContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceFactory;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
+import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
+import com.vordel.circuit.filter.devkit.script.context.GroovyContextRuntime;
 import com.vordel.circuit.filter.devkit.script.context.ScriptContext;
 import com.vordel.circuit.filter.devkit.script.context.ScriptContextBuilder;
-import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionFactory;
 import com.vordel.common.Dictionary;
 import com.vordel.config.Circuit;
 import com.vordel.config.ConfigContext;
@@ -285,7 +284,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		return args;
 	}
 
-	private final class ExportedRuntime extends ScriptContext implements AdvancedScriptRuntime, GroovyScriptConfigurator {
+	private final class ExportedRuntime extends ScriptContext implements AdvancedScriptRuntime, GroovyScriptConfigurator, GroovyContextRuntime {
 		private void checkState() throws ScriptException {
 			if (attached) {
 				throw new ScriptException("This function can only be used during filter attachment");
@@ -323,26 +322,17 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		}
 
 		@Override
-		public void reflectExtension(String name) throws ScriptException {
-			ScriptContextBuilder builder = new ScriptContextBuilder(resources, this::reflectExtension);
+		public void attachExtension(String name) throws ScriptException {
+			ScriptContextBuilder builder = new ScriptContextBuilder(resources, this, this::attachExtension);
 
-			builder.reflectExtension(name);
+			builder.attachExtension(name);
 		}
 
-		private void reflectExtension(ScriptContextBuilder builder, Set<String> loaded, String className) throws ScriptException {
+		private void attachExtension(String className, Object instance, Method[] methods) throws ScriptException {
 			checkState();
 
-			ScriptExtensionFactory factory = ExtensionLoader.getScriptExtensionFactory(className);
-
-			if (factory == null) {
-				throw new ScriptException(String.format("script extension '%s' is not registered", className));
-			}
-
-			if (!factory.isLoaded(loaded)) {
-				Trace.info(String.format("attaching extension '%s' to script '%s'", className, getFilterName()));
-
-				factory.bind(builder, resources, engine, this);
-			}
+			Trace.info(String.format("attaching extension '%s' to script '%s'", className, getFilterName()));
+			AdvancedScriptRuntimeBinder.getScriptBinder(engine).bind(engine, instance, methods);
 		}
 
 		@Override
@@ -382,10 +372,21 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 			checkState();
 
 			if (configurator != null) {
-				ScriptContextBuilder builder = new ScriptContextBuilder(resources, this::reflectExtension);
+				ScriptContextBuilder builder = new ScriptContextBuilder(resources, this, this::attachExtension);
 
 				configurator.accept(builder);
 			}
+		}
+
+		@Override
+		public Object invokeFunction(Dictionary dict, String name, Object... args) throws CircuitAbortException {
+			ContextResource resource = getContextResource(name);
+
+			if (!(resource instanceof FunctionResource)) {
+				throw new CircuitAbortException(String.format("resource '%s' is not a function", name));
+			}
+
+			return ((FunctionResource) resource).invoke(dict, args);
 		}
 	}
 

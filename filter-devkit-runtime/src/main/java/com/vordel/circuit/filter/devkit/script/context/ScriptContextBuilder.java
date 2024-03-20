@@ -1,8 +1,10 @@
 package com.vordel.circuit.filter.devkit.script.context;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -21,6 +23,7 @@ import com.vordel.circuit.filter.devkit.context.resources.AbstractContextResourc
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.EHCacheResource;
+import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
 import com.vordel.circuit.filter.devkit.context.resources.KPSStoreResource;
 import com.vordel.circuit.filter.devkit.context.resources.PolicyResource;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
@@ -66,15 +69,21 @@ public final class ScriptContextBuilder {
 	 * extension binder implementation
 	 */
 	private final ScriptExtensionBinder extensionBinder;
+	/**
+	 * Underlying runtime object
+	 */
+	private final ScriptContextRuntime runtime;
 
 	/**
 	 * public constructor with actual resources map. This way the advanced script
 	 * framework can inherit this implementation.
 	 * 
 	 * @param resources       current script's set of resources
+	 * @param runtime         underlying runtime object for current script
 	 * @param extensionBinder entry point for binding script extensions
 	 */
-	public ScriptContextBuilder(Map<String, ContextResource> resources, ScriptExtensionBinder extensionBinder) {
+	public ScriptContextBuilder(Map<String, ContextResource> resources, ScriptContextRuntime runtime, ScriptExtensionBinder extensionBinder) {
+		this.runtime = runtime;
 		this.resources = resources;
 		this.extensionBinder = extensionBinder;
 	}
@@ -282,6 +291,7 @@ public final class ScriptContextBuilder {
 	 * Reflect existing loaded class for static method exports if
 	 * {@link InvocableMethod}, {@link SubstitutableMethod} or
 	 * {@link ExtensionFunction}
+	 * 
 	 * @param clazz class to be reflected
 	 * 
 	 * @return this instance of builder
@@ -310,16 +320,33 @@ public final class ScriptContextBuilder {
 	 * @throws ScriptException if this method is called outside script attachment
 	 *                         phase or if extension does not exists.
 	 */
-	public ScriptContextBuilder reflectExtension(String className) throws ScriptException {
+	public ScriptContextBuilder attachExtension(String className) throws ScriptException {
 		if (className == null) {
 			throw new ScriptException("className parameter cannot be null");
 		}
 
 		if (extensionBinder == null) {
-			throw new ScriptException("extension loader is not available");
+			throw new ScriptException("extension binder is not available");
 		}
 
-		extensionBinder.reflectExtension(this, loaded, className);
+		ScriptExtensionFactory factory = ExtensionLoader.getScriptExtensionFactory(className);
+
+		if (factory == null) {
+			throw new ScriptException(String.format("script extension '%s' is not available", className));
+		}
+
+		if (!factory.isLoaded(loaded)) {
+			Object instance = factory.createExtensionInstance(this, runtime);
+			List<Method> methods = new ArrayList<Method>();
+
+			/* reflect invocables/substitutables and extension functions */
+			ExtensionResourceProvider.reflectInstance(resources, instance);
+
+			/* build list of methods to be bound to the running script */
+			factory.scanScriptExtension(methods);
+
+			extensionBinder.bindExtension(className, factory.proxify(instance), methods.toArray(new Method[0]));
+		}
 
 		return this;
 	}
@@ -331,26 +358,6 @@ public final class ScriptContextBuilder {
 	 */
 	public static final void bindGroovyScriptContext(Script script) {
 		bindGroovyScriptContext(script, null);
-	}
-
-	/**
-	 * Static entry point for creating a ScriptContext object. Use a callback to add
-	 * resources. Script extensions are not available in this case.
-	 * 
-	 * @param configurator callback which will be applied to add resource to the
-	 *                     resulting context.
-	 * @return a {@link ScriptContext} object containing resources created using the
-	 *         configurator callback
-	 */
-	public static final ScriptContext createScriptContext(Consumer<ScriptContextBuilder> configurator) {
-		Map<String, ContextResource> resources = new HashMap<String, ContextResource>();
-		ScriptContextBuilder builder = new ScriptContextBuilder(resources, null);
-
-		if (configurator != null) {
-			configurator.accept(builder);
-		}
-
-		return new ScriptContextAdapter(resources);
 	}
 
 	/**
@@ -378,19 +385,10 @@ public final class ScriptContextBuilder {
 				Map<String, ContextResource> resources = new HashMap<String, ContextResource>();
 				ScriptContextAdapter runtime = new ScriptContextAdapter(resources);
 
-				ScriptContextBuilder builder = new ScriptContextBuilder(resources, (instance, loaded, className) -> {
-					/* special case for extensions, need a binder to access the script object */
-					ScriptExtensionFactory factory = ExtensionLoader.getScriptExtensionFactory(className);
+				ScriptContextBuilder builder = new ScriptContextBuilder(resources, runtime, (className, instance, methods) -> {
+					Trace.info(String.format("attaching extension '%s' to groovy script", className));
 
-					if (factory == null) {
-						throw new ScriptException(String.format("script extension '%s' is not available", className));
-					}
-
-					if (!factory.isLoaded(loaded)) {
-						factory.bind(instance, resources, script, runtime);
-
-						Trace.info(String.format("attached script extension '%s'", className));
-					}
+					bindGroovyClosures(script, instance, methods);
 				});
 
 				/* add base runtime closures to script */
@@ -407,10 +405,10 @@ public final class ScriptContextBuilder {
 		}
 	}
 
-	private static final void bindGroovyClosures(Script script, ScriptContext context, Method[] methods) {
+	private static final void bindGroovyClosures(Script script, Object instance, Method[] methods) {
 		for (Method method : methods) {
 			String name = method.getName();
-			MethodClosure closure = new MethodClosure(context, name);
+			MethodClosure closure = new MethodClosure(instance, name);
 
 			script.setProperty(name, closure);
 		}
@@ -428,7 +426,7 @@ public final class ScriptContextBuilder {
 		return null;
 	}
 
-	private static final class ScriptContextAdapter extends ScriptContext {
+	private static final class ScriptContextAdapter extends ScriptContext implements GroovyContextRuntime {
 		private final Map<String, ContextResource> resources;
 		private final ContextResourceProvider exports = new AbstractContextResourceProvider() {
 			@Override
@@ -449,6 +447,17 @@ public final class ScriptContextBuilder {
 		@Override
 		public ContextResourceProvider getExportedResources() {
 			return exports;
+		}
+
+		@Override
+		public Object invokeFunction(Dictionary dict, String name, Object... args) throws CircuitAbortException {
+			ContextResource resource = getContextResource(name);
+
+			if (!(resource instanceof FunctionResource)) {
+				throw new CircuitAbortException(String.format("resource '%s' is not a function", name));
+			}
+
+			return ((FunctionResource) resource).invoke(dict, args);
 		}
 	}
 }

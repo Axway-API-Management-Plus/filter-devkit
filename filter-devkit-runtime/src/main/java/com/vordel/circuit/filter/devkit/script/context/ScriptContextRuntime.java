@@ -84,8 +84,8 @@ public interface ScriptContextRuntime {
 	/**
 	 * Substitute the named resource (if applicable)
 	 * 
-	 * @param dict dictionary to resolve delayed resources
-	 * @param name name of selector expression
+	 * @param dict dictionary used for substitutions
+	 * @param name name of bound selector expression
 	 * 
 	 * @return result of resource substitution
 	 */

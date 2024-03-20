@@ -3,14 +3,13 @@
 Extension Context is a mechanism dedicated to call Java code from selectors. In order to fully use this mechanism, the [Extended Evaluate Selector](../filter-devkit-plugins/filter-devkit-plugins-eval/README.md) is recommended (as this plugin is able to relay CircuitAbortException).
 
 If not using the Filter Devkit loadable module the following limitations apply :
- - No global namespace registration,
  - Only static method export allowed,
- - No 'child first' class loader available
- - Explicit reflection of Java classes within groovies.
+ - No global namespace registration (explicit reflection of Java classes within groovies),
+ - No 'child first' class loader available (depends on [Extension interface](ExtensionInterface.md)).
 
-There is 3 kinds of exported selectors
- - [Invocable Selector](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/InvocableMethod.java) : invoke a Java method like a policy shortcut using an (Extended) Eval Selector Filter. Parameters are resolved from annotations and injected.
- - [Substitutable Selector](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/SubstitutableMethod.java) : invoke a Java method to return any value. This kind of export can't throw exceptions but can be used anywhere in the API Gateway where selectors are accepted (Set Message, Copy/Modify, Set Attribute, etc...). Parameters are resolved from annotations and injected.
+There is 3 kinds of exported methods
+ - [Invocable method](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/InvocableMethod.java) : invoke a Java method like a policy shortcut using an (Extended) Eval Selector Filter. Parameters are resolved from annotations and injected.
+ - [Substitutable method](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/SubstitutableMethod.java) : invoke a Java method to return any value. This kind of export can't throw exceptions but can be used anywhere in the API Gateway where selectors are accepted (Set Message, Copy/Modify, Set Attribute, etc...). Parameters are resolved from annotations and injected.
  - [Extension Function](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionFunction.java) : Invoke a Java method using JUEL invoke syntax. Parameters must be provided in the JUEL expression. Use with caution since parameter coercion may be tricky and variable arguments can cause strange behavior when used outside of Java Strong typing system (like Javascript or JUEL).
 
 Extension context global registration use an API Gateway global namespace. This global registration is only available when using the Filter Devkit module has been imported in the typeset. Script exported contexts do not use the global namespace they use a message attribute instead. See examples below for global registration.
@@ -63,10 +62,10 @@ import com.vordel.common.Dictionary;
 
 /**
  * sample extension context for API Gateway. This extension will get registered
- * under the 'sample' name. The @ExtensionInstance annotation allows this
- * class to be instanciated with the no-arg constructor (but it will not
- * register any interface). Since it does not implements ExtensionModule, there
- * will be no attachModule() or detachModule() initialization calls.
+ * under the 'sample' name. The @ExtensionInstance annotation allows this class
+ * to be instanciated with the no-arg constructor (but it will not register any
+ * interface). Since it does not implements ExtensionModule, there will be no
+ * attachModule() or detachModule() initialization calls.
  * 
  * Without @ExtensionInstance all exported methods must be set as static
  */

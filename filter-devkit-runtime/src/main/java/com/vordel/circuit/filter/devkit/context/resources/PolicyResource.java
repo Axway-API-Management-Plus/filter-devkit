@@ -12,6 +12,11 @@ import com.vordel.es.Entity;
 import com.vordel.es.EntityStore;
 import com.vordel.es.EntityStoreException;
 
+/**
+ * This class represent an API Gateway Policy Object
+ * 
+ * @author rdesaintleger@axway.com
+ */
 public final class PolicyResource implements InvocableResource {
 	private final Circuit circuit;
 	private final ESPK circuitPK;
