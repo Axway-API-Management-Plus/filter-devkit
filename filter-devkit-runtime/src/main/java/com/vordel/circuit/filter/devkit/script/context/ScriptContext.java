@@ -1,4 +1,4 @@
-package com.vordel.circuit.filter.devkit.script;
+package com.vordel.circuit.filter.devkit.script.context;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
@@ -12,11 +12,12 @@ import com.vordel.common.Dictionary;
 import com.vordel.trace.Trace;
 
 /**
- * base runtime implementation for scripts. Used for regular and advanced scripts
+ * base runtime implementation for scripts. Used for regular and advanced
+ * scripts
  * 
  * @author rdesaintleger@axway.com
  */
-public abstract class ScriptContext implements ScriptRuntime {
+public abstract class ScriptContext implements ScriptContextRuntime {
 	@Override
 	public final InvocableResource getInvocableResource(String name) {
 		ContextResource resource = getContextResource(name);
@@ -55,21 +56,16 @@ public abstract class ScriptContext implements ScriptRuntime {
 	@Override
 	public final Boolean invokeResource(Message msg, String name) throws CircuitAbortException {
 		ContextResource resource = getContextResource(name);
-		Boolean result = null;
 
-		if (resource != null) {
-			if (!(resource instanceof InvocableResource)) {
-				throw new CircuitAbortException(String.format("resource '%s' is not invocable", name));
-			}
-
-			if (msg == null) {
-				throw new CircuitAbortException("no message context");
-			}
-
-			result = ((InvocableResource) resource).invoke(msg);
+		if (!(resource instanceof InvocableResource)) {
+			throw new CircuitAbortException(String.format("resource '%s' is not invocable", name));
 		}
 
-		return result;
+		if (msg == null) {
+			throw new CircuitAbortException("no message context");
+		}
+
+		return ((InvocableResource) resource).invoke(msg);
 	}
 
 	@Override

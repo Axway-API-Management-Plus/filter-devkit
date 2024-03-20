@@ -2,6 +2,8 @@
 
 Extension interfaces is a mechanism dedicated for custom filters and regular script filter. Main goal if this feature is to instanciate a module from a foreign class loader with a particular interface shared with API Gateway ClassPath and Module ClassPath. Using this feature is quite simple and can be used in other situations since the child first class loader remains optional.
 
+This feature is not available if the Filter DevKit typeset is not installed.
+
  - The programmer start by creating an interface which will be exported. This interface must not inherit [ExtensionModule](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/ExtensionModule.java)
  - He also create an implementation for this interface with a no-arg constructor and the [ExtensionInstance](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionInstance.java) annotation with the exported interface as value.
  - The implementation may also implement the [ExtensionModule](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/ExtensionModule.java) interface
@@ -30,8 +32,8 @@ public interface ExtensionInterfaceSample {
 }
 
 /**
- * interface implementation with annotation and no arg constructor. Each interface specified in the
- * annotation value will get registered
+ * interface implementation with annotation and no arg constructor. Each
+ * interface specified in the annotation value will get registered
  */
 @ExtensionInstance(ExtensionInterfaceSample.class)
 class ExtensionInterfaceSampleImpl implements ExtensionInterfaceSample, ExtensionModule {
@@ -62,7 +64,7 @@ class ExtentionInterfaceSampleCall {
 	public static String callSayHello() {
 		/* retrieve the registered implementation */
 		ExtensionInterfaceSample impl = ExtensionLoader.getExtensionInstance(ExtensionInterfaceSample.class);
-		
+
 		/* and call the interface */
 		return impl.sayHello();
 	}

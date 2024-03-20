@@ -5,7 +5,7 @@ import com.vordel.es.EntityStoreException;
 
 /**
  * Marker interface for instantiable modules. If the class implement this
- * interface. It will be instantiated using a no arg contructor,
+ * interface. It will be instantiated using a no arg constructor,
  * {@link #attachModule(ConfigContext)} method will be called at
  * initialization time before any filter or processor attachment.
  * {@link #detachModule()} method will be called at {@link ExtensionLoader}

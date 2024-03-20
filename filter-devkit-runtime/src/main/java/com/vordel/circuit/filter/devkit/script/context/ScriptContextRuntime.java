@@ -1,4 +1,4 @@
-package com.vordel.circuit.filter.devkit.script;
+package com.vordel.circuit.filter.devkit.script.context;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
@@ -11,7 +11,7 @@ import com.vordel.circuit.filter.devkit.context.resources.KPSResource;
 import com.vordel.circuit.filter.devkit.context.resources.SubstitutableResource;
 import com.vordel.common.Dictionary;
 
-public interface ScriptRuntime {
+public interface ScriptContextRuntime {
 	/**
 	 * Retrieve the named context resource.
 	 * 
@@ -84,8 +84,8 @@ public interface ScriptRuntime {
 	/**
 	 * Substitute the named resource (if applicable)
 	 * 
-	 * @param dict dictionary to resolve delayed resources
-	 * @param name name of selector expression
+	 * @param dict dictionary used for substitutions
+	 * @param name name of bound selector expression
 	 * 
 	 * @return result of resource substitution
 	 */

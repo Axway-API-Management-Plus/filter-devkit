@@ -1,2 +1,3 @@
 com.vordel.circuit.filter.devkit.quick.tools.JavaQuickFilterPluginGenerator
 com.vordel.circuit.filter.devkit.context.tools.ExtensionProviderGenerator
+com.vordel.circuit.filter.devkit.context.tools.ExtensionLibrariesGenerator

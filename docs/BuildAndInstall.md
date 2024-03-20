@@ -65,7 +65,7 @@ You must stop and start each instance after runtime installation in the API Gate
 
 Open a configuration in the Policy Studio and choose File -> Import -> Import Custom Filter (this option is not available in YAML entity store as time of writing) and choose the [apigwsdkset.xml](../filter-devkit-runtime/src/main/typesets/apigwsdkset.xml) file.
 
-If importing the typeset  is not an option, Filter DevKit features will be limited (see top README for list). When using this type of install annotations and runtime jars must be set in Policy Studio runtime dependencies instead of plugins.
+If importing the typeset  is not an option, Filter DevKit features will be limited (see top [README](../README.md) for list). When using this type of install annotations and runtime jars must be set in Policy Studio runtime dependencies instead of plugins.
 
 ### Quick Filter activation
 

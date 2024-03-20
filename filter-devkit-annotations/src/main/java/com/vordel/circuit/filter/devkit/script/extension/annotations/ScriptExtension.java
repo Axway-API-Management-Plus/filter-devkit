@@ -1,4 +1,4 @@
-package com.vordel.circuit.filter.devkit.script.extension;
+package com.vordel.circuit.filter.devkit.script.extension.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

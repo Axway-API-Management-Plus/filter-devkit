@@ -1,6 +1,6 @@
 package com.vordel.circuit.filter.devkit.script.extension;
 
-import com.vordel.circuit.filter.devkit.script.ScriptRuntime;
+import com.vordel.circuit.filter.devkit.script.context.ScriptContextRuntime;
 
 /**
  * purpose of this class is to avoid implementers of script extensions to access
@@ -8,10 +8,10 @@ import com.vordel.circuit.filter.devkit.script.ScriptRuntime;
  * 
  * @author rdesaintleger@axway.com
  */
-public final class AbstractScriptExtensionBuilder {
-	final ScriptRuntime runtime;
+public final class ScriptExtensionBuilder {
+	final ScriptContextRuntime runtime;
 
-	public AbstractScriptExtensionBuilder(ScriptRuntime runtime) {
+	public ScriptExtensionBuilder(ScriptContextRuntime runtime) {
 		this.runtime = runtime;
 	}
 }
