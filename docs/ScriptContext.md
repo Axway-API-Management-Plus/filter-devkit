@@ -38,7 +38,7 @@ ScriptContextBuilder.bindGroovyScriptContext(this, { builder ->
 
 	// additional methods for registering resources
 	//builder.attachKPSResourceByAlias("resource.kps", "kpsAlias") // register KPS Table using its alias
-	//builder.attachCacheResourceByName("resource.cache", "cacheName") // register KPS Table using its name
+	//builder.attachCacheResourceByName("resource.cache", "cacheName") // register Cache using its name
 	
 	// you can also add resource by reflecting static invocables and substitutables from existing class
 	builder.reflectClass(PolicyHelper.class)
