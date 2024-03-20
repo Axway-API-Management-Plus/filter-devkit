@@ -448,7 +448,11 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 					Object result = method.invoke(instance, params);
 
 					if (Trace.isDebugEnabled()) {
-						if (result instanceof String) {
+						Class<?> returnType = method.getReturnType();
+
+						if (returnType.equals(void.class) || returnType.equals(Void.class)) {
+							Trace.debug(String.format("method '%s' did not return result (void)", method.getName()));
+						} else if (result instanceof String) {
 							Trace.debug(String.format("method '%s' returned \"%s\"", method.getName(), ScriptHelper.encodeLiteral((String) result)));
 						} else if ((result instanceof Boolean) || (result instanceof Number)) {
 							Trace.debug(String.format("method '%s' returned '%s'", method.getName(), result.toString()));
@@ -469,6 +473,10 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 
 					if (cause instanceof CircuitAbortException) {
 						throw (CircuitAbortException) cause;
+					}
+
+					if (Trace.isDebugEnabled()) {
+						Trace.debug(String.format("method '%s' thrown exception ", method.getName()), cause);
 					}
 
 					throw new CircuitAbortException("got error when invoking method", cause);
@@ -877,11 +885,12 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 
 	private static class ReflectedResource<T> {
 		private final InjectableParameter<?>[] parameters;
-		private final Method method;
 		private final Object instance;
 		private final String name;
 		private final String filterName;
 		private final Class<T> returnType;
+
+		protected final Method method;
 
 		private ReflectedResource(Object instance, AnnotatedMethod annotated, Class<T> returnType, String name, String filterName) {
 			this.parameters = processInjectableParameters(annotated);
@@ -923,7 +932,11 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 				Object value = method.invoke(instance, resolved);
 
 				if (Trace.isDebugEnabled()) {
-					if (value instanceof String) {
+					Class<?> returnType = method.getReturnType();
+
+					if (returnType.equals(void.class) || returnType.equals(Void.class)) {
+						Trace.debug(String.format("method '%s' did not return result (void)", method.getName()));
+					} else if (value instanceof String) {
 						Trace.debug(String.format("method '%s' returned \"%s\"", method.getName(), ScriptHelper.encodeLiteral((String) value)));
 					} else if ((value instanceof Boolean) || (value instanceof Number)) {
 						Trace.debug(String.format("method '%s' returned '%s'", method.getName(), value.toString()));
@@ -978,6 +991,10 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 					throw (CircuitAbortException) cause;
 				}
 
+				if (Trace.isDebugEnabled()) {
+					Trace.debug(String.format("method '%s' thrown exception ", method.getName()), cause);
+				}
+
 				throw new CircuitAbortException("got error when invoking method", cause);
 			} catch (RuntimeException e) {
 				throw new CircuitAbortException("unexpected exception", e);
@@ -1012,13 +1029,17 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 				 * since exceptions are silenced for substitutables, do not report an error but
 				 * show the stacktrace in debug
 				 */
-				Trace.debug("got error when invoking method", cause);
+				if (Trace.isDebugEnabled()) {
+					Trace.debug(String.format("method '%s' thrown exception", method.getName()), cause);
+				}
 			} catch (RuntimeException e) {
 				/*
 				 * since exceptions are silenced for substitutables, do not report an error but
 				 * show the stacktrace in debug
 				 */
-				Trace.debug("unexpected exception", e);
+				if (Trace.isDebugEnabled()) {
+					Trace.debug(String.format("unexpected exception when calling method '%s'", method.getName()), e);
+				}
 			}
 
 			return null;
@@ -1041,13 +1062,17 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 				 * since exceptions are silenced for substitutables, do not report an error but
 				 * show the stacktrace in debug
 				 */
-				Trace.debug("got error when invoking method", cause);
+				if (Trace.isDebugEnabled()) {
+					Trace.debug(String.format("method '%s' thrown exception", method.getName()), cause);
+				}
 			} catch (RuntimeException e) {
 				/*
 				 * since exceptions are silenced for substitutables, do not report an error but
 				 * show the stacktrace in debug
 				 */
-				Trace.debug("unexpected exception", e);
+				if (Trace.isDebugEnabled()) {
+					Trace.debug(String.format("unexpected exception when calling method '%s'", method.getName()), e);
+				}
 			}
 
 			return null;

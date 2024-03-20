@@ -45,8 +45,13 @@ public class AnnotationClassValueExtractor<T> extends SimpleAnnotationValueVisit
 
 	public static TypeMirror getAnnotationTypeMirrorValue(AnnotationMirror annotation, String key) {
 		AnnotationValue value = getAnnotationValue(annotation, key);
-		AnnotationClassValueExtractor<Void> visitor = new AnnotationClassValueExtractor<Void>();
 
-		return value.accept(visitor, null);
+		if (value != null) {
+			AnnotationClassValueExtractor<Void> visitor = new AnnotationClassValueExtractor<Void>();
+
+			return value.accept(visitor, null);
+		}
+
+		return null;
 	}
 }

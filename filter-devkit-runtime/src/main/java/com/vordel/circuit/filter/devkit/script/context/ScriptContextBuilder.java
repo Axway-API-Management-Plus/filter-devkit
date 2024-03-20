@@ -311,9 +311,7 @@ public final class ScriptContextBuilder {
 
 	/**
 	 * Adds resources from the given extension to the actual script. extensions can
-	 * interact with the current script set of resources. If {@link ExtensionLoader}
-	 * is not activated script extension interfaces are not available (in this case
-	 * use binary name of implementation instead.
+	 * interact with the current script set of resources.
 	 * 
 	 * @param className binary name of the extension Java class
 	 * @return this instance of builder
@@ -345,7 +343,10 @@ public final class ScriptContextBuilder {
 			/* build list of methods to be bound to the running script */
 			factory.scanScriptExtension(methods);
 
-			extensionBinder.bindExtension(className, factory.proxify(instance), methods.toArray(new Method[0]));
+			/* create instance proxy only if needed (interface closures to export) */
+			Object proxy = methods.isEmpty() ? instance : factory.proxify(instance);
+			
+			extensionBinder.bindExtension(className, proxy, methods.toArray(new Method[0]));
 		}
 
 		return this;
@@ -378,8 +379,8 @@ public final class ScriptContextBuilder {
 
 			if ((attach != null) && (reflect != null)) {
 				/* if in advanced script filter, use existing closures */
-				((Closure<?>) reflect).invokeMethod("reflectResources", script);
-				((Closure<?>) attach).invokeMethod("attachResources", configurator);
+				reflect.call(script);
+				attach.call(configurator);
 			} else {
 				/* create runtime context for legacy script filter */
 				Map<String, ContextResource> resources = new HashMap<String, ContextResource>();
@@ -393,6 +394,7 @@ public final class ScriptContextBuilder {
 
 				/* add base runtime closures to script */
 				bindGroovyClosures(script, runtime, ScriptContextRuntime.class.getDeclaredMethods());
+				bindGroovyClosures(script, runtime, GroovyContextRuntime.class.getDeclaredMethods());
 
 				/* reflect groovy script for runtime */
 				builder.reflectGroovyScript(script);
@@ -416,7 +418,7 @@ public final class ScriptContextBuilder {
 
 	private static final Closure<?> getGroovyClosure(Script script, String name) {
 		try {
-			Object closure = script.getProperty("attachResources");
+			Object closure = script.getProperty(name);
 
 			return closure instanceof Closure ? (Closure<?>) closure : null;
 		} catch (MissingPropertyException e) {

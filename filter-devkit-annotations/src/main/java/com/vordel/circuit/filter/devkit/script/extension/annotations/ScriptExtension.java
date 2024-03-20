@@ -16,5 +16,5 @@ public @interface ScriptExtension {
 	/**
 	 * @return list of interfaces to be registered.
 	 */
-	Class<?>[] value();
+	Class<?>[] value() default {};
 }
