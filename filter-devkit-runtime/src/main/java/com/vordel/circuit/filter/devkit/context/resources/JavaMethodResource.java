@@ -439,6 +439,33 @@ public abstract class JavaMethodResource implements ContextResource {
 		return parameter;
 	}
 
+	private static void debugParameters(InjectableParameter<?>[] parameters, Object[] values) {
+		StringBuilder builder = new StringBuilder();
+		builder.append('(');
+
+		for (int index = 0; index < values.length; index++) {
+			String debug = null;
+
+			if (parameters[index] != null) {
+				debug = parameters[index].debug(values[index]);
+			}
+
+			if (index > 0) {
+				builder.append(',');
+			}
+
+			if (debug == null) {
+				builder.append("null");
+			} else {
+				builder.append(debug);
+			}
+		}
+
+		builder.append(')');
+
+		Trace.debug(String.format("provided parameters : '%s'", builder.toString()));
+	}
+
 	/**
 	 * Check if the first argument of function is a dictionary.
 	 * 
@@ -487,11 +514,17 @@ public abstract class JavaMethodResource implements ContextResource {
 		return params.toArray();
 	}
 
-	protected Object invokeMethod(String kind, Object... args) throws InvocationTargetException {
-		if (filterName != null) {
-			Trace.debug(String.format("%s '%s' from script '%s' (bound as '%s')", kind, method.getName(), filterName, resourceName));
-		} else {
-			Trace.debug(String.format("%s '%s' (bound as '%s')", kind, method, resourceName));
+	protected Object invokeMethod(String kind, Runnable params, Object... args) throws InvocationTargetException {
+		if (Trace.isDebugEnabled()) {
+			if (filterName != null) {
+				Trace.debug(String.format("%s '%s' from script '%s' (bound as '%s')", kind, method.getName(), filterName, resourceName));
+			} else {
+				Trace.debug(String.format("%s '%s' (bound as '%s')", kind, method, resourceName));
+			}
+
+			if (params != null) {
+				params.run();
+			}
 		}
 
 		try {
@@ -522,6 +555,7 @@ public abstract class JavaMethodResource implements ContextResource {
 	private Object invokeMethod(InjectableParameter<?>[] parameters, Dictionary dict, String kind) throws InvocationTargetException {
 		MethodDictionary dictionary = new MethodDictionary(dict instanceof Message ? (Message) dict : null, dict);
 		Object[] resolved = new Object[parameters.length];
+		Runnable debug = null;
 
 		for (int index = 0; index < parameters.length; index++) {
 			InjectableParameter<?> resolver = parameters[index];
@@ -533,7 +567,13 @@ public abstract class JavaMethodResource implements ContextResource {
 			}
 		}
 
-		return invokeMethod(kind, resolved);
+		if (Trace.isDebugEnabled()) {
+			debug = () -> {
+				debugParameters(parameters, resolved);
+			};
+		}
+
+		return invokeMethod(kind, debug, resolved);
 	}
 
 	protected static boolean invokeResource(JavaMethodResource resource, InjectableParameter<?>[] parameters, Message m) throws CircuitAbortException {
@@ -653,7 +693,7 @@ public abstract class JavaMethodResource implements ContextResource {
 			Object[] params = ContextResourceResolver.coerceFunctionArguments(method, setupFunctionParams(msg, dict, dictionaryType, args));
 
 			try {
-				return invokeMethod("call", params);
+				return invokeMethod("call", null, params);
 			} catch (InvocationTargetException e) {
 				Throwable cause = e.getCause();
 
@@ -785,6 +825,8 @@ public abstract class JavaMethodResource implements ContextResource {
 	private abstract static class InjectableParameter<T> {
 		protected abstract T resolve(MethodDictionary dictionary);
 
+		protected abstract String debug(Object value);
+
 		protected void resolve(MethodDictionary dictionary, int index, Object[] resolved) {
 			T value = resolve(dictionary);
 
@@ -797,6 +839,15 @@ public abstract class JavaMethodResource implements ContextResource {
 		protected Dictionary resolve(MethodDictionary dictionary) {
 			return dictionary.getDictionary();
 		}
+
+		@Override
+		protected String debug(Object value) {
+			if (value == null) {
+				return "null";
+			}
+
+			return value instanceof Message ? "Message" : "Dictionary";
+		}
 	}
 
 	private static class MessageParameter extends InjectableParameter<Message> {
@@ -804,13 +855,20 @@ public abstract class JavaMethodResource implements ContextResource {
 		protected Message resolve(MethodDictionary dictionary) {
 			return dictionary.getMessage();
 		}
+
+		@Override
+		protected String debug(Object value) {
+			return value instanceof Message ? "Message" : null;
+		}
 	}
 
 	private static class AttributeParameter<T> extends InjectableParameter<T> {
 		private final Selector<T> selector;
+		private final String attributeName;
 
 		private AttributeParameter(String attributeName, Class<T> type) {
-			this.selector = SelectorResource.fromExpression(String.format("dictionary[\"%s\"]", escapeQuotes(attributeName)), type);
+			this.attributeName = String.format("\"%s\"", escapeQuotes(attributeName));
+			this.selector = SelectorResource.fromExpression(String.format("dictionary[%s]", this.attributeName), type);
 		}
 
 		private static final String escapeQuotes(String attributeName) {
@@ -831,19 +889,50 @@ public abstract class JavaMethodResource implements ContextResource {
 		protected T resolve(MethodDictionary dictionary) {
 			return selector.substitute(dictionary);
 		}
+
+		@Override
+		protected String debug(Object value) {
+			String debug = null;
+
+			if (value instanceof String) {
+				debug = String.format("\"%s\"", ScriptHelper.encodeLiteral((String) value));
+			} else if ((value instanceof Boolean) || (value instanceof Number)) {
+				debug = String.format("%s", value.toString());
+			} else if (value != null) {
+				debug = String.format("get(%s)", attributeName);
+			}
+
+			return debug;
+		}
 	}
 
 	private static class SelectorParameter<T> extends InjectableParameter<T> {
 		private final Selector<T> selector;
+		private final String expression;
 
 		private SelectorParameter(String expression, Class<T> type) {
 			this.selector = SelectorResource.fromExpression(expression, type);
+			this.expression = expression;
 		}
 
 		@Override
 		protected T resolve(MethodDictionary dictionary) {
 			return selector.substitute(dictionary.getDictionary());
 		}
-	}
 
+		@Override
+		protected String debug(Object value) {
+			String debug = null;
+
+			if (value instanceof String) {
+				debug = String.format("\"%s\"", ScriptHelper.encodeLiteral((String) value));
+			} else if ((value instanceof Boolean) || (value instanceof Number)) {
+				debug = String.format("%s", value.toString());
+			} else if (value != null) {
+				debug = String.format("${%s}", expression);
+			}
+
+			return debug;
+		}
+	}
 }

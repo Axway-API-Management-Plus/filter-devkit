@@ -9,6 +9,7 @@ Export-Package: \
 	com.vordel.circuit.filter.devkit.quick.annotations,\
 	com.vordel.circuit.filter.devkit.context.annotations,\
 	com.vordel.circuit.filter.devkit.script.context,\
+	com.vordel.circuit.filter.devkit.script.extension,\
 	com.vordel.circuit.filter.devkit.context.resources,\
 	com.vordel.client.manager.filter.devkit.studio,\
 	com.vordel.client.manager.filter.devkit.studio.advanced,\
