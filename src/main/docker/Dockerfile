@@ -1,11 +1,11 @@
 # Cache stage
-FROM node:16-bookworm as stage_cache
+FROM node:20-bookworm as stage_cache
 
 ### refresh the 'apt' cache and download debian packages
 RUN --mount=type=tmpfs,target=/tmp \
 	apt update
 
-FROM node:16-bookworm as base_image
+FROM node:20-bookworm as base_image
 
 RUN --mount=type=tmpfs,target=/tmp \
 	--mount=type=cache,from=stage_cache,sharing=locked,source=/var/cache/apt,target=/var/cache/apt \

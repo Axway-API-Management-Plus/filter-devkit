@@ -20,6 +20,14 @@ import com.vordel.mime.JSONBody;
 import com.vordel.mime.XMLBody;
 import com.vordel.trace.Trace;
 
+/**
+ * represent a selector expression which can be subtituted using any
+ * {@link Dictionary} object.
+ * 
+ * @author rdesaintleger@axway.com
+ *
+ * @param <T> type returned by this selector
+ */
 public class SelectorResource<T> implements SubstitutableResource<T> {
 	private Selector<T> selector;
 
@@ -45,7 +53,7 @@ public class SelectorResource<T> implements SubstitutableResource<T> {
 	 * @throws CircuitAbortException relayed exception or newly contructed if the
 	 *                               expression did not return a boolean.
 	 */
-	public static final Boolean invoke(Dictionary dict, Selector<Boolean> selector) throws CircuitAbortException {
+	public static final boolean invoke(Dictionary dict, Selector<Boolean> selector) throws CircuitAbortException {
 		Boolean rc = null;
 
 		try {
@@ -64,7 +72,10 @@ public class SelectorResource<T> implements SubstitutableResource<T> {
 				}
 			}
 
-			/* no underlying CircuitAbortException, create a new one with the thrown exception as cause */
+			/*
+			 * no underlying CircuitAbortException, create a new one with the thrown
+			 * exception as cause
+			 */
 			throw new CircuitAbortException(String.format("Could not evaluate boolean expression %s", selector.getLiteral()), e);
 		}
 

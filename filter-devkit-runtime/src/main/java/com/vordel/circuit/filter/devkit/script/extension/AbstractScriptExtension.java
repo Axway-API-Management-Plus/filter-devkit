@@ -1,34 +1,37 @@
 package com.vordel.circuit.filter.devkit.script.extension;
 
+import javax.script.ScriptException;
+
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.filter.devkit.context.resources.CacheResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
+import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
 import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
 import com.vordel.circuit.filter.devkit.context.resources.KPSResource;
 import com.vordel.circuit.filter.devkit.context.resources.SubstitutableResource;
-import com.vordel.circuit.filter.devkit.script.advanced.AdvancedScriptRuntime;
+import com.vordel.circuit.filter.devkit.script.context.ScriptContextBuilder;
+import com.vordel.circuit.filter.devkit.script.context.ScriptContextRuntime;
 import com.vordel.common.Dictionary;
 
 /**
- * Base class for script extensions. This class allows the extension to interact
- * with the running script and to add {@link InvocableResource} or
- * {@link SubstitutableResource}
+ * Base class for script extensions which needs to interact with script
+ * resources.
  * 
  * @author rdesaintleger@axway.com
  */
-public abstract class AbstractScriptExtension implements AdvancedScriptRuntime {
-	private final AdvancedScriptRuntime runtime;
+public abstract class AbstractScriptExtension extends ScriptExtensionConfigurator implements ScriptContextRuntime {
+	private final ScriptContextRuntime runtime;
 
 	/**
-	 * Protected contructor. Called by the script runtime binder. Once this class
+	 * Protected constructor. Called by the script runtime binder. Once this class
 	 * has been instanciated, reflected resources will be added to the calling
 	 * script.
 	 * 
 	 * @param builder script extension builder
 	 */
-	protected AbstractScriptExtension(AbstractScriptExtensionBuilder builder) {
+	protected AbstractScriptExtension(ScriptExtensionBuilder builder) {
 		this.runtime = builder.runtime;
 	}
 
@@ -40,6 +43,16 @@ public abstract class AbstractScriptExtension implements AdvancedScriptRuntime {
 	@Override
 	public final InvocableResource getInvocableResource(String name) {
 		return runtime.getInvocableResource(name);
+	}
+
+	@Override
+	public FunctionResource getFunctionResource(String name) {
+		return runtime.getFunctionResource(name);
+	}
+
+	@Override
+	public SubstitutableResource<?> getSubstitutableResource(String name) {
+		return runtime.getSubstitutableResource(name);
 	}
 
 	@Override
@@ -68,7 +81,7 @@ public abstract class AbstractScriptExtension implements AdvancedScriptRuntime {
 	}
 
 	@Override
-	public final String getFilterName() {
-		return runtime.getFilterName();
+	protected void attachResources(ScriptContextBuilder builder) throws ScriptException {
+		/* no resources to bind */
 	}
 }

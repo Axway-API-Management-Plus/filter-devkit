@@ -1,8 +1,8 @@
-# Quick Java Filters
+# Java Quick Filters
 
-The Quick Java Filter feature allow to package a Java classes as first order filters (i.e appears in pallette etc). Filter classes and typesets are generated from a single annotated definition class. All generated classes and typesets are packaged with the declarative UI and NLS properties files to for an policy studio compatible plugin.
+The Java Quick Filter feature allow to package a Java classes as first order filters (i.e appears in pallette etc). Filter classes and typesets are generated from a single annotated definition class. All generated classes and typesets are packaged with the declarative UI and NLS properties files to for an policy studio compatible plugin.
 
-## Quick Java Filters annotations
+## Java Quick Filters annotations
 
 To be recognized by the annotation processor. The definition class must inherit [JavaQuickFilterDefinition](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/quick/JavaQuickFilterDefinition.java) and must be annotated with [QuickFilterType](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/quick/annotations/QuickFilterType.java).
 
@@ -26,7 +26,7 @@ Additionally, three other annotations can be added to the definition type ([Quic
 
 Quick Filters are no longer discovered dynamically. They are instantiated using the regular API Gateway and Policy Studio mechanism. On the API Gateway side, the generated filter class will return the generated MessageProcessor class which will instantiate and initialize the filter definition (MessageProcessor is acting as a proxy class for the definition).
 
-Each Quick Java Filter initialize itself using the following steps:
+Each Java Quick Filter initialize itself using the following steps:
  - invoke the no-arg constructor,
  - call each annotated setter from entity fields with proper field name or ESPK collection,
  - call the attachFilter() method
