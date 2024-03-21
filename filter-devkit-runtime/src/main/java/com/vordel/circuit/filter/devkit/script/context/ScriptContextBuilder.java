@@ -18,9 +18,7 @@ import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionFunction;
 import com.vordel.circuit.filter.devkit.context.annotations.InvocableMethod;
 import com.vordel.circuit.filter.devkit.context.annotations.SubstitutableMethod;
-import com.vordel.circuit.filter.devkit.context.resources.AbstractContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
-import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.EHCacheResource;
 import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
 import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
@@ -453,12 +451,6 @@ public final class ScriptContextBuilder {
 
 	private static final class ScriptContextAdapter extends ScriptContext implements GroovyContextRuntime {
 		private final Map<String, ContextResource> resources;
-		private final ContextResourceProvider exports = new AbstractContextResourceProvider() {
-			@Override
-			public ContextResource getContextResource(String name) {
-				return resources.get(name);
-			}
-		};
 
 		private ScriptContextAdapter(Map<String, ContextResource> resources) {
 			this.resources = resources;
@@ -467,11 +459,6 @@ public final class ScriptContextBuilder {
 		@Override
 		public ContextResource getContextResource(String name) {
 			return resources.get(name);
-		}
-
-		@Override
-		public ContextResourceProvider getExportedResources() {
-			return exports;
 		}
 
 		@Override

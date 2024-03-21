@@ -17,7 +17,6 @@ import com.vordel.circuit.Message;
 import com.vordel.circuit.filter.devkit.context.resources.AbstractContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceFactory;
-import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
 import com.vordel.circuit.filter.devkit.context.resources.JavaMethodResource;
 import com.vordel.circuit.filter.devkit.script.context.GroovyContextRuntime;
@@ -80,7 +79,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 	/**
 	 * exportable resource provider
 	 */
-	private final ExportedResources exports = new ExportedResources();
+	private final AdvancedScriptContext runtime = new AdvancedScriptContext();
 
 	@Override
 	protected String substituteScript(String script) {
@@ -155,8 +154,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		/* retrieve resources */
 		attachResources(ctx, entity, resources = new HashMap<String, ContextResource>());
 
-		/* create the runtime object used to create function closures */
-		ExportedRuntime runtime = new ExportedRuntime();
+		/* retrieve binder used to create function closures */
 		AdvancedScriptRuntimeBinder binder = AdvancedScriptRuntimeBinder.getScriptBinder(engine);
 
 		if (binder != null) {
@@ -260,8 +258,8 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 
 			if (type.isAssignableFrom(Message.class)) {
 				args[index] = msg;
-			} else if (type.isAssignableFrom(ExportedResources.class)) {
-				args[index] = exports;
+			} else if (type.isAssignableFrom(AbstractContextResourceProvider.class)) {
+				args[index] = runtime.getExportedResources();
 			} else if (type.isAssignableFrom(Circuit.class)) {
 				args[index] = circuit;
 			} else if (type.isAssignableFrom(AdvancedScriptProcessor.class)) {
@@ -295,7 +293,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		return args;
 	}
 
-	private final class ExportedRuntime extends ScriptContext implements AdvancedScriptRuntime, GroovyScriptConfigurator, GroovyContextRuntime {
+	private final class AdvancedScriptContext extends ScriptContext implements AdvancedScriptRuntime, GroovyScriptConfigurator, GroovyContextRuntime {
 		private void checkState() throws ScriptException {
 			if (attached) {
 				throw new ScriptException("This function can only be used during filter attachment");
@@ -322,7 +320,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 
 		@Override
 		public ContextResource getContextResource(String name) {
-			return exports.getContextResource(name);
+			return resources.get(name);
 		}
 
 		@Override
@@ -369,11 +367,6 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		}
 
 		@Override
-		public ContextResourceProvider getExportedResources() {
-			return exports;
-		}
-
-		@Override
 		public String getFilterName() {
 			return getFilter().getName();
 		}
@@ -398,13 +391,6 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 			}
 
 			return ((FunctionResource) resource).invoke(dict, args);
-		}
-	}
-
-	private final class ExportedResources extends AbstractContextResourceProvider {
-		@Override
-		public ContextResource getContextResource(String name) {
-			return resources.get(name);
 		}
 	}
 }
