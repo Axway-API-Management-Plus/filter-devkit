@@ -12,6 +12,8 @@ import org.codehaus.groovy.runtime.MethodClosure;
 import org.python.core.Py;
 import org.python.core.PyObject;
 
+import com.vordel.circuit.filter.devkit.script.context.GroovyContextRuntime;
+import com.vordel.circuit.filter.devkit.script.context.ScriptContextRuntime;
 import com.vordel.trace.Trace;
 
 public abstract class AdvancedScriptRuntimeBinder {
@@ -66,6 +68,7 @@ public abstract class AdvancedScriptRuntimeBinder {
 	protected void bind(ScriptEngine engine, AdvancedScriptRuntime runtime) throws ScriptException {
 		bind(engine, runtime, AdvancedScriptConfigurator.class.getDeclaredMethods());
 		bind(engine, runtime, AdvancedScriptRuntime.class.getDeclaredMethods());
+		bind(engine, runtime, ScriptContextRuntime.class.getDeclaredMethods());
 	}
 
 	public abstract void bind(ScriptEngine engine, Object instance, Method[] methods) throws ScriptException;
@@ -103,7 +106,7 @@ public abstract class AdvancedScriptRuntimeBinder {
 	private static AdvancedScriptRuntimeBinder getPythonBinder() {
 		return new AdvancedScriptRuntimeBinder() {
 			@Override
-			public void bind(ScriptEngine engine, Object instance, Method[] methods) throws ScriptException {
+			public void bind(ScriptEngine engine, Object instance, Method[] methods) {
 				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
 				PyObject pyobj = Py.java2py(instance);
 
@@ -123,11 +126,13 @@ public abstract class AdvancedScriptRuntimeBinder {
 			protected void bind(ScriptEngine engine, AdvancedScriptRuntime runtime) throws ScriptException {
 				super.bind(engine, runtime);
 
+				/* add groovy specific bindings */
 				bind(engine, runtime, GroovyScriptConfigurator.class.getDeclaredMethods());
+				bind(engine, runtime, GroovyContextRuntime.class.getDeclaredMethods());
 			}
 
 			@Override
-			public void bind(ScriptEngine engine, Object instance, Method[] methods) throws ScriptException {
+			public void bind(ScriptEngine engine, Object instance, Method[] methods) {
 				Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
 
 				for (Method method : methods) {

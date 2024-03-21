@@ -8,6 +8,8 @@ Bundle-ClassPath: .
 Export-Package: \
 	com.vordel.circuit.filter.devkit.quick.annotations,\
 	com.vordel.circuit.filter.devkit.context.annotations,\
+	com.vordel.circuit.filter.devkit.script,\
+	com.vordel.circuit.filter.devkit.context.resources,\
 	com.vordel.client.manager.filter.devkit.studio,\
 	com.vordel.client.manager.filter.devkit.studio.advanced,\
 	com.vordel.client.manager.filter.devkit.studio.quick,\

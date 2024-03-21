@@ -27,23 +27,25 @@ This filter brings the concept of 'Configuration Resource'. Resources are either
 Advanced Script Filter provide top level functions to the script to configure behavior and interact with attached resources
 
  - *getContextResource(string)* : Retrieve an attached resource using its name in the script configuration
- - *getInvocableResource(string)* : Retrieve an attached resource which is invokable (Ex: a policy). If the configured resource does not exists or is not invokable, null is returned.
- - *getFunctionResource(string)* : Retrieve an attached resource which is a function (may come from groovy reflection or script extension). If the configured resource does not exists or is not a function, null is returned.
- - *getKPSResource(string)* : Retrieve an attached resource which is a KPS Table. If the configured resource does not exists or is not a KPS Table, null is returned.
- - *getCacheResource(string)* : Retrieve an attached resource which is a KPS Table. If the configured resource does not exists or is not a KPS Table, null is returned.
- - *invokeResource(message, string)* : Invoke the target resource. It the resource does not exists or is not invokable, null is returned. Otherwise a Boolean is returned reflecting the status of execution. This method may also throw a CircuitAbortException.
+ - *getInvocableResource(string)* : Retrieve an attached resource which is [invocable](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/resources/InvocableResource.java) (Ex: a [policy](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/resources/PolicyResource.java)). If the configured resource does not exists or is not invokable, null is returned.
+ - *getFunctionResource(string)* : Retrieve an attached resource which is a [function](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/resources/FunctionResource.java) (may come from groovy reflection or script extension). If the configured resource does not exists or is not a function, null is returned.
+ - *getSubstitutableResource(string)* : Retrieve an attached resource which is a [substitutable](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/resources/SubstitutableResource.java) (Ex: a [selector](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/resources/SelectorResource.java) expression). If the configured resource does not exists or is not substitutable, null is returned.
+ - *getKPSResource(string)* : Retrieve an attached resource which is a [KPS Table](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/resources/KPSResource.java). If the configured resource does not exists or is not a KPS Table, null is returned.
+ - *getCacheResource(string)* : Retrieve an attached resource which is a [Cache](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/resources/CacheResource.java). If the configured resource does not exists or is not a Cache, null is returned.
+ - *invokeResource(message, string)* : Invoke the target resource. It the resource does not exists, null is returned. If the method is not [invocable](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/resources/InvocableResource.java) an exception is thrown. Otherwise a Boolean is returned reflecting the status of execution. The target resource may also throw a CircuitAbortException.
  - *substituteResource(dictionary, string)* : Execute selector substitution. It the resource does not exists or is not substitutable null is returned. Even if the substitution triggers an invocation, exception are not thrown (in this case null is returned). The return value is the result of substitution.
- - *getExportedResources()* : Retrieve this script context for exporting in the message (to be used by another script or extension).
+ - *getExportedResources()* : Retrieve this script context for exporting in the message (to be used by another script or extension). Even is selector substitution of exported resources includes [caches](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/resources/CacheResource.java) and [kps](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/resources/KPSResource.java) the exported object do not have shorthand methods *getKPSResource(string)* and *getCacheResource(string)* which are only valid as script top level functions.
  - *getFilterName()* : Retrieve the filter configured name. Purpose of this method is for debugging and diagnostic.
 
 Additional top level function are provided for filter attachment for all script languages
 
- - *setUnwrapCircuitAbortException(boolean)* : this function can be called in the script attach hook. It allows script to throw CircuitAbortException (which is not available in the base Script Filter). Even if using groovy reflected entry points this option may be set when calling [Script Extensions](Extensions.md)
+ - *setUnwrapCircuitAbortException(boolean)* : this function can be called in the script attach hook. It allows script to throw CircuitAbortException (which is not available in the base Script Filter). Even if using groovy reflected entry points this option may be set when calling [Script Extensions](ScriptExtensions.md)
  - *setExtendedInvoke(boolean)* : this function can be called in the script attach hook. its purpose is to provide the circuit to the invoke function.
- - *reflectExtension(string)* : this function can be called in the script attach hook. its purpose is to bind additional top level functions from script extensions. This function takes a fully qualified interface name as argument.
+ - *attachExtension(string)* : this function can be called in the script attach hook. its purpose is to bind additional top level functions from script extensions. This function takes a fully qualified interface name as argument.
 
 Groovy scripts define additional runtime functions. Reflection on groovy scripts produce illegal reflection messages in the instance startup log which can be safely ignored.
 
+ - *invokeFunction(dictionary, string, variable arguments)* : Invoke the target [function](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/resources/FunctionResource.java). It the resource does not exists, null is returned. If the resource is not a function, an exception is thrown. Otherwise the function return value is returned. The target function may also throw a CircuitAbortException.
  - *reflectResources(script)* : reflect the script for methods exported as resources. It must be called with the 'this' keyword as argument. It will search for methods annotated with [InvocableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/InvocableMethod.java), [SubstitutableMethod](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/SubstitutableMethod.java) and [ExtensionFunction](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionFunction.java) and will add them to the script's resources. See [Extension Context](Extensions.md) documentation for further information about reflection and injection rules for each annotation.
  - *reflectEntryPoints(script)* : reflect the script for invoke and detach methods. It must be called with the 'this' keyword as argument. It will search for *invoke()* and *detach()* methods and will replace JSR-223 invocation by a direct Java reflection call. Method arguments are injected according to the requested type.
 
@@ -105,7 +107,7 @@ Script extension is a new mechanism which can add top level functions and resour
 
 ```javascript
 function attach(ctx, entity) {
-	reflectExtension("com.vordel.circuit.filter.devkit.script.ext.ScriptExtendedRuntime");
+	attachExtension("com.vordel.circuit.filter.devkit.script.ext.ScriptExtendedRuntime");
 }
 ```
 

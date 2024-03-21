@@ -1,9 +1,13 @@
 package com.vordel.circuit.filter.devkit.script.advanced;
 
+import java.util.function.Consumer;
+
 import javax.script.ScriptException;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
+import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
+import com.vordel.circuit.filter.devkit.script.context.ScriptContextBuilder;
 import com.vordel.config.Circuit;
 
 /**
@@ -42,11 +46,21 @@ public interface AdvancedScriptConfigurator {
 
 	/**
 	 * Adds resources from the given extension to the actual script. extensions can
-	 * interact with the current script set of resources.
+	 * interact with the current script set of resources. If {@link ExtensionLoader}
+	 * is not activated script extension interfaces are not available (in this case
+	 * use binary name of implementation instead.
 	 * 
-	 * @param extension fully qualified name of the extension Java class
+	 * @param extension binary name of the extension Java class
 	 * @throws ScriptException if this method is called outside script attachment
-	 *                         phase
+	 *                         phase or if extension does not exists.
 	 */
-	void reflectExtension(String extension) throws ScriptException;
+	void attachExtension(String extension) throws ScriptException;
+
+	/**
+	 * Attach resources to a script using legacy mechanisms
+	 * 
+	 * @param configurator consumer for {@link ScriptContextBuilder}
+	 * @throws ScriptException if called outside the attach call
+	 */
+	void attachResources(Consumer<ScriptContextBuilder> configurator) throws ScriptException;
 }

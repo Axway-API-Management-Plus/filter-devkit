@@ -31,7 +31,6 @@ import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
 import com.vordel.circuit.filter.devkit.context.ExtensionModule;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionLibraries;
-import com.vordel.circuit.filter.devkit.context.annotations.ExtensionLink;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
 import com.vordel.circuit.filter.devkit.dynamic.compiler.CompilerFileManager;
 import com.vordel.circuit.filter.devkit.dynamic.compiler.DynamicJavaSource;
@@ -340,14 +339,6 @@ public class DynamicCompilerModule implements ExtensionModule {
 		return output;
 	}
 
-	/**
-	 * private inner class which must me loaded in the same class loder of parent
-	 * class. The {@link ExtensionLink} allow this class to be forwarded to the
-	 * 'child first' class loader.
-	 * 
-	 * @author rdesaintleger@axway.com
-	 */
-	@ExtensionLink(DynamicCompilerModule.class)
 	private final static class CompilerListener implements DiagnosticListener<JavaFileObject> {
 		@Override
 		public void report(Diagnostic<? extends JavaFileObject> diagnostic) {

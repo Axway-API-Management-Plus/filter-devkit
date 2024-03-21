@@ -46,21 +46,16 @@ public abstract class AbstractContextResourceProvider implements ContextResource
 	@Override
 	public final Boolean invoke(Message m, String name) throws CircuitAbortException {
 		ContextResource resource = getContextResource(name);
-		Boolean result = null;
 
-		if (resource != null) {
-			if (!(resource instanceof InvocableResource)) {
-				throw new CircuitAbortException(String.format("resource '%s' is not invocable", name));
-			}
-
-			if (m == null) {
-				throw new CircuitAbortException("no message context");
-			}
-
-			result = ((InvocableResource) resource).invoke(m);
+		if (!(resource instanceof InvocableResource)) {
+			throw new CircuitAbortException(String.format("resource '%s' is not invocable", name));
 		}
 
-		return result;
+		if (m == null) {
+			throw new CircuitAbortException("no message context");
+		}
+
+		return ((InvocableResource) resource).invoke(m);
 	}
 
 	@Override
