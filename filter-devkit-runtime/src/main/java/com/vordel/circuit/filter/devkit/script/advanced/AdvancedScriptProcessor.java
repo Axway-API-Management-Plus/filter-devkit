@@ -2,6 +2,7 @@ package com.vordel.circuit.filter.devkit.script.advanced;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -217,15 +218,25 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		return result;
 	}
 
+	private static void getGroovyMethods(List<Method> methods, Class<?> clazz, String name) {
+		Class<?> superClazz = clazz.getSuperclass();
+
+		if (Script.class.isAssignableFrom(superClazz)) {
+			for (Method m : clazz.getDeclaredMethods()) {
+				if (Modifier.isPublic(m.getModifiers()) && m.getName().equals(name)) {
+					methods.add(m);
+				}
+			}
+
+			getGroovyMethods(methods, superClazz, name);
+		}
+	}
+
 	private static Method getGroovyMethod(Script script, String name) {
 		Class<? extends Script> clazz = script.getClass();
 		List<Method> methods = new ArrayList<Method>();
 
-		for (Method m : clazz.getMethods()) {
-			if (m.getName().equals(name)) {
-				methods.add(m);
-			}
-		}
+		getGroovyMethods(methods, clazz, name);
 
 		switch (methods.size()) {
 		case 0:
