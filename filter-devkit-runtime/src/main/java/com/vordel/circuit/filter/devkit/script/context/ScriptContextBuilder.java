@@ -15,7 +15,6 @@ import org.codehaus.groovy.runtime.MethodClosure;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.filter.devkit.context.ExtensionLoader;
-import com.vordel.circuit.filter.devkit.context.ExtensionResourceProvider;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionFunction;
 import com.vordel.circuit.filter.devkit.context.annotations.InvocableMethod;
 import com.vordel.circuit.filter.devkit.context.annotations.SubstitutableMethod;
@@ -24,9 +23,12 @@ import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.EHCacheResource;
 import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
+import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
+import com.vordel.circuit.filter.devkit.context.resources.JavaMethodResource;
 import com.vordel.circuit.filter.devkit.context.resources.KPSStoreResource;
 import com.vordel.circuit.filter.devkit.context.resources.PolicyResource;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
+import com.vordel.circuit.filter.devkit.context.resources.SubstitutableResource;
 import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionBinder;
 import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionFactory;
 import com.vordel.common.Dictionary;
@@ -108,7 +110,7 @@ public final class ScriptContextBuilder {
 	private void reflectGroovyScript(Script script) {
 		if (script != null) {
 			/* reflect script instance resources */
-			ExtensionResourceProvider.reflectInstance(resources, script);
+			JavaMethodResource.reflectInstance(resources, script);
 		}
 	}
 
@@ -196,8 +198,19 @@ public final class ScriptContextBuilder {
 		}
 
 		Selector<T> selector = SelectorResource.fromExpression(expression, clazz);
+		SelectorResource<T> resource = new SelectorResource<T>(selector);
 
-		resources.put(name, new SelectorResource<T>(selector));
+		return attachSubstitutableResource(name, resource);
+	}
+
+	public ScriptContextBuilder attachSubstitutableResource(String name, SubstitutableResource<?> resource) throws ScriptException {
+		checkName(name);
+
+		if (resource == null) {
+			throw new ScriptException("resource parameter cannot be null");
+		}
+
+		resources.put(name, resource);
 
 		return this;
 	}
@@ -282,6 +295,16 @@ public final class ScriptContextBuilder {
 
 		PolicyResource resource = new PolicyResource(circuit, circuitPK);
 
+		return attachInvocableResource(name, resource);
+	}
+
+	public ScriptContextBuilder attachInvocableResource(String name, InvocableResource resource) throws ScriptException {
+		checkName(name);
+
+		if (resource == null) {
+			throw new ScriptException("resource parameter cannot be null");
+		}
+
 		resources.put(name, resource);
 
 		return this;
@@ -304,7 +327,7 @@ public final class ScriptContextBuilder {
 
 		Trace.info(String.format("reflecting static resources from '%s'", clazz.getName()));
 
-		ExtensionResourceProvider.reflectClass(resources, clazz);
+		JavaMethodResource.reflectClass(resources, clazz);
 
 		return this;
 	}
@@ -338,7 +361,7 @@ public final class ScriptContextBuilder {
 			List<Method> methods = new ArrayList<Method>();
 
 			/* reflect invocables/substitutables and extension functions */
-			ExtensionResourceProvider.reflectInstance(resources, instance);
+			JavaMethodResource.reflectInstance(resources, instance);
 
 			/* build list of methods to be bound to the running script */
 			factory.scanScriptExtension(methods);

@@ -10,6 +10,7 @@ import com.vordel.common.Dictionary;
  *
  * @param <T> substitution target coercion
  */
+@FunctionalInterface
 public interface SubstitutableResource<T> extends ContextResource {
 	/**
 	 * retrieve or compute value according to provided {@link Dictionary} object.

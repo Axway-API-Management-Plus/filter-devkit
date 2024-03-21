@@ -13,12 +13,12 @@ import javax.script.ScriptException;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
-import com.vordel.circuit.filter.devkit.context.ExtensionResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.AbstractContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceFactory;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
+import com.vordel.circuit.filter.devkit.context.resources.JavaMethodResource;
 import com.vordel.circuit.filter.devkit.script.context.GroovyContextRuntime;
 import com.vordel.circuit.filter.devkit.script.context.ScriptContext;
 import com.vordel.circuit.filter.devkit.script.context.ScriptContextBuilder;
@@ -318,7 +318,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 		public void reflectResources(Script script) throws ScriptException {
 			checkState();
 
-			ExtensionResourceProvider.reflect(resources, script, getFilterName());
+			JavaMethodResource.reflectGroovy(resources, script, getFilterName());
 		}
 
 		@Override
