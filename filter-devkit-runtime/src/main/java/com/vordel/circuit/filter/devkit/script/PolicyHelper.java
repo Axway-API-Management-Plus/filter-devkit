@@ -13,7 +13,6 @@ import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProperties;
 import com.vordel.circuit.filter.devkit.context.annotations.DictionaryAttribute;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContext;
-import com.vordel.circuit.filter.devkit.context.annotations.SelectorExpression;
 import com.vordel.circuit.filter.devkit.context.annotations.SubstitutableMethod;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
 import com.vordel.el.Selector;
@@ -27,6 +26,9 @@ public class PolicyHelper {
 	private static final Selector<String> REQUEST_PROTOCOL = SelectorResource.fromExpression(MessageProperties.HTTP_REQ_PROTOCOL, String.class);
 	private static final Selector<String> REQUEST_HOSTNAME = SelectorResource.fromExpression(MessageProperties.HTTP_REQ_HOSTNAME, String.class);
 	private static final Selector<InetSocketAddress> REQUEST_LOCALADDR = SelectorResource.fromExpression(MessageProperties.HTTP_REQ_LOCALADDR, InetSocketAddress.class);
+
+	private PolicyHelper() {
+	}
 
 	@SubstitutableMethod("RequestURI")
 	public static URI getRequestURI(Message msg, @DictionaryAttribute(MessageProperties.HTTP_HEADERS) Headers headers) {
@@ -121,7 +123,11 @@ public class PolicyHelper {
 	}
 
 	@SubstitutableMethod("BaseURI")
-	public static URI getBaseURI(Message msg, @SelectorExpression("extensions[\"policy.helper\"].RequestURI") URI requestURI) {
+	public static URI getBaseURI(Message msg, @DictionaryAttribute(MessageProperties.HTTP_HEADERS) Headers headers) {
+		return getBaseURI(msg, getRequestURI(msg, headers));
+	}
+
+	public static URI getBaseURI(Message msg, URI requestURI) {
 		URI baseURI = null;
 
 		if (requestURI != null) {

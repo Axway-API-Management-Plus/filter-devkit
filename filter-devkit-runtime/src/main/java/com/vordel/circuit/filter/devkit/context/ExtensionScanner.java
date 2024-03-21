@@ -15,9 +15,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import javax.annotation.Priority;
 
@@ -25,8 +28,8 @@ import com.vordel.circuit.filter.devkit.context.annotations.ExtensionContext;
 import com.vordel.circuit.filter.devkit.context.annotations.ExtensionInstance;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
 import com.vordel.circuit.filter.devkit.script.extension.AbstractScriptExtension;
-import com.vordel.circuit.filter.devkit.script.extension.AbstractScriptExtensionBuilder;
-import com.vordel.circuit.filter.devkit.script.extension.ScriptExtension;
+import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionBuilder;
+import com.vordel.circuit.filter.devkit.script.extension.annotations.ScriptExtension;
 import com.vordel.common.Dictionary;
 import com.vordel.config.ConfigContext;
 import com.vordel.el.Selector;
@@ -42,22 +45,11 @@ public class ExtensionScanner {
 
 		if (isInstantiable(clazz)) {
 			try {
-				/* class is annotated is an extension module */
-				Constructor<?> constructor = clazz.getDeclaredConstructor();
+				instance = newInstance(clazz);
 
-				try {
-					constructor.setAccessible(true);
-					instance = constructor.newInstance();
-
-					/* attach module */
-					ExtensionLoader.registerExtensionInstance(ctx, instance);
-				} finally {
-					constructor.setAccessible(false);
-				}
+				ExtensionLoader.registerExtensionInstance(ctx, instance);
 			} catch (InstantiationException e) {
 				Trace.error(String.format("the class '%s' can't be instantiated", clazz.getName()), e);
-			} catch (IllegalAccessException e) {
-				Trace.error(String.format("the no-arg constructor for class '%s' is not accessible", clazz.getName()), e);
 			} catch (InvocationTargetException e) {
 				Throwable cause = e.getCause();
 
@@ -68,7 +60,7 @@ public class ExtensionScanner {
 		} else if (isScriptExtension(clazz)) {
 			try {
 				/* class is annotated is an extension module */
-				Constructor<? extends AbstractScriptExtension> constructor = clazz.asSubclass(AbstractScriptExtension.class).getDeclaredConstructor(AbstractScriptExtensionBuilder.class);
+				Constructor<? extends AbstractScriptExtension> constructor = clazz.asSubclass(AbstractScriptExtension.class).getDeclaredConstructor(ScriptExtensionBuilder.class);
 
 				ExtensionLoader.registerScriptExtension(constructor);
 			} catch (NoSuchMethodException e) {
@@ -105,44 +97,85 @@ public class ExtensionScanner {
 		}
 	};
 
-	private static List<Class<?>> scanExtensions(ClassLoader loader, Set<String> extensions) {
-		Set<String> clazzes = new HashSet<String>();
-
+	private static void readExtensionResources(ClassLoader loader, String resources, Consumer<String> action) {
 		try {
-			Enumeration<URL> configs = loader.getResources("META-INF/vordel/extensions");
+			Enumeration<URL> configs = loader.getResources(resources);
 
 			while (configs.hasMoreElements()) {
 				URL config = configs.nextElement();
-				InputStream in = config.openStream();
+
+				readExtensionResource(config, action);
+			}
+		} catch (IOException e) {
+			Trace.error(String.format("Unable to read extension resources '%s'", resources), e);
+		}
+	}
+
+	private static void readExtensionResource(URL resource, Consumer<String> action) {
+		try {
+			InputStream in = resource.openStream();
+
+			try {
+				BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 
 				try {
-					BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+					String line = null;
 
-					try {
-						String line = null;
+					while ((line = reader.readLine()) != null) {
+						line = line.trim();
 
-						while ((line = reader.readLine()) != null) {
-							line = line.trim();
-
-							if (!line.isEmpty()) {
-								clazzes.add(line);
-							}
+						if (!line.isEmpty()) {
+							action.accept(line);
+							;
 						}
-					} finally {
-						reader.close();
 					}
 				} finally {
-					in.close();
+					reader.close();
 				}
+			} finally {
+				in.close();
 			}
-		} catch (Exception e) {
-			Trace.error("Unable to scan extensions", e);
+		} catch (IOException e) {
+			Trace.error(String.format("Unable to read extension resource '%s'", resource), e);
 		}
+	}
+
+	static List<Class<?>> scanExtensions(ClassLoader loader, Set<String> registered, Set<String> allowed) {
+		Set<String> clazzes = new HashSet<String>();
+
+		readExtensionResources(loader, "META-INF/vordel/extensions", (clazzName) -> {
+			clazzes.add(clazzName);
+		});
 
 		List<Class<?>> scanned = new ArrayList<Class<?>>();
 
+		if (allowed != null) {
+			Map<String, String> discovered = new HashMap<String, String>();
+
+			for (String binaryName : clazzes) {
+				Set<String> scriptExtensions = getScriptExtensionInterfaces(loader, binaryName);
+
+				String qualifiedName = binaryName.replace('$', '.');
+
+				discovered.put(binaryName, binaryName);
+				discovered.put(qualifiedName, binaryName);
+
+				for (String scriptExtension : scriptExtensions) {
+					/* also add implemented script extensions */
+					discovered.put(scriptExtension, binaryName);
+					discovered.put(scriptExtension.replace('$', '.'), binaryName);
+				}
+			}
+
+			/* retains only requested classes (binary of qualified name) */
+			discovered.keySet().retainAll(allowed);
+
+			/* retains only requested binary names */
+			clazzes.retainAll(discovered.values());
+		}
+
 		for (String clazzName : clazzes) {
-			if (extensions.add(clazzName)) {
+			if (registered.add(clazzName)) {
 				try {
 					/*
 					 * create classes which expose ExtensionContext or ExtensionInstance annotation
@@ -170,6 +203,20 @@ public class ExtensionScanner {
 		return scanned;
 	}
 
+	private static Set<String> getScriptExtensionInterfaces(ClassLoader loader, String clazzName) {
+		String resourceName = String.format("META-INF/vordel/scriptextensions/%s", clazzName);
+		URL scriptExtensions = loader.getResource(resourceName);
+		Set<String> interfaces = new HashSet<String>();
+
+		if (scriptExtensions != null) {
+			readExtensionResource(scriptExtensions, (interfaceName) -> {
+				interfaces.add(interfaceName);
+			});
+		}
+
+		return interfaces;
+	}
+
 	/**
 	 * create a child first classloader for an extension module (or context)
 	 * 
@@ -183,38 +230,16 @@ public class ExtensionScanner {
 		Set<File> scanned = new HashSet<File>();
 
 		if (jars != null) {
-			try {
-				InputStream in = jars.openStream();
+			readExtensionResource(jars, (fileName) -> {
+				Selector<String> selector = SelectorResource.fromLiteral(fileName, String.class, true);
+				File file = new File(selector.substitute(Dictionary.empty));
 
-				try {
-					BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-
-					try {
-						String line = null;
-
-						while ((line = reader.readLine()) != null) {
-							line = line.trim();
-
-							if (!line.isEmpty()) {
-								Selector<String> selector = SelectorResource.fromLiteral(line, String.class, true);
-								File file = new File(selector.substitute(Dictionary.empty));
-
-								if (!file.exists()) {
-									Trace.error(String.format("path '%s' does not exists for module '%s'", selector.getLiteral(), clazzName));
-								}
-
-								scanJavaArchives(file, scanned);
-							}
-						}
-					} finally {
-						reader.close();
-					}
-				} finally {
-					in.close();
+				if (!file.exists()) {
+					Trace.error(String.format("path '%s' does not exists for module '%s'", selector.getLiteral(), clazzName));
 				}
-			} catch (IOException e) {
-				Trace.error(String.format("Got error reading module libraries for '%s'", clazzName), e);
-			}
+
+				scanJavaArchives(file, scanned);
+			});
 
 			Set<URL> urls = new HashSet<URL>();
 
@@ -304,12 +329,6 @@ public class ExtensionScanner {
 		return root.isFile() && (name.endsWith(".jar") || name.endsWith(".zip"));
 	}
 
-	static void scanClasses(ConfigContext ctx, ClassLoader loader, Set<String> extensions) {
-		List<Class<?>> scanned = scanExtensions(loader, extensions);
-
-		registerClasses(ctx, scanned);
-	}
-
 	private static boolean isInstantiable(Class<?> clazz) {
 		boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
 		boolean isInstance = (clazz.getAnnotation(ExtensionInstance.class) != null) || (clazz.getAnnotation(ScriptExtension.class) != null);
@@ -334,7 +353,7 @@ public class ExtensionScanner {
 		boolean hasExtensionContructor = false;
 
 		try {
-			clazz.getDeclaredConstructor(AbstractScriptExtensionBuilder.class);
+			clazz.getDeclaredConstructor(ScriptExtensionBuilder.class);
 
 			hasExtensionContructor = true;
 		} catch (Exception e) {
@@ -344,7 +363,7 @@ public class ExtensionScanner {
 		return (!isAbstract) && isInstance && isEntension && hasExtensionContructor;
 	}
 
-	public static void registerClasses(ConfigContext ctx, Iterable<Class<?>> clazzes) {
+	static void registerClasses(ConfigContext ctx, Iterable<Class<?>> clazzes) {
 		if (clazzes != null) {
 			List<Class<?>> sorted = new ArrayList<Class<?>>();
 
@@ -385,5 +404,23 @@ public class ExtensionScanner {
 		}
 
 		return resources;
+	}
+
+	static Object newInstance(Class<?> clazz) throws NoSuchMethodException, InstantiationException, InvocationTargetException {
+		/* class is annotated is an extension module */
+		Constructor<?> constructor = clazz.getDeclaredConstructor();
+
+		try {
+			constructor.setAccessible(true);
+
+			return constructor.newInstance();
+		} catch (IllegalAccessException e) {
+			Trace.error(String.format("the no-arg constructor for class '%s' is not accessible", clazz.getName()), e);
+
+			/* should not occur because of the setAccessible() call */
+			throw new IllegalStateException("unexpected access exception", e);
+		} finally {
+			constructor.setAccessible(false);
+		}
 	}
 }

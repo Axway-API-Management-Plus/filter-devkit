@@ -19,6 +19,7 @@ import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
 import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
 import com.vordel.circuit.filter.devkit.context.resources.SubstitutableResource;
 import com.vordel.circuit.filter.devkit.context.resources.ViewableResource;
+import com.vordel.circuit.filter.devkit.script.context.ScriptContextRuntime;
 import com.vordel.common.Dictionary;
 
 import de.odysseus.el.misc.TypeConverter;
@@ -58,6 +59,10 @@ public class ContextResourceResolver extends ELResolver {
 	public Object getValue(ELContext context, Object base, Object property) {
 		Object result = null;
 
+		if (base instanceof ScriptContextRuntime) {
+			base = ((ScriptContextRuntime) base).getExportedResources();
+		}
+		
 		if (isResolvable(base)) {
 			String name = getPropertyName(property);
 
@@ -79,6 +84,10 @@ public class ContextResourceResolver extends ELResolver {
 
 	@Override
 	public Class<?> getType(ELContext context, Object base, Object property) {
+		if (base instanceof ScriptContextRuntime) {
+			base = ((ScriptContextRuntime) base).getExportedResources();
+		}
+		
 		if (isResolvable(base)) {
 			context.setPropertyResolved(true);
 		}
@@ -88,6 +97,10 @@ public class ContextResourceResolver extends ELResolver {
 
 	@Override
 	public void setValue(ELContext context, Object base, Object property, Object value) {
+		if (base instanceof ScriptContextRuntime) {
+			base = ((ScriptContextRuntime) base).getExportedResources();
+		}
+		
 		if (isResolvable(base)) {
 			throw new PropertyNotWritableException("Extensions are not writeable");
 		}
@@ -95,6 +108,10 @@ public class ContextResourceResolver extends ELResolver {
 
 	@Override
 	public boolean isReadOnly(ELContext context, Object base, Object property) {
+		if (base instanceof ScriptContextRuntime) {
+			base = ((ScriptContextRuntime) base).getExportedResources();
+		}
+		
 		if (isResolvable(base)) {
 			context.setPropertyResolved(true);
 		}
@@ -109,6 +126,10 @@ public class ContextResourceResolver extends ELResolver {
 
 	@Override
 	public Class<?> getCommonPropertyType(ELContext context, Object base) {
+		if (base instanceof ScriptContextRuntime) {
+			base = ((ScriptContextRuntime) base).getExportedResources();
+		}
+		
 		return isResolvable(base) ? String.class : null;
 	}
 
@@ -117,6 +138,10 @@ public class ContextResourceResolver extends ELResolver {
 		Object target = null;
 		Object result = null;
 
+		if (base instanceof ScriptContextRuntime) {
+			base = ((ScriptContextRuntime) base).getExportedResources();
+		}
+		
 		/*
 		 * First step, try to extract FunctionResource object (either using regular
 		 * dictionary, or direct lookup in resource provider. This way of resolving

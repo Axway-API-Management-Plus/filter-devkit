@@ -68,7 +68,8 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 	 *               class
 	 * @param module module instance to be reflected
 	 * @param clazz  class definition of the module instance
-	 * @return ExtensionResourceProvider containing exposed methods for the given module
+	 * @return ExtensionResourceProvider containing exposed methods for the given
+	 *         module
 	 */
 	static <T> ExtensionResourceProvider create(T module, Class<? extends T> clazz) {
 		return create(module, clazz, null);
@@ -84,7 +85,8 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 	 * @param instance   instance which holds non static exported methods
 	 * @param clazz      Class object corresponding to the given instance
 	 * @param filterName used when the instance is a script
-	 * @return ExtensionResourceProvider containing exposed methods for the given instance
+	 * @return ExtensionResourceProvider containing exposed methods for the given
+	 *         instance
 	 */
 	private static <T> ExtensionResourceProvider create(T instance, Class<? extends T> clazz, String filterName) {
 		Map<String, ContextResource> resources = new HashMap<String, ContextResource>();
@@ -373,16 +375,19 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 	}
 
 	/**
-	 * package private entry to register script extension methods as api gateway
-	 * resources.
+	 * entry to register resources from an object instance
 	 * 
 	 * @param resources script attached resources
 	 * @param instance  extension to be bound to the script
 	 */
-	static void reflect(Map<String, ContextResource> resources, Object instance) {
+	public static void reflectInstance(Map<String, ContextResource> resources, Object instance) {
 		Class<?> clazz = instance.getClass();
 
 		reflect(resources, instance, clazz, null);
+	}
+
+	public static void reflectClass(Map<String, ContextResource> resources, Class<?> clazz) {
+		reflect(resources, null, clazz, null);
 	}
 
 	/**
@@ -443,7 +448,11 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 					Object result = method.invoke(instance, params);
 
 					if (Trace.isDebugEnabled()) {
-						if (result instanceof String) {
+						Class<?> returnType = method.getReturnType();
+
+						if (returnType.equals(void.class) || returnType.equals(Void.class)) {
+							Trace.debug(String.format("method '%s' did not return result (void)", method.getName()));
+						} else if (result instanceof String) {
 							Trace.debug(String.format("method '%s' returned \"%s\"", method.getName(), ScriptHelper.encodeLiteral((String) result)));
 						} else if ((result instanceof Boolean) || (result instanceof Number)) {
 							Trace.debug(String.format("method '%s' returned '%s'", method.getName(), result.toString()));
@@ -464,6 +473,10 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 
 					if (cause instanceof CircuitAbortException) {
 						throw (CircuitAbortException) cause;
+					}
+
+					if (Trace.isDebugEnabled()) {
+						Trace.debug(String.format("method '%s' thrown exception ", method.getName()), cause);
 					}
 
 					throw new CircuitAbortException("got error when invoking method", cause);
@@ -815,8 +828,22 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 		private final String attributeName;
 
 		private AttributeParameter(String attributeName, Class<T> type) {
-			this.selector = SelectorResource.fromExpression(String.format("dictionary[\"%s\"]", attributeName), type);
+			this.selector = SelectorResource.fromExpression(String.format("dictionary[\"%s\"]", escapeQuotes(attributeName)), type);
 			this.attributeName = attributeName;
+		}
+		
+		private static final String escapeQuotes(String attributeName) {
+			StringBuilder out = new StringBuilder();
+			
+			for(char c : attributeName.toCharArray()) {
+				if (c == '"') {
+					out.append('\\');
+				}
+				
+				out.append(c);
+			}
+			
+			return out.toString();
 		}
 
 		@Override
@@ -872,11 +899,12 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 
 	private static class ReflectedResource<T> {
 		private final InjectableParameter<?>[] parameters;
-		private final Method method;
 		private final Object instance;
 		private final String name;
 		private final String filterName;
 		private final Class<T> returnType;
+
+		protected final Method method;
 
 		private ReflectedResource(Object instance, AnnotatedMethod annotated, Class<T> returnType, String name, String filterName) {
 			this.parameters = processInjectableParameters(annotated);
@@ -918,7 +946,11 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 				Object value = method.invoke(instance, resolved);
 
 				if (Trace.isDebugEnabled()) {
-					if (value instanceof String) {
+					Class<?> returnType = method.getReturnType();
+
+					if (returnType.equals(void.class) || returnType.equals(Void.class)) {
+						Trace.debug(String.format("method '%s' did not return result (void)", method.getName()));
+					} else if (value instanceof String) {
 						Trace.debug(String.format("method '%s' returned \"%s\"", method.getName(), ScriptHelper.encodeLiteral((String) value)));
 					} else if ((value instanceof Boolean) || (value instanceof Number)) {
 						Trace.debug(String.format("method '%s' returned '%s'", method.getName(), value.toString()));
@@ -957,7 +989,7 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 		}
 
 		@Override
-		public Boolean invoke(Message m) throws CircuitAbortException {
+		public boolean invoke(Message m) throws CircuitAbortException {
 			try {
 				Boolean result = super.invokeMethod(m);
 
@@ -971,6 +1003,10 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 
 				if (cause instanceof CircuitAbortException) {
 					throw (CircuitAbortException) cause;
+				}
+
+				if (Trace.isDebugEnabled()) {
+					Trace.debug(String.format("method '%s' thrown exception ", method.getName()), cause);
 				}
 
 				throw new CircuitAbortException("got error when invoking method", cause);
@@ -1007,13 +1043,17 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 				 * since exceptions are silenced for substitutables, do not report an error but
 				 * show the stacktrace in debug
 				 */
-				Trace.debug("got error when invoking method", cause);
+				if (Trace.isDebugEnabled()) {
+					Trace.debug(String.format("method '%s' thrown exception", method.getName()), cause);
+				}
 			} catch (RuntimeException e) {
 				/*
 				 * since exceptions are silenced for substitutables, do not report an error but
 				 * show the stacktrace in debug
 				 */
-				Trace.debug("unexpected exception", e);
+				if (Trace.isDebugEnabled()) {
+					Trace.debug(String.format("unexpected exception when calling method '%s'", method.getName()), e);
+				}
 			}
 
 			return null;
@@ -1036,13 +1076,17 @@ public final class ExtensionResourceProvider extends AbstractContextResourceProv
 				 * since exceptions are silenced for substitutables, do not report an error but
 				 * show the stacktrace in debug
 				 */
-				Trace.debug("got error when invoking method", cause);
+				if (Trace.isDebugEnabled()) {
+					Trace.debug(String.format("method '%s' thrown exception", method.getName()), cause);
+				}
 			} catch (RuntimeException e) {
 				/*
 				 * since exceptions are silenced for substitutables, do not report an error but
 				 * show the stacktrace in debug
 				 */
-				Trace.debug("unexpected exception", e);
+				if (Trace.isDebugEnabled()) {
+					Trace.debug(String.format("unexpected exception when calling method '%s'", method.getName()), e);
+				}
 			}
 
 			return null;
