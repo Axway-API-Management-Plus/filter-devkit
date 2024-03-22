@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.xml.bind.DatatypeConverter;
-
 import com.vordel.circuit.filter.devkit.httpsig.algorithm.Cksum;
 import com.vordel.circuit.filter.devkit.httpsig.algorithm.Sum16;
+import com.vordel.trace.Trace;
 
 public enum DigestAlgorithm {
 	DIGEST_MD5("MD5", "MD5"),
@@ -23,6 +23,9 @@ public enum DigestAlgorithm {
 
 	private static final Map<String, DigestAlgorithm> publicAliases = new HashMap<String, DigestAlgorithm>();
 	private static final Map<String, DigestAlgorithm> jvmAliases = new HashMap<String, DigestAlgorithm>();
+
+	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+	private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 
 	static {
 		byte[] test = "test".getBytes();
@@ -151,7 +154,7 @@ public enum DigestAlgorithm {
 			case DIGEST_SHA384:
 			case DIGEST_SHA512:
 			default:
-				encoded = DatatypeConverter.printBase64Binary(digest);
+				encoded = BASE64_ENCODER.encodeToString(digest);
 				break;
 			}
 		}
@@ -163,21 +166,25 @@ public enum DigestAlgorithm {
 		byte[] decoded = null;
 
 		if (digest != null) {
-			switch (this) {
-			case DIGEST_SUM:
-				decoded = decodeInteger(this, digest, 2);
-				break;
-			case DIGEST_CKSUM:
-				decoded = decodeInteger(this, digest, 4);
-				break;
-			case DIGEST_MD5:
-			case DIGEST_SHA:
-			case DIGEST_SHA256:
-			case DIGEST_SHA384:
-			case DIGEST_SHA512:
-			default:
-				decoded = DatatypeConverter.parseBase64Binary(digest);
-				break;
+			try {
+				switch (this) {
+				case DIGEST_SUM:
+					decoded = decodeInteger(this, digest, 2);
+					break;
+				case DIGEST_CKSUM:
+					decoded = decodeInteger(this, digest, 4);
+					break;
+				case DIGEST_MD5:
+				case DIGEST_SHA:
+				case DIGEST_SHA256:
+				case DIGEST_SHA384:
+				case DIGEST_SHA512:
+				default:
+					decoded = BASE64_DECODER.decode(digest);
+					break;
+				}
+			} catch (RuntimeException e) {
+				Trace.debug("got error decoding digest", e);
 			}
 		}
 
