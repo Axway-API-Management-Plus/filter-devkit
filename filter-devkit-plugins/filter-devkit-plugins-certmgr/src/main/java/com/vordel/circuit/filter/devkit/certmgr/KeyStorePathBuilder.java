@@ -271,6 +271,8 @@ public class KeyStorePathBuilder {
 			path.addAll(holder.path);
 
 			return holder.pkix;
+		} else {
+			path.add(certificate);
 		}
 
 		return null;
@@ -286,6 +288,8 @@ public class KeyStorePathBuilder {
 			path.addAll(holder.path);
 
 			return holder.pkix;
+		} else {
+			path.add(certificate);
 		}
 
 		return null;

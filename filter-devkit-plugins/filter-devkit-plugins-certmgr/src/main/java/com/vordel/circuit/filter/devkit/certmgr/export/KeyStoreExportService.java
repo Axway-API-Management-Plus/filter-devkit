@@ -106,9 +106,9 @@ public class KeyStoreExportService implements InvocableResource {
 				for (KeyStoreEntry entry : certificates.values()) {
 					exports.add(entry);
 				}
-			}
 
-			stamp = System.currentTimeMillis();
+				stamp = System.currentTimeMillis();
+			}
 		}
 	}
 
@@ -266,7 +266,7 @@ public class KeyStoreExportService implements InvocableResource {
 	}
 
 	@GET
-	@Path("certificates/x5t:{x5t}.cer")
+	@Path("x509/x5t:{x5t}.cer")
 	@Produces("application/pkix-cert")
 	public Response getDERCertificateByX5T(@Context Request request, @PathParam("x5t") String x5t) {
 		if ((x5t == null) || x5t.isEmpty()) {
@@ -281,7 +281,7 @@ public class KeyStoreExportService implements InvocableResource {
 	}
 
 	@GET
-	@Path("certificates/x5t:{x5t}.pubkey")
+	@Path("x509/x5t:{x5t}.pubkey")
 	@Produces({ "application/x-pem-file", MediaType.TEXT_PLAIN })
 	public Response getPEMPublicKeyByX5T(@Context Request request, @PathParam("x5t") String x5t) throws CircuitAbortException {
 		if ((x5t == null) || x5t.isEmpty()) {
@@ -296,7 +296,7 @@ public class KeyStoreExportService implements InvocableResource {
 	}
 
 	@GET
-	@Path("certificates/x5t:{x5t}.pem")
+	@Path("x509/x5t:{x5t}.pem")
 	@Produces({ "application/x-pem-file", MediaType.TEXT_PLAIN })
 	public Response getPEMCertificateByX5T(@Context Request request, @PathParam("x5t") String x5t) throws CircuitAbortException {
 		if ((x5t == null) || x5t.isEmpty()) {
@@ -311,7 +311,7 @@ public class KeyStoreExportService implements InvocableResource {
 	}
 
 	@GET
-	@Path("certificates/x5t:{x5t}.pkipath")
+	@Path("x509/x5t:{x5t}.pkipath")
 	@Produces(CertPathBodyWriter.PKIX_PKIPATH)
 	public Response getCertificatePathByX5T(@Context Request request, @PathParam("x5t") String x5t) throws CircuitAbortException {
 		if ((x5t == null) || x5t.isEmpty()) {
@@ -326,7 +326,7 @@ public class KeyStoreExportService implements InvocableResource {
 	}
 
 	@GET
-	@Path("certificates/x5t256:{x5t}.cer")
+	@Path("x509/x5t256:{x5t}.cer")
 	@Produces("application/pkix-cert")
 	public Response getDERCertificateByX5T256(@Context Request request, @PathParam("x5t") String x5t) {
 		if ((x5t == null) || x5t.isEmpty()) {
@@ -341,7 +341,7 @@ public class KeyStoreExportService implements InvocableResource {
 	}
 
 	@GET
-	@Path("certificates/x5t256:{x5t}.pubkey")
+	@Path("x509/x5t256:{x5t}.pubkey")
 	@Produces({ "application/x-pem-file", MediaType.TEXT_PLAIN })
 	public Response getPEMPublicKeyByX5T256(@Context Request request, @PathParam("x5t") String x5t) throws CircuitAbortException {
 		if ((x5t == null) || x5t.isEmpty()) {
@@ -356,7 +356,7 @@ public class KeyStoreExportService implements InvocableResource {
 	}
 
 	@GET
-	@Path("certificates/x5t256:{x5t}.pem")
+	@Path("x509/x5t256:{x5t}.pem")
 	@Produces({ "application/x-pem-file", MediaType.TEXT_PLAIN })
 	public Response getPEMCertificateByX5T256(@Context Request request, @PathParam("x5t") String x5t) throws CircuitAbortException {
 		if ((x5t == null) || x5t.isEmpty()) {
@@ -371,7 +371,7 @@ public class KeyStoreExportService implements InvocableResource {
 	}
 
 	@GET
-	@Path("certificates/x5t256:{x5t}.pkipath")
+	@Path("x509/x5t256:{x5t}.pkipath")
 	@Produces(CertPathBodyWriter.PKIX_PKIPATH)
 	public Response getCertificatePathByX5T256(@Context Request request, @PathParam("x5t") String x5t) throws CircuitAbortException {
 		if ((x5t == null) || x5t.isEmpty()) {
@@ -386,7 +386,7 @@ public class KeyStoreExportService implements InvocableResource {
 	}
 
 	@GET
-	@Path("certificates/alias:{alias}.cer")
+	@Path("x509/alias:{alias}.cer")
 	@Produces("application/pkix-cert")
 	public Response getDERCertificateByAlias(@Context Request request, @PathParam("alias") String alias) {
 		if ((alias == null) || alias.isEmpty()) {
@@ -401,7 +401,7 @@ public class KeyStoreExportService implements InvocableResource {
 	}
 
 	@GET
-	@Path("certificates/alias:{alias}.pubkey")
+	@Path("x509/alias:{alias}.pubkey")
 	@Produces({ "application/x-pem-file", MediaType.TEXT_PLAIN })
 	public Response getPEMPublicKeyByAlias(@Context Request request, @PathParam("alias") String alias) throws CircuitAbortException {
 		if ((alias == null) || alias.isEmpty()) {
@@ -416,7 +416,7 @@ public class KeyStoreExportService implements InvocableResource {
 	}
 
 	@GET
-	@Path("certificates/alias:{alias}.pem")
+	@Path("x509/alias:{alias}.pem")
 	@Produces({ "application/x-pem-file", MediaType.TEXT_PLAIN })
 	public Response getPEMCertificateByAlias(@Context Request request, @PathParam("alias") String alias) throws CircuitAbortException {
 		if ((alias == null) || alias.isEmpty()) {
@@ -431,7 +431,7 @@ public class KeyStoreExportService implements InvocableResource {
 	}
 
 	@GET
-	@Path("certificates/alias:{alias}.pkipath")
+	@Path("x509/alias:{alias}.pkipath")
 	@Produces(CertPathBodyWriter.PKIX_PKIPATH)
 	public Response getCertificatePathByAlias(@Context Request request, @PathParam("alias") String alias) throws CircuitAbortException {
 		if ((alias == null) || alias.isEmpty()) {

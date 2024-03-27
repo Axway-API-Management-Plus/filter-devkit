@@ -56,79 +56,41 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 			publicKey = certificate.getPublicKey();
 		}
 
-		this.alias = entry.alias;
-		this.certificate = certificate;
-		this.privateKey = privateKey;
-		this.publicKey = publicKey;
-		this.secretKey = entry.secretKey;
-		this.privateJWK = entry.privateJWK;
-		this.publicJWK = entry.publicJWK;
-		this.x5t = entry.x5t;
-		this.x5t256 = entry.x5t256;
-	}
-
-	private KeyStoreEntry(String alias, Certificate certificate, PublicKey publicKey, PrivateKey privateKey) {
-		JWK privateJWK = null;
+		JWK privateJWK = refineJWK(this.alias = entry.alias, certificate, publicKey, privateKey);
 		JWK publicJWK = null;
 
 		Base64URL x5t = null;
 		Base64URL x5t256 = null;
 
-		try {
-			/* write keys to PEM so the JOSE parser can be used */
-			StringWriter pem = new StringWriter();
-			JcaPEMWriter writer = new JcaPEMWriter(pem);
-
-			try {
-				if (publicKey != null) {
-					writer.writeObject(publicKey);
-				}
-
-				if (privateKey != null) {
-					writer.writeObject(privateKey);
-				}
-			} finally {
-				writer.close();
-			}
-
-			privateJWK = JWK.parseFromPEMEncodedObjects(pem.toString());
-
-			if (privateJWK instanceof RSAKey) {
-				RSAKey.Builder builder = new RSAKey.Builder((RSAKey) privateJWK);
-
-				if (alias != null) {
-					builder = builder.keyID(alias);
-				}
-
-				if (certificate instanceof X509Certificate) {
-					builder = builder.keyUse(KeyUse.from((X509Certificate) certificate));
-					builder = builder.x509CertChain(Collections.singletonList(Base64.encode(certificate.getEncoded())));
-					builder = builder.x509CertSHA256Thumbprint(getX5Tx(certificate, "SHA-256"));
-				}
-
-				privateJWK = builder.build();
-			} else if (privateJWK instanceof ECKey) {
-				ECKey.Builder builder = new ECKey.Builder((ECKey) privateJWK);
-
-				if (alias != null) {
-					builder = builder.keyID(alias);
-				}
-
-				if (certificate instanceof X509Certificate) {
-					builder = builder.keyUse(KeyUse.from((X509Certificate) certificate));
-					builder = builder.x509CertChain(Collections.singletonList(Base64.encode(certificate.getEncoded())));
-					builder = builder.x509CertSHA256Thumbprint(getX5Tx(certificate, "SHA-256"));
-				}
-
-				privateJWK = builder.build();
-			}
-
-			publicJWK = privateJWK.toPublicJWK();
-
+		if (privateJWK != null) {
 			x5t = getX5T(privateJWK);
 			x5t256 = privateJWK.getX509CertSHA256Thumbprint();
-		} catch (IOException | CertificateEncodingException | JOSEException e) {
-			Trace.error("unable to create JWK", e);
+			publicJWK = privateJWK.toPublicJWK();
+		}
+
+		this.alias = entry.alias;
+		this.certificate = certificate;
+		this.privateKey = privateKey;
+		this.publicKey = publicKey;
+		this.secretKey = entry.secretKey;
+		this.privateJWK = privateJWK;
+		this.publicJWK = publicJWK;
+
+		this.x5t = getX5Tx(certificate, x5t, "SHA-1");
+		this.x5t256 = getX5Tx(certificate, x5t256, "SHA-256");
+	}
+
+	private KeyStoreEntry(String alias, Certificate certificate, PublicKey publicKey, PrivateKey privateKey) {
+		JWK privateJWK = refineJWK(alias, certificate, publicKey, privateKey);
+		JWK publicJWK = null;
+
+		Base64URL x5t = null;
+		Base64URL x5t256 = null;
+
+		if (privateJWK != null) {
+			x5t = getX5T(privateJWK);
+			x5t256 = privateJWK.getX509CertSHA256Thumbprint();
+			publicJWK = privateJWK.toPublicJWK();
 		}
 
 		this.alias = alias;
@@ -267,7 +229,7 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 			return available.toString();
 		} else {
 			Base64URL thumbprint = getX5Tx(certificate, hash);
-			
+
 			if (thumbprint != null) {
 				return thumbprint.toString();
 			}
@@ -328,11 +290,11 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 		return x5t256;
 	}
 
-	public final boolean isX509Certificate() {
+	public boolean isX509Certificate() {
 		return getCertificate() instanceof X509Certificate;
 	}
 
-	public final Certificate[] getCertificateChain(KeyStorePathBuilder trust) throws CircuitAbortException {
+	public Certificate[] getCertificateChain(KeyStorePathBuilder trust) throws CircuitAbortException {
 		Certificate[] chain = null;
 
 		if (isX509Certificate()) {
@@ -346,7 +308,7 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 		return chain;
 	}
 
-	public final CertPath getCertificatePath(KeyStorePathBuilder trust) throws CircuitAbortException {
+	public CertPath getCertificatePath(KeyStorePathBuilder trust) throws CircuitAbortException {
 		if (isX509Certificate()) {
 			List<Certificate> path = new ArrayList<Certificate>();
 
@@ -358,6 +320,62 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 
 	protected KeyStoreEntry refineCertificate(Certificate certificate, PrivateKey privateKey) {
 		return new KeyStoreEntry(this, certificate, privateKey);
+	}
+
+	private static JWK refineJWK(String alias, Certificate certificate, PublicKey publicKey, PrivateKey privateKey) {
+		JWK privateJWK = null;
+
+		try {
+			/* write keys to PEM so the JOSE parser can be used */
+			StringWriter pem = new StringWriter();
+			JcaPEMWriter writer = new JcaPEMWriter(pem);
+
+			try {
+				writer.writeObject(publicKey);
+
+				if (privateKey != null) {
+					writer.writeObject(privateKey);
+				}
+			} finally {
+				writer.close();
+			}
+
+			privateJWK = JWK.parseFromPEMEncodedObjects(pem.toString());
+
+			if (privateJWK instanceof RSAKey) {
+				RSAKey.Builder builder = new RSAKey.Builder((RSAKey) privateJWK);
+
+				if (alias != null) {
+					builder = builder.keyID(alias);
+				}
+
+				if (certificate instanceof X509Certificate) {
+					builder = builder.keyUse(KeyUse.from((X509Certificate) certificate));
+					builder = builder.x509CertChain(Collections.singletonList(Base64.encode(certificate.getEncoded())));
+					builder = builder.x509CertSHA256Thumbprint(getX5Tx(certificate, "SHA-256"));
+				}
+
+				privateJWK = builder.build();
+			} else if (privateJWK instanceof ECKey) {
+				ECKey.Builder builder = new ECKey.Builder((ECKey) privateJWK);
+
+				if (alias != null) {
+					builder = builder.keyID(alias);
+				}
+
+				if (certificate instanceof X509Certificate) {
+					builder = builder.keyUse(KeyUse.from((X509Certificate) certificate));
+					builder = builder.x509CertChain(Collections.singletonList(Base64.encode(certificate.getEncoded())));
+					builder = builder.x509CertSHA256Thumbprint(getX5Tx(certificate, "SHA-256"));
+				}
+
+				privateJWK = builder.build();
+			}
+		} catch (IOException | CertificateEncodingException | JOSEException e) {
+			Trace.error("unable to create JWK", e);
+		}
+
+		return privateJWK;
 	}
 
 	@Override
