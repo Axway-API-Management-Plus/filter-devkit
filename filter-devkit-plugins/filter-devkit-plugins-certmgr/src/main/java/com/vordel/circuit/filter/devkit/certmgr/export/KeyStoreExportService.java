@@ -38,6 +38,7 @@ import com.nimbusds.jose.util.Base64URL;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.filter.devkit.certmgr.KeyStoreEntry;
+import com.vordel.circuit.filter.devkit.certmgr.KeyStoreFilter;
 import com.vordel.circuit.filter.devkit.certmgr.KeyStoreHolder;
 import com.vordel.circuit.filter.devkit.certmgr.KeyStorePathBuilder;
 import com.vordel.circuit.filter.devkit.certmgr.export.jaxrs.CertPathBodyWriter;
@@ -56,7 +57,7 @@ public class KeyStoreExportService implements InvocableResource {
 	private final KeyStorePathBuilder trust;
 
 	private final List<KeyStoreExportTransform> transforms;
-	private final List<KeyStoreExportFilter> filters;
+	private final List<KeyStoreFilter> filters;
 
 	private final ScriptWebComponent service;
 	private final boolean exportPrivate;
@@ -66,7 +67,7 @@ public class KeyStoreExportService implements InvocableResource {
 
 	protected final Object sync = new Object();
 
-	public KeyStoreExportService(List<KeyStoreHolder> exported, KeyStorePathBuilder trust, List<KeyStoreExportFilter> filters, List<KeyStoreExportTransform> transforms, boolean exportPrivate) {
+	public KeyStoreExportService(List<KeyStoreHolder> exported, KeyStorePathBuilder trust, List<KeyStoreFilter> filters, List<KeyStoreExportTransform> transforms, boolean exportPrivate) {
 		this.stores = exported;
 		this.trust = trust;
 		this.filters = filters;
@@ -153,11 +154,11 @@ public class KeyStoreExportService implements InvocableResource {
 	}
 
 	private boolean isExported(KeyStoreEntry entry) {
-		Iterator<KeyStoreExportFilter> iterator = filters.iterator();
+		Iterator<KeyStoreFilter> iterator = filters.iterator();
 		boolean exported = true;
 
 		while (exported && iterator.hasNext()) {
-			KeyStoreExportFilter filter = iterator.next();
+			KeyStoreFilter filter = iterator.next();
 
 			exported &= filter.isExported(entry);
 		}

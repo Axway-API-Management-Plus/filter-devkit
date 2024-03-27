@@ -3,6 +3,7 @@ package com.vordel.circuit.filter.devkit.certmgr.export;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.vordel.circuit.filter.devkit.certmgr.KeyStoreFilter;
 import com.vordel.circuit.filter.devkit.certmgr.KeyStoreHolder;
 import com.vordel.circuit.filter.devkit.certmgr.KeyStorePathBuilder;
 import com.vordel.circuit.filter.devkit.certmgr.KeyStoreResource;
@@ -13,7 +14,7 @@ public class KeyStoreExportBuilder {
 	private final List<KeyStoreHolder> exported = new ArrayList<KeyStoreHolder>();
 	private final List<KeyStoreResource> trusted = new ArrayList<KeyStoreResource>();
 
-	private final List<KeyStoreExportFilter> filters = new ArrayList<KeyStoreExportFilter>();
+	private final List<KeyStoreFilter> filters = new ArrayList<KeyStoreFilter>();
 	private final List<KeyStoreExportTransform> transforms = new ArrayList<KeyStoreExportTransform>();
 
 	private CacheResource cache = null;
@@ -59,7 +60,7 @@ public class KeyStoreExportBuilder {
 	 * @param filter to be applied on keys from exported keystore.
 	 * @return this instanceof builder.
 	 */
-	public final KeyStoreExportBuilder appendFilter(KeyStoreExportFilter filter) {
+	public final KeyStoreExportBuilder appendFilter(KeyStoreFilter filter) {
 		if (filter != null) {
 			filters.add(filter);
 		}
