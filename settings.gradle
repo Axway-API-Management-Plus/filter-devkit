@@ -11,6 +11,7 @@ include 'filter-devkit-plugins-lambda'
 include 'filter-devkit-plugins-oauth'
 include 'filter-devkit-plugins-loop'
 include 'filter-devkit-plugins-scriptextensions'
+include 'filter-devkit-plugins-certmgr'
 
 include 'filter-devkit-playground'
 
@@ -21,3 +22,4 @@ project(':filter-devkit-plugins-lambda').projectDir = file('filter-devkit-plugin
 project(':filter-devkit-plugins-oauth').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-oauth')
 project(':filter-devkit-plugins-loop').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-loop')
 project(':filter-devkit-plugins-scriptextensions').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-scriptextensions')
+project(':filter-devkit-plugins-certmgr').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-certmgr')

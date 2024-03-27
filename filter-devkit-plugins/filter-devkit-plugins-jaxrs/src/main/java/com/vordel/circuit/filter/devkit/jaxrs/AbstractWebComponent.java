@@ -30,7 +30,6 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.filter.devkit.script.jaxrs.ScriptContainer;
-import com.vordel.store.cert.CertStore;
 import com.vordel.trace.Trace;
 
 public abstract class AbstractWebComponent {
@@ -235,16 +234,6 @@ public abstract class AbstractWebComponent {
 		protected final Set<Object> singletons = new HashSet<Object>();
 
 		protected Builder() {
-		}
-
-		/**
-		 * check if we are in policy studio of api gateway. usually, the class CertStore
-		 * not loaded in policy studio.
-		 * 
-		 * @return 'true' if running on api gateway.
-		 */
-		public boolean buildable() {
-			return CertStore.getInstance() != null;
 		}
 
 		public final Builder property(String key, Object value) {

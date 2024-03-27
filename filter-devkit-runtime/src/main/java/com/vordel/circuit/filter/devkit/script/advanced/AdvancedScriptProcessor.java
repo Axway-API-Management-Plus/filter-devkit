@@ -335,6 +335,7 @@ public class AdvancedScriptProcessor extends AbstractScriptProcessor {
 			ScriptContextBuilder builder = new ScriptContextBuilder(resources, this, this::attachExtension);
 
 			builder.attachExtension(name);
+			builder.seal();
 		}
 
 		private void attachExtension(String className, Object instance, Method[] methods) throws ScriptException {

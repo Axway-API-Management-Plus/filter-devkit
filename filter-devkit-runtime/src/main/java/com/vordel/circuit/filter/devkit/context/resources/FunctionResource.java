@@ -12,7 +12,7 @@ import com.vordel.common.Dictionary;
  * @author rdesaintleger@axway.com
  */
 @FunctionalInterface
-public interface FunctionResource extends ContextResource {
+public interface FunctionResource extends ResolvedResource {
 	/**
 	 * Invoke the target Java Method
 	 * 

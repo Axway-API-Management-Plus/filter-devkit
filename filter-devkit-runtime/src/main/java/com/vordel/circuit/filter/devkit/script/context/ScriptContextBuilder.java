@@ -2,6 +2,7 @@ package com.vordel.circuit.filter.devkit.script.context;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,12 +22,10 @@ import com.vordel.circuit.filter.devkit.context.annotations.SubstitutableMethod;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
 import com.vordel.circuit.filter.devkit.context.resources.EHCacheResource;
 import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
-import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
 import com.vordel.circuit.filter.devkit.context.resources.JavaMethodResource;
 import com.vordel.circuit.filter.devkit.context.resources.KPSStoreResource;
 import com.vordel.circuit.filter.devkit.context.resources.PolicyResource;
 import com.vordel.circuit.filter.devkit.context.resources.SelectorResource;
-import com.vordel.circuit.filter.devkit.context.resources.SubstitutableResource;
 import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionBinder;
 import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionFactory;
 import com.vordel.common.Dictionary;
@@ -57,18 +56,18 @@ import groovy.lang.Script;
  */
 public final class ScriptContextBuilder {
 	/**
-	 * current script's set of resources
+	 * current script's set of resources, removed after configuration.
 	 */
-	private final Map<String, ContextResource> resources;
+	private Map<String, ContextResource> resources;
 	/**
 	 * loaded extensions for this builder
 	 */
 	private final Set<String> loaded = new HashSet<String>();
 
 	/**
-	 * extension binder implementation
+	 * extension binder implementation, removed after configuration.
 	 */
-	private final ScriptExtensionBinder extensionBinder;
+	private ScriptExtensionBinder extensionBinder;
 	/**
 	 * Underlying runtime object
 	 */
@@ -198,19 +197,7 @@ public final class ScriptContextBuilder {
 		Selector<T> selector = SelectorResource.fromExpression(expression, clazz);
 		SelectorResource<T> resource = new SelectorResource<T>(selector);
 
-		return attachSubstitutableResource(name, resource);
-	}
-
-	public ScriptContextBuilder attachSubstitutableResource(String name, SubstitutableResource<?> resource) throws ScriptException {
-		checkName(name);
-
-		if (resource == null) {
-			throw new ScriptException("resource parameter cannot be null");
-		}
-
-		resources.put(name, resource);
-
-		return this;
+		return attachContextResource(name, resource);
 	}
 
 	/**
@@ -293,10 +280,10 @@ public final class ScriptContextBuilder {
 
 		PolicyResource resource = new PolicyResource(circuit, circuitPK);
 
-		return attachInvocableResource(name, resource);
+		return attachContextResource(name, resource);
 	}
 
-	public ScriptContextBuilder attachInvocableResource(String name, InvocableResource resource) throws ScriptException {
+	public ScriptContextBuilder attachContextResource(String name, ContextResource resource) throws ScriptException {
 		checkName(name);
 
 		if (resource == null) {
@@ -366,7 +353,7 @@ public final class ScriptContextBuilder {
 
 			/* create instance proxy only if needed (interface closures to export) */
 			Object proxy = methods.isEmpty() ? instance : factory.proxify(instance);
-			
+
 			extensionBinder.bindExtension(className, proxy, methods.toArray(new Method[0]));
 		}
 
@@ -424,8 +411,20 @@ public final class ScriptContextBuilder {
 					/* and apply configurator closure */
 					configurator.accept(builder);
 				}
+
+				/* seal resources for this builder */
+				builder.seal();
 			}
 		}
+	}
+
+	/**
+	 * seal resources for this builder instance. after calling this method it is no
+	 * longer possible to attach resources or bind extensions to this context.
+	 */
+	public void seal() {
+		resources = Collections.unmodifiableMap(resources);
+		extensionBinder = null;
 	}
 
 	private static final void bindGroovyClosures(Script script, Object instance, Method[] methods) {

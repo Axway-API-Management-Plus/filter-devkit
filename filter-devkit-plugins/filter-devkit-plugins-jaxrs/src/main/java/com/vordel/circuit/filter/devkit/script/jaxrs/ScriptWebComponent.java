@@ -42,8 +42,7 @@ public class ScriptWebComponent extends AbstractWebComponent {
 		public <T> ScriptWebComponent build(T script, String filterName) {
 			ScriptWebComponent component = null;
 
-			/* check if we are called from policy studio */
-			if ((script != null) && buildable()) {
+			if (script != null) {
 				ScriptContainer<T> container = new ScriptContainer<T>(script);
 				Application application = new VordelApplication(classes, singletons, properties, filterName);
 

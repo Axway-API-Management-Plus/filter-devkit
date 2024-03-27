@@ -103,8 +103,11 @@ public class AbstractScriptProcessor extends MessageProcessor {
 				entityString = PortableESPK.toPortableKey(ctx.getStore(), pk).toShorthandString();
 			}
 
-			Trace.error(String.format("There was a problem loading the script '%s': %s", entityString, e.getMessage()));
-			Trace.debug(e);
+			if (Trace.isDebugEnabled()) {
+				Trace.error(String.format("There was a problem loading the script '%s': %s", entityString, e.getMessage()));
+			} else {
+				Trace.error(String.format("There was a problem loading the script '%s': %s", entityString, e.getMessage()), e);
+			}
 		}
 	}
 
