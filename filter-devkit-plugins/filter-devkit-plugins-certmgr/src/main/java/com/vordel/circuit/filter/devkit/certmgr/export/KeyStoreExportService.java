@@ -510,7 +510,7 @@ public class KeyStoreExportService implements InvocableResource {
 
 				builder = Response.ok(tree).lastModified(lastModified);
 			} catch (JsonProcessingException e) {
-				throw new WebApplicationException("Unable to encode jwk set", e, Response.serverError().build());
+				throw new WebApplicationException("Unable to encode jwk set", e, Status.INTERNAL_SERVER_ERROR);
 			}
 		}
 
@@ -585,7 +585,7 @@ public class KeyStoreExportService implements InvocableResource {
 
 				builder = Response.ok(tree).lastModified(lastModified);
 			} catch (JsonProcessingException e) {
-				throw new WebApplicationException("Unable to encode jwk", e, Response.serverError().build());
+				throw new WebApplicationException("Unable to encode jwk", e, Status.INTERNAL_SERVER_ERROR);
 			}
 		}
 
@@ -613,7 +613,7 @@ public class KeyStoreExportService implements InvocableResource {
 			while ((json != null) && iterator.hasNext()) {
 				KeyStoreExportTransform transform = iterator.next();
 
-				json = transform.transform(entry, json);
+				json = transform.transform(trust, entry, json);
 			}
 
 			if (json != null) {

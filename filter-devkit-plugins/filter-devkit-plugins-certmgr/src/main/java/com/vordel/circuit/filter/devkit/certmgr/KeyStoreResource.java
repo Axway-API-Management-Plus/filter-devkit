@@ -37,6 +37,12 @@ public abstract class KeyStoreResource extends AbstractMap<String, Certificate> 
 	 */
 	protected int rcnt = 0;
 
+	public final Iterator<KeyStoreEntry> iterator(KeyStoreFilter filter) {
+		Iterator<KeyStoreEntry> iterator = iterator();
+
+		return filter == null ? iterator : new KeyStoreFilterIterator(iterator, filter);
+	}
+
 	/**
 	 * Retrieve a {@link KeyStoreEntry} using its alias
 	 * 

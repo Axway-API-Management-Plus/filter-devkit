@@ -11,7 +11,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
@@ -37,7 +37,7 @@ public class CertPathBodyWriter implements MessageBodyWriter<CertPath> {
 
 			entityStream.write(encoded);
 		} catch (CertificateEncodingException e) {
-			throw new WebApplicationException("Unable to encode Certificate", e, Response.serverError().build());
+			throw new WebApplicationException("Unable to encode Certificate", e, Status.INTERNAL_SERVER_ERROR);
 		}
 	}
 }
