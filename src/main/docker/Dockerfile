@@ -28,7 +28,7 @@ RUN git clone https://github.com/eclipse-theia/theia-blueprint.git . && \
 	yarn build:extensions && \
 	yarn download:plugins && \
 	yarn browser build && \
-	yarn --production && \
+	yarn && \
 	yarn autoclean --init && \
 	echo *.ts >> .yarnclean && \
 	echo *.ts.map >> .yarnclean && \
