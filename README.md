@@ -6,9 +6,9 @@ This project contains a set of libraries for implementing API Gateway Filters an
 
 To build this artefact, you need the following items:
  - JDK 11
- - API Gateway and Policy Studio 7.7.20240228
+ - API Gateway and Policy Studio 7.7.20240530
  
-Code base is actually stable and has been tested from 20220530 (JDK 8) to 20240228 (JDK 11). Even if jars compiled using another release should work, it is recommended to use artifacts produced for a particular release using the branch specific the the API Gateway version you're targeting (some bytecode changes can trigger a MethodNotFoundException). If no branch already exists please open an issue for it or make a Pull Request for this new branch.
+Code base is actually stable and has been tested from 20220530 (JDK 8) to 20240530 (JDK 11). Even if jars compiled using another release should work, it is recommended to use artifacts produced for a particular release using the branch specific the the API Gateway version you're targeting (some bytecode changes can trigger a MethodNotFoundException). If no branch already exists please open an issue for it or make a Pull Request for this new branch.
 
 A playground Dockerfile is provided. It provides an on-premise API Gateway, Policy Studio, In-Browser GUI and IDE with the FDK pre-installed.
 
