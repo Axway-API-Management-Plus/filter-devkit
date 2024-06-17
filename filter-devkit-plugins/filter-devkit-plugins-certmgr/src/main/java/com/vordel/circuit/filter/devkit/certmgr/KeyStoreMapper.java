@@ -36,6 +36,10 @@ public abstract class KeyStoreMapper extends KeyStoreResource {
 	private final Map<String, KeyStoreEntry> x5ts = new HashMap<String, KeyStoreEntry>();
 
 	protected final <T> void reload(Iterator<T> entries, Function<T, KeyStoreEntry> parser) {
+		reload(entries, parser, false);
+	}
+
+	protected final <T> void reload(Iterator<T> entries, Function<T, KeyStoreEntry> parser, boolean keep) {
 		List<KeyStoreEntry> parsed = new ArrayList<KeyStoreEntry>();
 
 		Map<ByteBuffer, Certificate> certificates = new HashMap<ByteBuffer, Certificate>();
@@ -71,11 +75,12 @@ public abstract class KeyStoreMapper extends KeyStoreResource {
 		}
 
 		/* reload internal maps */
-		reload(parsed, certificates, privateKeys);
+		reload(parsed, certificates, privateKeys, keep);
 	}
 
-	private final void reload(List<KeyStoreEntry> entries, Map<ByteBuffer, Certificate> refined, Map<ByteBuffer, PrivateKey> privateKeys) {
+	private final void reload(List<KeyStoreEntry> entries, Map<ByteBuffer, Certificate> refined, Map<ByteBuffer, PrivateKey> privateKeys, boolean keep) {
 		synchronized (sync) {
+			List<KeyStoreEntry> existing = new ArrayList<KeyStoreEntry>(entryList);
 			ListIterator<KeyStoreEntry> iterator = entries.listIterator();
 
 			entryList.clear();
@@ -109,43 +114,29 @@ public abstract class KeyStoreMapper extends KeyStoreResource {
 							/* update the entry in the list */
 							iterator.set(entry);
 						}
-
-						publicKeys.putIfAbsent(key, entry);
 					}
 				}
 
-				String x5t = entry.getX5T();
-				String x5t256 = entry.getX5T();
-				String alias = entry.getAlias();
+				mapEntry(entry);
+			}
 
-				if (alias != null) {
-					aliases.putIfAbsent(alias, entry);
-				}
+			if (keep) {
+				for (KeyStoreEntry entry : existing) {
+					Certificate certificate = entry.getCertificate();
+					PublicKey pubkey = entry.getPublicKey();
 
-				if (x5t != null) {
-					x5ts.putIfAbsent(x5t, entry);
-				}
+					if ((getByPublicKey(pubkey) == null) || (getByCertificate(certificate) == null)) {
+						String alias = entry.getAlias();
 
-				if (x5t256 != null) {
-					x5t256s.putIfAbsent(x5t256, entry);
-				}
+						if (getByAlias(alias) != null) {
+							/* the alias is taken by a new certificate. strip out existing alias */
+							entry = new KeyStoreEntry(null, entry);
+						}
 
-				if (certificate != null) {
-					try {
-						byte[] encoded = certificate.getEncoded();
-						ByteBuffer key = ByteBuffer.wrap(encoded);
-
-						certificates.putIfAbsent(key, entry);
-					} catch (CertificateEncodingException e) {
-						Trace.error("unable to encode certificate", e);
+						/* map previous entry (not present) and add it to new entries */
+						mapEntry(entry);
+						entries.add(entry);
 					}
-				}
-
-				if (certificate instanceof X509Certificate) {
-					X500Principal subject = ((X509Certificate) certificate).getSubjectX500Principal();
-					List<KeyStoreEntry> named = subjects.computeIfAbsent(subject, (key) -> new ArrayList<KeyStoreEntry>());
-
-					named.add(entry);
 				}
 			}
 
@@ -188,6 +179,51 @@ public abstract class KeyStoreMapper extends KeyStoreResource {
 
 			/* increment reload count */
 			rcnt++;
+		}
+	}
+
+	private void mapEntry(KeyStoreEntry entry) {
+		Certificate certificate = entry.getCertificate();
+		PublicKey pubkey = entry.getPublicKey();
+		String x5t = entry.getX5T();
+		String x5t256 = entry.getX5T();
+		String alias = entry.getAlias();
+
+		if (alias != null) {
+			aliases.putIfAbsent(alias, entry);
+		}
+
+		if (x5t != null) {
+			x5ts.putIfAbsent(x5t, entry);
+		}
+
+		if (x5t256 != null) {
+			x5t256s.putIfAbsent(x5t256, entry);
+		}
+
+		if (pubkey != null) {
+			byte[] encoded = pubkey.getEncoded();
+			ByteBuffer key = ByteBuffer.wrap(encoded);
+
+			publicKeys.putIfAbsent(key, entry);
+		}
+
+		if (certificate != null) {
+			try {
+				byte[] encoded = certificate.getEncoded();
+				ByteBuffer key = ByteBuffer.wrap(encoded);
+
+				certificates.putIfAbsent(key, entry);
+			} catch (CertificateEncodingException e) {
+				Trace.error("unable to encode certificate", e);
+			}
+		}
+
+		if (certificate instanceof X509Certificate) {
+			X500Principal subject = ((X509Certificate) certificate).getSubjectX500Principal();
+			List<KeyStoreEntry> named = subjects.computeIfAbsent(subject, (key) -> new ArrayList<KeyStoreEntry>());
+
+			named.add(entry);
 		}
 	}
 

@@ -18,28 +18,21 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiFunction;
 
 import javax.security.auth.x500.X500Principal;
 
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 
-import com.vordel.circuit.CircuitAbortException;
-import com.vordel.circuit.Message;
-import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
 import com.vordel.security.cert.PersonalInfo;
 import com.vordel.security.pem.PEM;
 import com.vordel.store.cert.CertStore;
 import com.vordel.trace.Trace;
 
 public final class VordelKeyStore extends KeyStoreMapper {
-	private static final ReentrantReadWriteLock LOCK;
-
 	private static final VordelKeyStore INSTANCE;
 
 	static {
-		LOCK = new ReentrantReadWriteLock(true);
 		INSTANCE = new VordelKeyStore();
 	}
 
@@ -82,24 +75,13 @@ public final class VordelKeyStore extends KeyStoreMapper {
 
 			if (store != null) {
 				/*
-				 * from the cert store point of view, refreshing this KeyStore is a read
-				 * operation
+				 * copy references to all infos in vordel certstore. assume that PersonalInfo
+				 * object do not need to be protected by the lock.
 				 */
-				LOCK.readLock().lock();
+				Map<String, PersonalInfo> aliases = store.getAliasToInfo();
 
-				try {
-					/*
-					 * copy references to all infos in vordel certstore. assume that PersonalInfo
-					 * object do not need to be protected by the lock.
-					 */
-					Map<String, PersonalInfo> aliases = store.getAliasToInfo();
-
-					for (Entry<String, PersonalInfo> entry : aliases.entrySet()) {
-						infos.put(entry.getKey(), entry.getValue());
-					}
-				} finally {
-					/* free the read lock */
-					LOCK.readLock().unlock();
+				for (Entry<String, PersonalInfo> entry : aliases.entrySet()) {
+					infos.put(entry.getKey(), entry.getValue());
 				}
 
 				/* assume data has been loaded in the context of a reload operation */
@@ -132,189 +114,70 @@ public final class VordelKeyStore extends KeyStoreMapper {
 	}
 
 	/**
-	 * This method will allow to invoke policies with a read protection on the
-	 * vordel store. It should not be used for policies which want to write to the
-	 * vordel store. This method will ensure that no write (imports) can occur
-	 * within the policy invocation. Do not call long running policies while holding
-	 * the read lock.
-	 * 
-	 * @param resource resource to be invoked
-	 * @param m        current message
-	 * @return resource invocation result
-	 * @throws CircuitAbortException if any error occurs
-	 */
-	public static Boolean invokeResourceSafely(InvocableResource resource, Message m) throws CircuitAbortException {
-		if (resource == null) {
-			return null;
-		}
-
-		LOCK.readLock().lock();
-
-		try {
-			return resource.invoke(m);
-		} finally {
-			LOCK.readLock().unlock();
-		}
-	}
-
-	/**
 	 * entry point for importing certificates info the vordel keystore. Any service
 	 * using the {@link VordelKeyStore} wrapper will be updated transparently. This
 	 * method can be used safely during deployment. Beware of imports during message
 	 * handling since the base vordel certificate store does not provide critical
 	 * sections. Loading certificates under heavy load may produce inconsistencies
-	 * in the vordel keystore unless you use the dedicated method to call policies
-	 * which needs read access to the key store with a read lock (basically, if a
-	 * policy use a filter which needs certificates if should be called with the
-	 * cert store read locked). Do not call long running policies while holding the
-	 * read lock.
+	 * in the vordel keystore. importing certificates during filter attachment is
+	 * totally safe.
 	 * 
 	 * @param entries        iterable of entries to be imported
 	 * @param aliasGenerator a function which generate the alias to be used with
 	 *                       existing PersonalInfo object and {@link KeyStoreEntry}
 	 *                       to be imported.
-	 * @return true if the store was available and entries have been submitted for
-	 *         import.
+	 * @param useThread      use separate thread to avoid disposeof Vordel JCE
+	 *                       Objects. use 'false' when in script attachment phase,
+	 *                       'true' if handling a message.
+	 * @return true if any certificate has been successfully imported.
 	 */
-	public boolean importEntries(Iterable<KeyStoreEntry> entries, BiFunction<PersonalInfo, KeyStoreEntry, String> aliasGenerator) {
+	public boolean importEntries(Iterable<KeyStoreEntry> entries, BiFunction<PersonalInfo, KeyStoreEntry, String> aliasGenerator, boolean useThread) {
 		Map<String, KeyStoreEntry> aliases = new HashMap<String, KeyStoreEntry>();
+		List<PersonalInfo> imported = new ArrayList<PersonalInfo>();
 		CertStore store = CertStore.getInstance();
 
 		if (store != null) {
-			LOCK.readLock().lock();
+			/* start by filtering X509 Certificates */
+			for (KeyStoreEntry entry : entries) {
+				if (entry.isX509Certificate()) {
+					X509Certificate certificate = (X509Certificate) entry.getCertificate();
+					X500Principal subject = certificate.getSubjectX500Principal();
+					PersonalInfo info = null;
 
-			try {
-				/* start by filtering X509 Certificates */
-				for (KeyStoreEntry entry : entries) {
-					if (entry.isX509Certificate()) {
-						X509Certificate certificate = (X509Certificate) entry.getCertificate();
-						X500Principal subject = certificate.getSubjectX500Principal();
-						PersonalInfo info = null;
+					try {
+						String thumb = CertStore.getCertThumbprint(certificate);
 
-						try {
-							String thumb = CertStore.getCertThumbprint(certificate);
+						info = store.getPersonalInfoByThumbprint(thumb);
+					} catch (NoSuchAlgorithmException | CertificateEncodingException e) {
+						Trace.error(String.format("unable to check for personal infos for '%s'", subject.toString()), e);
+					}
 
-							info = store.getPersonalInfoByThumbprint(thumb);
-						} catch (NoSuchAlgorithmException | CertificateEncodingException e) {
-							Trace.error(String.format("unable to check for personal infos for '%s'", subject.toString()), e);
-						}
+					String alias = aliasGenerator.apply(info, entry);
 
-						String alias = aliasGenerator.apply(info, entry);
-
-						if (alias != null) {
-							aliases.put(alias, entry);
-						}
+					if (alias != null) {
+						aliases.put(alias, entry);
 					}
 				}
-			} finally {
-				LOCK.readLock().unlock();
 			}
 
-			List<PersonalInfo> imported = new ArrayList<PersonalInfo>();
+			Runnable installer = new X509CertificateInstaller(store, aliases, imported);
 
-			Thread task = new Thread(() -> {
-				boolean modified = false;
-
-				LOCK.writeLock().lock();
+			if (useThread) {
+				Thread task = new Thread(installer);
 
 				try {
-					Iterator<Entry<String, KeyStoreEntry>> iterator = aliases.entrySet().iterator();
-
-					/*
-					 * the first step consist of importing certificates and private keys in the
-					 * vordel expected format. Any exception will cancel the import for a single
-					 * entry
-					 */
-
-					while (iterator.hasNext()) {
-						Entry<String, KeyStoreEntry> element = iterator.next();
-						KeyStoreEntry entry = element.getValue();
-						String alias = element.getKey();
-
-						X500Principal subject = ((X509Certificate) entry.getCertificate()).getSubjectX500Principal();
-
-						try {
-							/* retrieve API Gateway certificate and private key representations */
-							byte[] encoded = entry.getCertificate().getEncoded();
-							X509Certificate certificate = CertStore.decodeCert(encoded);
-							PrivateKey privateKey = toVordelPrivateKey(entry.getPrivateKey());
-
-							imported.add(store.addEntry(certificate, privateKey, alias));
-
-							modified |= true;
-						} catch (NoSuchAlgorithmException | CertificateEncodingException e) {
-							Trace.error(String.format("JCE exception importing certificate '%s' using alias '%s'", alias, subject.toString()), e);
-						} catch (Exception e) {
-							Trace.error(String.format("unexpected exception importing certificate '%s' using alias '%s'", alias, subject.toString()), e);
-						}
-					}
-
-					setCertificateChains(store, imported);
+					task.run();
+					task.join();
+				} catch (InterruptedException e) {
+					Trace.error("interrupted while importing certificates", e);
 				} finally {
-					LOCK.writeLock().unlock();
 				}
-
-				if (modified) {
-					synchronized (sync) {
-						dirty |= true;
-					}
-				}
-			});
-
-			int count = LOCK.getReadHoldCount();
-
-			while (LOCK.getReadHoldCount() > 0) {
-				/* ensure that we do not hold any read lock */
-				LOCK.readLock().unlock();
-			}
-
-			try {
-				task.run();
-				task.join();
-			} catch (InterruptedException e) {
-				Trace.error("interrupted while importing certificates", e);
-			} finally {
-				/* restore read hold count */
-				while (LOCK.getReadHoldCount() < count) {
-					LOCK.readLock().lock();
-				}
+			} else {
+				installer.run();
 			}
 		}
 
-		return store != null;
-	}
-
-	private static void setCertificateChains(CertStore store, List<PersonalInfo> imported) {
-		/*
-		 * Each imported entry has not the certificate chain set. Update it using the
-		 * KeyStorePathBuilder.
-		 */
-
-		/* create objects for holding anchors */
-		Map<X500Principal, TrustAnchor> anchors = new HashMap<X500Principal, TrustAnchor>();
-		List<Certificate> all = new ArrayList<Certificate>();
-
-		/* retrieve anchors */
-		KeyStorePathBuilder.setupAnchors(anchors, null, all, new X509CertificateIterator(store.getAliasToInfo().values().iterator()));
-
-		for (PersonalInfo info : imported) {
-			X509Certificate certificate = info.certificate;
-			List<Certificate> path = new ArrayList<Certificate>();
-			List<X509Certificate> x509 = new ArrayList<X509Certificate>();
-
-			/* build cert path and fill chain according to vordel cert store content */
-			KeyStorePathBuilder.getCertPath(certificate, all, path, anchors);
-
-			for (Certificate item : path) {
-				if (item instanceof X509Certificate) {
-					/* just ensure that there won't be any class cast exception */
-					x509.add((X509Certificate) item);
-				}
-			}
-
-			/* set certificate chain */
-			info.chain = x509.toArray(new X509Certificate[0]);
-		}
+		return !imported.isEmpty();
 	}
 
 	/**
@@ -355,6 +218,94 @@ public final class VordelKeyStore extends KeyStoreMapper {
 		}
 
 		return null;
+	}
+
+	private static class X509CertificateInstaller implements Runnable {
+		private final Map<String, KeyStoreEntry> aliases;
+		private final List<PersonalInfo> imported;
+		private final CertStore store;
+
+		private X509CertificateInstaller(CertStore store, Map<String, KeyStoreEntry> aliases, List<PersonalInfo> imported) {
+			this.store = store;
+			this.aliases = aliases;
+			this.imported = imported;
+		}
+
+		@Override
+		public void run() {
+			Iterator<Entry<String, KeyStoreEntry>> iterator = aliases.entrySet().iterator();
+			boolean modified = false;
+
+			/*
+			 * the first step consist of importing certificates and private keys in the
+			 * vordel expected format. Any exception will cancel the import for a single
+			 * entry
+			 */
+
+			while (iterator.hasNext()) {
+				Entry<String, KeyStoreEntry> element = iterator.next();
+				KeyStoreEntry entry = element.getValue();
+				String alias = element.getKey();
+
+				X500Principal subject = ((X509Certificate) entry.getCertificate()).getSubjectX500Principal();
+
+				try {
+					/* retrieve API Gateway certificate and private key representations */
+					byte[] encoded = entry.getCertificate().getEncoded();
+					X509Certificate certificate = CertStore.decodeCert(encoded);
+					PrivateKey privateKey = toVordelPrivateKey(entry.getPrivateKey());
+
+					imported.add(store.addEntry(certificate, privateKey, alias));
+
+					modified |= true;
+				} catch (NoSuchAlgorithmException | CertificateEncodingException e) {
+					Trace.error(String.format("JCE exception importing certificate '%s' using alias '%s'", alias, subject.toString()), e);
+				} catch (Exception e) {
+					Trace.error(String.format("unexpected exception importing certificate '%s' using alias '%s'", alias, subject.toString()), e);
+				}
+			}
+
+			setCertificateChains();
+
+			if (modified) {
+				synchronized (INSTANCE.sync) {
+					INSTANCE.dirty |= true;
+				}
+			}
+		}
+
+		private void setCertificateChains() {
+			/*
+			 * Each imported entry has not the certificate chain set. Update it using the
+			 * KeyStorePathBuilder.
+			 */
+
+			/* create objects for holding anchors */
+			Map<X500Principal, TrustAnchor> anchors = new HashMap<X500Principal, TrustAnchor>();
+			List<Certificate> authorities = new ArrayList<Certificate>();
+
+			/* retrieve anchors */
+			KeyStorePathBuilder.setupAnchors(new X509CertificateIterator(store.getAliasToInfo().values().iterator()), anchors, null, authorities);
+
+			for (PersonalInfo info : imported) {
+				X509Certificate certificate = info.certificate;
+				List<Certificate> path = new ArrayList<Certificate>();
+				List<X509Certificate> x509 = new ArrayList<X509Certificate>();
+
+				/* build cert path and fill chain according to vordel cert store content */
+				KeyStorePathBuilder.getCertPath(certificate, path, anchors, authorities);
+
+				for (Certificate item : path) {
+					if (item instanceof X509Certificate) {
+						/* just ensure that there won't be any class cast exception */
+						x509.add((X509Certificate) item);
+					}
+				}
+
+				/* set certificate chain */
+				info.chain = x509.toArray(new X509Certificate[0]);
+			}
+		}
 	}
 
 	private static class X509CertificateIterator implements Iterator<X509Certificate> {

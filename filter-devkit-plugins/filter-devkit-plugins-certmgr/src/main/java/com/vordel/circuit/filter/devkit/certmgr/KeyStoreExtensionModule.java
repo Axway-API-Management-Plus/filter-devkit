@@ -1,12 +1,12 @@
 package com.vordel.circuit.filter.devkit.certmgr;
 
-import com.vordel.circuit.CircuitAbortException;
-import com.vordel.circuit.Message;
+import java.util.function.BiFunction;
+
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
-import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
 import com.vordel.circuit.filter.devkit.script.extension.AbstractScriptExtension;
 import com.vordel.circuit.filter.devkit.script.extension.ScriptExtensionBuilder;
 import com.vordel.circuit.filter.devkit.script.extension.annotations.ScriptExtension;
+import com.vordel.security.cert.PersonalInfo;
 
 @ScriptExtension(KeyStoreExtensionRuntime.class)
 public class KeyStoreExtensionModule extends AbstractScriptExtension implements KeyStoreExtensionRuntime {
@@ -22,17 +22,9 @@ public class KeyStoreExtensionModule extends AbstractScriptExtension implements 
 	}
 
 	@Override
-	public Boolean lockedCertStoreInvoke(Message msg, String name) throws CircuitAbortException {
-		ContextResource resource = getContextResource(name);
+	public boolean importEntries(Iterable<KeyStoreEntry> entries, BiFunction<PersonalInfo, KeyStoreEntry, String> aliasGenerator, boolean useThread) {
+		VordelKeyStore store = VordelKeyStore.getInstance();
 
-		if (!(resource instanceof InvocableResource)) {
-			throw new CircuitAbortException(String.format("resource '%s' is not invocable", name));
-		}
-
-		if (msg == null) {
-			throw new CircuitAbortException("no message context");
-		}
-
-		return VordelKeyStore.invokeResourceSafely((InvocableResource) resource, msg);
+		return store.importEntries(entries, aliasGenerator, useThread);
 	}
 }

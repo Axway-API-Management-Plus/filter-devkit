@@ -1,10 +1,11 @@
 package com.vordel.circuit.filter.devkit.certmgr;
 
-import com.vordel.circuit.CircuitAbortException;
-import com.vordel.circuit.Message;
+import java.util.function.BiFunction;
+
+import com.vordel.security.cert.PersonalInfo;
 
 public interface KeyStoreExtensionRuntime {
 	KeyStoreResource getKeyStoreResource(String name);
-
-	Boolean lockedCertStoreInvoke(Message msg, String name) throws CircuitAbortException;
+	
+	boolean importEntries(Iterable<KeyStoreEntry> entries, BiFunction<PersonalInfo, KeyStoreEntry, String> aliasGenerator, boolean useThread);
 }

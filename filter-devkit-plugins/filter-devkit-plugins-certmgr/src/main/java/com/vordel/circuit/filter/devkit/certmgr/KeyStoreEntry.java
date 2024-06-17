@@ -37,15 +37,40 @@ import com.vordel.security.cert.PersonalInfo;
 import com.vordel.trace.Trace;
 
 public final class KeyStoreEntry implements Entry<String, Certificate> {
-	private String alias;
-	private Certificate certificate;
-	private PrivateKey privateKey;
-	private PublicKey publicKey;
-	private SecretKey secretKey;
-	private JWK privateJWK;
-	private JWK publicJWK;
-	private String x5t;
-	private String x5t256;
+	private final String alias;
+	private final Certificate certificate;
+	private final PrivateKey privateKey;
+	private final PublicKey publicKey;
+	private final SecretKey secretKey;
+	private final JWK privateJWK;
+	private final JWK publicJWK;
+
+	private final String x5t256;
+	private final String x5t;
+	
+	public KeyStoreEntry(String alias, KeyStoreEntry entry) {
+		this.alias = alias;
+		this.certificate = entry.certificate;
+		this.privateKey = entry.privateKey;
+		this.publicKey = entry.publicKey;
+		this.secretKey = entry.secretKey;
+		this.privateJWK = entry.privateJWK;
+		this.publicJWK = entry.publicJWK;
+		this.x5t = entry.x5t;
+		this.x5t256 = entry.x5t256;
+	}
+	
+	public KeyStoreEntry(KeyStoreEntry entry, JWK transformed) {
+		this.alias = entry.alias;
+		this.certificate = entry.certificate;
+		this.privateKey = entry.privateKey;
+		this.publicKey = entry.publicKey;
+		this.secretKey = entry.secretKey;
+		this.privateJWK = transformed;
+		this.publicJWK = transformed == null ? null : transformed.toPublicJWK();
+		this.x5t = entry.x5t;
+		this.x5t256 = entry.x5t256;
+	}
 
 	private KeyStoreEntry(KeyStoreEntry entry, Certificate certificate, PrivateKey privateKey) {
 		PublicKey publicKey = entry.publicKey;
@@ -56,7 +81,7 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 			publicKey = certificate.getPublicKey();
 		}
 
-		JWK privateJWK = refineJWK(this.alias = entry.alias, certificate, publicKey, privateKey);
+		JWK privateJWK = refineJWK(entry.alias, certificate, publicKey, privateKey);
 		JWK publicJWK = null;
 
 		Base64URL x5t = null;
@@ -219,11 +244,6 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 		return publicKey == null ? null : new KeyStoreEntry(alias, certificate, publicKey, privateKey);
 	}
 
-	@SuppressWarnings("deprecation")
-	private static Base64URL getX5T(JWK jwk) {
-		return jwk.getX509CertThumbprint();
-	}
-
 	private static String getX5Tx(Certificate certificate, Base64URL available, String hash) {
 		if (available != null) {
 			return available.toString();
@@ -280,6 +300,10 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 
 	public JWK getJWK() {
 		return privateJWK;
+	}
+
+	public String getKeyID() {
+		return privateJWK == null ? null : privateJWK.getKeyID();
 	}
 
 	public String getX5T() {
@@ -376,6 +400,11 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 		}
 
 		return privateJWK;
+	}
+
+	@SuppressWarnings("deprecation")
+	private static Base64URL getX5T(JWK jwk) {
+		return jwk.getX509CertThumbprint();
 	}
 
 	@Override

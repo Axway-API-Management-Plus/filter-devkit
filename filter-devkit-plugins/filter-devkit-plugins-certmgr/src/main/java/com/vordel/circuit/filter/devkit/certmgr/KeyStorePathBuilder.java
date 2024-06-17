@@ -99,23 +99,36 @@ public class KeyStorePathBuilder {
 					}
 				}
 
-				setupAnchors(anchors, authorities, null, certificates.iterator());
+				setupAnchors(certificates.iterator(), anchors, authorities, null);
 			}
 		}
 
 		return force;
 	}
 
-	public static <T> void setupAnchors(Map<X500Principal, TrustAnchor> anchors, List<X509Certificate> authorities, List<Certificate> all, Iterator<X509Certificate> iterator) {
+	/**
+	 * from a given iterator of trusted certificates, fill anchor map and
+	 * intermediate autorities list. a third list is filled with all values from
+	 * iterator (except duplicates). This method does not check for certificates
+	 * validity.
+	 * 
+	 * @param iterator      iterator of X509 certificates
+	 * @param anchors       list of anchors (self signed certificates or
+	 *                      intermediates without root CA)
+	 * @param intermediates intermediate authorities for which we do have the root
+	 *                      CA
+	 * @param authorities   list of all trusted certificates without duplicates.
+	 */
+	public static void setupAnchors(Iterator<X509Certificate> iterator, Map<X500Principal, TrustAnchor> anchors, List<? super X509Certificate> intermediates, List<? super X509Certificate> authorities) {
 		Map<X500Principal, X509Certificate> trusts = new HashMap<X500Principal, X509Certificate>();
 		Set<ByteBuffer> seen = new HashSet<ByteBuffer>();
 
-		if (authorities != null) {
-			authorities.clear();
+		if (intermediates != null) {
+			intermediates.clear();
 		}
 
-		if (all != null) {
-			all.clear();
+		if (authorities != null) {
+			authorities.clear();
 		}
 
 		anchors.clear();
@@ -132,8 +145,8 @@ public class KeyStorePathBuilder {
 
 					trusts.put(subject, certificate);
 
-					if (all != null) {
-						all.add(certificate);
+					if (authorities != null) {
+						authorities.add(certificate);
 					}
 				}
 			} catch (CertificateEncodingException e) {
@@ -153,9 +166,9 @@ public class KeyStorePathBuilder {
 
 				/* assume that we do not have multiple anchors with the same name */
 				anchors.putIfAbsent(subject, anchor);
-			} else if (authorities != null) {
+			} else if (intermediates != null) {
 				/* this is an intermediate authority */
-				authorities.add(certificate);
+				intermediates.add(certificate);
 			}
 		}
 	}
@@ -192,7 +205,7 @@ public class KeyStorePathBuilder {
 		return null;
 	}
 
-	private static CertPathHolder getCertPathHolder(X509Certificate certificate, List<? extends Certificate> untrusted, List<Certificate> path, Collection<? extends Certificate> authorities, Set<TrustAnchor> anchors) {
+	private static CertPathHolder getCertPathHolder(X509Certificate certificate, Set<TrustAnchor> anchors, Collection<? extends Certificate> authorities, List<? extends Certificate> untrusted) {
 		String name = certificate.getSubjectX500Principal().toString();
 		PublicKey key = certificate.getPublicKey();
 		CertPathHolder holder = null;
@@ -234,7 +247,7 @@ public class KeyStorePathBuilder {
 		return holder;
 	}
 
-	private final CertPathHolder getCertPathHolder(X509Certificate certificate, List<Certificate> untrusted, List<Certificate> path) {
+	private final CertPathHolder getCertPathHolder(X509Certificate certificate, List<? extends Certificate> untrusted) {
 		Collection<X509Certificate> authorities = null;
 		Set<TrustAnchor> anchors = null;
 
@@ -244,10 +257,10 @@ public class KeyStorePathBuilder {
 			authorities = new ArrayList<X509Certificate>(this.authorities);
 		}
 
-		return getCertPathHolder(certificate, untrusted, path, authorities, anchors);
+		return getCertPathHolder(certificate, anchors, authorities, untrusted);
 	}
 
-	private static final TrustAnchor getTrustAnchor(X509Certificate certificate, List<? extends Certificate> path, Set<TrustAnchor> roots) {
+	private static final TrustAnchor getTrustAnchor(X509Certificate certificate, List<? extends Certificate> path, Set<TrustAnchor> anchors) {
 		Certificate last = null;
 
 		if (path.size() > 0) {
@@ -265,7 +278,7 @@ public class KeyStorePathBuilder {
 		if (last instanceof X509Certificate) {
 			X500Principal issuer = ((X509Certificate) last).getIssuerX500Principal();
 
-			for (TrustAnchor anchor : roots) {
+			for (TrustAnchor anchor : anchors) {
 				X509Certificate root = anchor.getTrustedCert();
 
 				if (issuer.equals(root.getSubjectX500Principal())) {
@@ -277,7 +290,7 @@ public class KeyStorePathBuilder {
 		return null;
 	}
 
-	public final CertPath getCertPathWithCache(X509Certificate certificate, List<Certificate> path) throws CircuitAbortException {
+	public final CertPath getCertPathWithCache(X509Certificate certificate, List<? super X509Certificate> path) throws CircuitAbortException {
 		PublicKey key = certificate.getPublicKey();
 		CertPathHolder holder = null;
 		String cacheKey = null;
@@ -287,11 +300,11 @@ public class KeyStorePathBuilder {
 			holder = (CertPathHolder) cache.getCachedValue(cacheKey);
 
 			if (holder == null) {
-				holder = getCertPathHolder(certificate, null, path);
+				holder = getCertPathHolder(certificate, null);
 				cache.putCachedValue(cacheKey, holder);
 			}
 		} else {
-			holder = getCertPathHolder(certificate, null, path);
+			holder = getCertPathHolder(certificate, null);
 		}
 
 		path.clear();
@@ -308,8 +321,8 @@ public class KeyStorePathBuilder {
 		return null;
 	}
 
-	public final CertPath getCertPath(X509Certificate certificate, List<Certificate> untrusted, List<Certificate> path) {
-		CertPathHolder holder = getCertPathHolder(certificate, untrusted, path);
+	public final CertPath getCertPath(X509Certificate certificate, List<? super X509Certificate> path, List<? extends Certificate> untrusted) {
+		CertPathHolder holder = getCertPathHolder(certificate, untrusted);
 
 		path.clear();
 
@@ -325,9 +338,9 @@ public class KeyStorePathBuilder {
 		return null;
 	}
 
-	public static CertPath getCertPath(X509Certificate certificate, List<Certificate> store, List<Certificate> path, Map<X500Principal, TrustAnchor> anchors) {
+	public static CertPath getCertPath(X509Certificate certificate, List<? super X509Certificate> path, Map<X500Principal, TrustAnchor> anchors, List<? extends Certificate> authorities) {
 		Set<TrustAnchor> roots = new HashSet<TrustAnchor>(anchors.values());
-		CertPathHolder holder = getCertPathHolder(certificate, null, path, store, roots);
+		CertPathHolder holder = getCertPathHolder(certificate, roots, authorities, null);
 
 		path.clear();
 
@@ -358,30 +371,33 @@ public class KeyStorePathBuilder {
 	private static final class CertPathHolder implements Serializable {
 		private static final long serialVersionUID = -7648994056458753481L;
 
-		private final List<Certificate> path;
+		private final List<X509Certificate> path;
 		private final CertPath pkix;
 
 		private CertPathHolder(CertPath pkix, TrustAnchor anchor) {
-			List<Certificate> path = null;
+			List<X509Certificate> path = null;
 
 			if (pkix != null) {
 				Iterator<? extends Certificate> iterator = pkix.getCertificates().iterator();
 				Set<ByteBuffer> seen = new HashSet<ByteBuffer>();
 
-				path = new ArrayList<Certificate>();
+				path = new ArrayList<X509Certificate>();
 
 				while (iterator.hasNext()) {
 					Certificate certificate = iterator.next();
-					PublicKey key = certificate.getPublicKey();
-					byte[] encoded = key.getEncoded();
 
-					if (seen.add(ByteBuffer.wrap(encoded))) {
-						path.add(certificate);
+					if (certificate instanceof X509Certificate) {
+						PublicKey key = certificate.getPublicKey();
+						byte[] encoded = key.getEncoded();
+
+						if (seen.add(ByteBuffer.wrap(encoded))) {
+							path.add((X509Certificate) certificate);
+						}
 					}
 				}
 
 				if (anchor != null) {
-					Certificate trusted = anchor.getTrustedCert();
+					X509Certificate trusted = anchor.getTrustedCert();
 
 					if (trusted != null) {
 						PublicKey key = trusted.getPublicKey();

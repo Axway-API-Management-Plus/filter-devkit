@@ -105,7 +105,10 @@ public class KeyStoreExportService implements InvocableResource {
 				}
 
 				for (KeyStoreEntry entry : certificates.values()) {
-					exports.add(entry);
+					/* transform JWK on reload this will be faster for service */
+					JWK transformed = getTransformedJWK(entry);
+
+					exports.add(new KeyStoreEntry(entry, transformed));
 				}
 
 				stamp = System.currentTimeMillis();
@@ -124,7 +127,7 @@ public class KeyStoreExportService implements InvocableResource {
 				if (!certificates.containsKey(key)) {
 					List<Certificate> path = new ArrayList<Certificate>();
 
-					trust.getCertPath((X509Certificate) entry.getCertificate(), null, path);
+					trust.getCertPath((X509Certificate) entry.getCertificate(), path, null);
 
 					exportChain(certificates, path);
 
@@ -136,6 +139,30 @@ public class KeyStoreExportService implements InvocableResource {
 		} catch (CertificateEncodingException e) {
 			Trace.error("unable to encode certificate", e);
 		}
+	}
+
+	private JWK getTransformedJWK(KeyStoreEntry entry) {
+		try {
+			JWK jwk = entry.getJWK();
+			ObjectNode json = (ObjectNode) GLOBAL_MAPPER.readTree(jwk.toJSONString());
+			Iterator<KeyStoreExportTransform> iterator = transforms.iterator();
+
+			while ((json != null) && iterator.hasNext()) {
+				KeyStoreExportTransform transform = iterator.next();
+
+				json = transform.transform(trust, entry, json);
+			}
+
+			if (json != null) {
+				return JWK.parse(GLOBAL_MAPPER.writeValueAsString(json));
+			}
+		} catch (JsonProcessingException e) {
+			Trace.error("unable to decode JWK as JSON", e);
+		} catch (ParseException e) {
+			Trace.error("unable to decode transformed JSON as JWK", e);
+		}
+
+		return null;
 	}
 
 	private void exportChain(Map<ByteBuffer, KeyStoreEntry> certificates, List<Certificate> path) throws CertificateEncodingException {
@@ -261,6 +288,36 @@ public class KeyStoreExportService implements InvocableResource {
 
 		if (builder == null) {
 			builder = Response.ok(path).lastModified(lastModified);
+		}
+
+		return builder.build();
+	}
+
+	private Response getJWKResponse(Request request, Predicate<KeyStoreEntry> predicate) {
+		KeyStoreEntry entry = null;
+		Date lastModified = null;
+
+		synchronized (sync) {
+			entry = getKeyStoreEntry(predicate);
+			lastModified = new Date(stamp);
+		}
+
+		ResponseBuilder builder = request.evaluatePreconditions(lastModified);
+
+		if (builder == null) {
+			JWK jwk = exportPrivate ? entry.getJWK() : entry.getPublicJWK();
+
+			if (jwk == null) {
+				throw new WebApplicationException(Status.NOT_FOUND);
+			}
+
+			try {
+				ObjectNode tree = (ObjectNode) GLOBAL_MAPPER.readTree(jwk.toJSONString());
+
+				builder = Response.ok(tree).lastModified(lastModified);
+			} catch (JsonProcessingException e) {
+				throw new WebApplicationException("Unable to encode jwk", e, Status.INTERNAL_SERVER_ERROR);
+			}
 		}
 
 		return builder.build();
@@ -486,15 +543,15 @@ public class KeyStoreExportService implements InvocableResource {
 
 		while (entries.hasNext()) {
 			KeyStoreEntry entry = entries.next();
-			JWK jwk = getTransformedJWK(entry);
+			JWK jwk = exportPrivate ? entry.getJWK() : entry.getPublicJWK();
 
 			if (jwk != null) {
-				String alias = jwk.getKeyID();
+				String kid = jwk.getKeyID();
 				boolean added = false;
 
-				added |= appendJWK(jwks, jwk, aliases, alias, added);
+				added |= appendJWK(jwks, jwk, aliases, kid, added);
 
-				if (added || (alias == null)) {
+				if (added || (kid == null)) {
 					added |= appendJWK(jwks, jwk, x5t256s, jwk.getX509CertSHA256Thumbprint(), added);
 					added |= appendJWK(jwks, jwk, x5ts, getX5T(jwk), added);
 				}
@@ -506,7 +563,7 @@ public class KeyStoreExportService implements InvocableResource {
 
 		if (builder == null) {
 			try {
-				ObjectNode tree = (ObjectNode) GLOBAL_MAPPER.readTree(jwkset.toString(false));
+				ObjectNode tree = (ObjectNode) GLOBAL_MAPPER.readTree(jwkset.toString(!exportPrivate));
 
 				builder = Response.ok(tree).lastModified(lastModified);
 			} catch (JsonProcessingException e) {
@@ -526,7 +583,7 @@ public class KeyStoreExportService implements InvocableResource {
 		}
 
 		return getJWKResponse(request, (entry) -> {
-			String key = entry.getAlias();
+			String key = entry.getKeyID();
 
 			return kid.equals(key);
 		});
@@ -562,36 +619,6 @@ public class KeyStoreExportService implements InvocableResource {
 		});
 	}
 
-	private Response getJWKResponse(Request request, Predicate<KeyStoreEntry> predicate) {
-		KeyStoreEntry entry = null;
-		Date lastModified = null;
-
-		synchronized (sync) {
-			entry = getKeyStoreEntry(predicate);
-			lastModified = new Date(stamp);
-		}
-
-		ResponseBuilder builder = request.evaluatePreconditions(lastModified);
-
-		if (builder == null) {
-			JWK jwk = getTransformedJWK(entry);
-
-			if (jwk == null) {
-				throw new WebApplicationException(Status.NOT_FOUND);
-			}
-
-			try {
-				ObjectNode tree = (ObjectNode) GLOBAL_MAPPER.readTree(jwk.toJSONString());
-
-				builder = Response.ok(tree).lastModified(lastModified);
-			} catch (JsonProcessingException e) {
-				throw new WebApplicationException("Unable to encode jwk", e, Status.INTERNAL_SERVER_ERROR);
-			}
-		}
-
-		return builder.build();
-	}
-
 	private static boolean appendJWK(List<JWK> jwks, JWK jwk, Set<String> set, Base64URL key, boolean added) {
 		return key == null ? added : appendJWK(jwks, jwk, set, key.toString(), added);
 	}
@@ -602,30 +629,6 @@ public class KeyStoreExportService implements InvocableResource {
 		}
 
 		return added;
-	}
-
-	private JWK getTransformedJWK(KeyStoreEntry entry) {
-		try {
-			JWK jwk = exportPrivate ? entry.getJWK() : entry.getPublicJWK();
-			ObjectNode json = (ObjectNode) GLOBAL_MAPPER.readTree(jwk.toJSONString());
-			Iterator<KeyStoreExportTransform> iterator = transforms.iterator();
-
-			while ((json != null) && iterator.hasNext()) {
-				KeyStoreExportTransform transform = iterator.next();
-
-				json = transform.transform(trust, entry, json);
-			}
-
-			if (json != null) {
-				return JWK.parse(GLOBAL_MAPPER.writeValueAsString(json));
-			}
-		} catch (JsonProcessingException e) {
-			Trace.error("unable to decode JWK as JSON", e);
-		} catch (ParseException e) {
-			Trace.error("unable to decode transformed JSON as JWK", e);
-		}
-
-		return null;
 	}
 
 	@SuppressWarnings("deprecation")
