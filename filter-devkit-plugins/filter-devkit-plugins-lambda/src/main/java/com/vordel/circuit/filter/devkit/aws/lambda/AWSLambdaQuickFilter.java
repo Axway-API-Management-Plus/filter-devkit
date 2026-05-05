@@ -4,8 +4,6 @@ import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
-
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
 import com.amazonaws.auth.AWSCredentials;
@@ -291,8 +289,11 @@ public class AWSLambdaQuickFilter extends JavaQuickFilterDefinition {
 				m.put("aws.lambda.http.status.code", statusCode);
 				m.put("aws.lambda.http.headers", lambdaResponseHeaders);
 				m.put("aws.lambda.response", PAYLOAD_SELECTOR.substitute(m));
+
+				String error = invokeResult.getFunctionError();
+
 				// If the response contains a function error
-				if (StringUtils.isNotBlank(invokeResult.getFunctionError())) {
+				if ((error != null) && (!error.isBlank())) {
 					Trace.error("Error returned by Lambda function : " + vLambdaFunctionName);
 
 					m.put("aws.lambda.function.error", invokeResult.getFunctionError());

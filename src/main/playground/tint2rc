@@ -171,9 +171,7 @@ launcher_icon_asb = 100 0 0
 launcher_icon_theme_override = 0
 startup_notifications = 1
 launcher_tooltip = 1
-launcher_item_app = eclipse.desktop
 launcher_item_app = policystudio.desktop
-launcher_item_app = firefox-esr.desktop
 launcher_item_app = lxterminal.desktop
 launcher_item_app = tint2conf.desktop
 
@@ -204,5 +202,3 @@ tooltip_padding = 2 2
 tooltip_background_id = 5
 tooltip_font_color = #222222 100
 tooltip_font = sans 9
-
-
