@@ -29,7 +29,6 @@ public class QuickFilterGUI extends DefaultGUIFilterCompat {
 		return entityType;
 	}
 
-	@Override
 	public String getSmallIconId() {
 		EntityType entityType = getEntityType();
 		String id = entityType == null ? "filter_small" : QuickFilterSupport.getConstantStringValue(entityType, QuickFilterSupport.QUICKFILTER_ICON);

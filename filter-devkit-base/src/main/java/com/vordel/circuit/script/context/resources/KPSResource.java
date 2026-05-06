@@ -15,39 +15,8 @@ import com.vordel.kps.impl.KPS;
 import com.vordel.kps.query.KeyQuery;
 
 public abstract class KPSResource implements ContextResource, ViewableResource {
-	private static final Method MODEL_METHOD;
-	private static final Object INSTANCE;
-
-	static {
-		try {
-			/*
-			 * reflection stuff to support from 7.5 to 7.7.0.20200530
-			 */
-			Method instanceMethod = KPS.class.getMethod("getInstance");
-			Class<?> instanceType = instanceMethod.getReturnType();
-
-			INSTANCE = instanceMethod.invoke(null);
-			MODEL_METHOD = instanceType.getMethod("getModel");
-		} catch (NoSuchMethodException e) {
-			throw new IllegalStateException("Unable to find requested KPS methods", e);
-		} catch (IllegalAccessException e) {
-			throw new IllegalStateException("Unable to invoke requested KPS methods", e);
-		} catch (InvocationTargetException e) {
-			Throwable cause = e.getCause();
-
-			throw new IllegalStateException("Unable to retrieve KPS instance", cause);
-		}
-	}
 	public static Model getModel() {
-		try {
-			return (Model) MODEL_METHOD.invoke(INSTANCE);
-		} catch (IllegalAccessException e) {
-			throw new IllegalStateException("Unable to retrieve KPS model", e);
-		} catch (InvocationTargetException e) {
-			Throwable cause = e.getCause();
-
-			throw new IllegalStateException("Unable to retrieve KPS model", cause);
-		}
+		return (Model) KPS.getInstance();
 	}
 
 	public abstract Store getStore();

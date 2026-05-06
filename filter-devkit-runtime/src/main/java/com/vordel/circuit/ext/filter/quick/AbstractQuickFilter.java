@@ -10,7 +10,6 @@ import com.vordel.es.EntityStoreException;
 import com.vordel.es.EntityType;
 
 public abstract class AbstractQuickFilter extends DefaultFilter {
-	@Override
 	public Class<? extends FilterContainerImpl> getConfigPanelClass() throws ClassNotFoundException {
 		return Class.forName("com.vordel.client.ext.filter.quick.QuickFilterGUI").asSubclass(FilterContainerImpl.class);
 	}

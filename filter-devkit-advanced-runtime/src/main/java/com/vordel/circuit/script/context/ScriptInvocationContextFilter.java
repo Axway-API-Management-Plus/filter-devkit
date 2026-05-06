@@ -19,7 +19,6 @@ import com.vordel.es.EntityType;
 public class ScriptInvocationContextFilter extends DefaultFilter {
 	private Selector<String> attributeSelector = null;
 
-	@Override
 	public Class<? extends FilterContainerImpl> getConfigPanelClass() throws ClassNotFoundException {
 		return Class.forName("com.vordel.client.manager.filter.script.context.ScriptInvocationContextGUIFilter").asSubclass(FilterContainerImpl.class);
 	}

@@ -16,7 +16,6 @@ import com.vordel.es.EntityStore;
 import com.vordel.es.EntityType;
 
 public class ScriptInvocationContextGUIFilter extends DefaultGUIFilterCompat {
-	@Override
 	public String getSmallIconId() {
 		return "copy";
 	}
@@ -41,7 +40,6 @@ public class ScriptInvocationContextGUIFilter extends DefaultGUIFilterCompat {
 		return resolve("SCRIPTCONTEXT_PALETTE_NAME");
 	}
 
-	@Override
 	public List<VordelPage> getPropertyPages() {
 		Vector<VordelPage> pages = new Vector<VordelPage>();
 

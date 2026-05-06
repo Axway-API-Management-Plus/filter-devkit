@@ -9,7 +9,6 @@ import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
-import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
@@ -31,9 +30,7 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.Payload;
-import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.util.Base64;
@@ -47,7 +44,7 @@ import com.vordel.circuit.ext.filter.quick.QuickFilterField;
 import com.vordel.circuit.ext.filter.quick.QuickFilterType;
 import com.vordel.circuit.ext.filter.quick.QuickJavaFilterDefinition;
 import com.vordel.circuit.jwt.JWTException;
-import com.vordel.circuit.jwt.JWTUtils;
+import com.vordel.circuit.jwt.nimbus.JWTNimbusImpl;
 import com.vordel.circuit.script.context.resources.PolicyResource;
 import com.vordel.circuit.script.context.resources.SelectorResource;
 import com.vordel.common.Dictionary;
@@ -1043,16 +1040,8 @@ public class GenerateJWS extends QuickJavaFilterDefinition {
 
 					if (signer instanceof PrivateKey) {
 						PrivateKey key = (PrivateKey) signer;
-
-						if (RSASSASigner.SUPPORTED_ALGORITHMS.contains(alg)) {
-							result = new RSASSASigner(key);
-						} else if (ECDSASigner.SUPPORTED_ALGORITHMS.contains(alg)) {
-							ECPrivateKey ecPrivateKey = JWTUtils.translateToECPrivateKey(key);
-
-							result = new ECDSASigner((ECPrivateKey) ecPrivateKey);
-						} else {
-							Trace.error("No Supported assymetric algorithm");
-						}
+						
+						JWTNimbusImpl.getJWSAlgorithmSigner(alg, key);
 					} else if (signer instanceof byte[]) {
 						if (MACSigner.SUPPORTED_ALGORITHMS.contains(alg)) {
 							result = new MACSigner((byte[]) signer);

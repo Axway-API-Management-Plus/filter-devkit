@@ -25,7 +25,6 @@ import com.vordel.trace.Trace;
 public class InitializerShortcutGUIFilter extends DefaultGUIFilterCompat {
 	private Circuit remoteCircuit = null;
 
-	@Override
 	public String getSmallIconId() {
 		return "web_service";
 	}
@@ -50,7 +49,6 @@ public class InitializerShortcutGUIFilter extends DefaultGUIFilterCompat {
 		return resolve("INITIALIZERSHORTCUT_PALETTE_NAME");
 	}
 
-	@Override
 	public List<VordelPage> getPropertyPages() {
 		Vector<VordelPage> pages = new Vector<VordelPage>();
 

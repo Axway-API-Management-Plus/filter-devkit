@@ -11,7 +11,6 @@ import com.vordel.client.manager.Images;
 import com.vordel.client.manager.wizard.VordelPage;
 
 public class AssertionGUIFilter extends DefaultGUIFilterCompat {
-	@Override
 	public String getSmallIconId() {
 		return "has_cert_expired";
 	}
@@ -36,7 +35,6 @@ public class AssertionGUIFilter extends DefaultGUIFilterCompat {
 		return resolve("ASSERTION_PALETTE_NAME");
 	}
 
-	@Override
 	public List<VordelPage> getPropertyPages() {
 		Vector<VordelPage> pages = new Vector<VordelPage>();
 

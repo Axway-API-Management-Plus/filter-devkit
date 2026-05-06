@@ -1,19 +1,10 @@
 package com.vordel.mavenizer.dist;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.httpclient.Credentials;
-import org.apache.commons.httpclient.HostConfiguration;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.NTCredentials;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.maven.cli.configuration.SettingsXmlConfigurationProcessor;
 import org.apache.maven.model.building.DefaultModelBuilderFactory;
 import org.apache.maven.model.building.ModelBuilder;
@@ -29,9 +20,6 @@ import org.apache.maven.settings.building.SettingsBuildingException;
 import org.apache.maven.settings.crypto.DefaultSettingsDecryptionRequest;
 import org.apache.maven.settings.crypto.SettingsDecrypter;
 import org.apache.maven.settings.crypto.SettingsDecryptionResult;
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
-import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.codehaus.plexus.ContainerConfiguration;
 import org.codehaus.plexus.DefaultContainerConfiguration;
 import org.codehaus.plexus.DefaultPlexusContainer;
@@ -96,7 +84,7 @@ public class GatewayRepoSys {
 	}
 
 	private static RemoteRepository getCentralRepository() {
-		RemoteRepository.Builder builder = new RemoteRepository.Builder("central", "default", "http://repo.maven.apache.org/maven2");
+		RemoteRepository.Builder builder = new RemoteRepository.Builder("central", "default", "https://repo.maven.apache.org/maven2");
 
 		return builder.build();
 	}
@@ -131,50 +119,6 @@ public class GatewayRepoSys {
 
 		this.workspace = workspace;
 		this.systemProperties.putAll(System.getProperties());
-	}
-
-	public SolrServer getSolrServer(String url) {
-		try {
-			CommonsHttpSolrServer server = new CommonsHttpSolrServer(url);
-			Proxy proxy = getSettings().getActiveProxy();
-
-			HttpClient client = server.getHttpClient();
-			HostConfiguration params = client.getHostConfiguration();
-
-			if (proxy != null) {
-				String user = proxy.getUsername();
-				String password = proxy.getPassword();
-
-				params.setProxy(proxy.getHost(), proxy.getPort());
-
-				if (user != null) {
-					int separator = user.indexOf('\\');
-					Credentials creds = null;
-
-					if (separator != -1) {
-						String domain = user.substring(0, separator);
-
-						try {
-							creds = new NTCredentials(user.substring(separator
-									+ 1), password, InetAddress.getLocalHost().getHostName(), domain);
-						} catch (UnknownHostException e) {
-						}
-					}
-
-					if (creds == null) {
-						creds = new UsernamePasswordCredentials(user, password);
-					}
-
-					client.getState().setProxyCredentials(AuthScope.ANY, creds);
-				}
-			}
-
-			server.setParser(new XMLResponseParser());
-
-			return server;
-		} catch (MalformedURLException e) {
-			throw new IllegalStateException(e);
-		}
 	}
 
 	public synchronized RepositorySystem getSystem() {
@@ -273,7 +217,7 @@ public class GatewayRepoSys {
 
 		Settings settings = getSettings();
 		for (Mirror mirror : settings.getMirrors()) {
-			selector.add(String.valueOf(mirror.getId()), mirror.getUrl(), mirror.getLayout(), false, mirror.getMirrorOf(), mirror.getMirrorOfLayouts());
+			selector.add(String.valueOf(mirror.getId()), mirror.getUrl(), mirror.getLayout(), false, false, mirror.getMirrorOf(), mirror.getMirrorOfLayouts());
 		}
 
 		return selector;

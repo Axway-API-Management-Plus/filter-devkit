@@ -16,7 +16,6 @@ import com.vordel.es.EntityStore;
 import com.vordel.es.EntityType;
 
 public class GroovyScriptGUIFilter extends DefaultGUIFilterCompat {
-	@Override
 	public String getSmallIconId() {
 		return "filter_small";
 	}
@@ -41,7 +40,6 @@ public class GroovyScriptGUIFilter extends DefaultGUIFilterCompat {
 		return resolve("GROOVYSCRIPT_PALETTE_NAME");
 	}
 
-	@Override
 	public List<VordelPage> getPropertyPages() {
 		Vector<VordelPage> pages = new Vector<VordelPage>();
 

@@ -152,7 +152,7 @@ public final class MessageContextTracker {
 	}
 	
 	public static boolean isSecure(Message message) {
-		ServerTransaction txn = message instanceof HTTPMessage ? ((HTTPMessage) message).txn : null;
+		ServerTransaction txn = message instanceof HTTPMessage ? ((HTTPMessage) message).getTxn() : null;
 
 		return txn == null ? false : txn.getCipherName() != null;
 	}

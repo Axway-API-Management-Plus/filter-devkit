@@ -33,13 +33,6 @@ import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Repository;
 import org.apache.maven.repository.internal.ArtifactDescriptorUtils;
-import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.SolrDocument;
-import org.apache.solr.common.SolrDocumentList;
-import org.apache.solr.common.params.SolrParams;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
@@ -97,27 +90,6 @@ public class MavenizerRepository {
 				if (result == 0) {
 					result = artifactId1.compareTo(artifactId2);
 				}
-			}
-
-			return result;
-		}
-	};
-
-	private static Comparator<SolrDocument> SOLRDOCUMENT_COMPARATOR = new Comparator<SolrDocument>() {
-		@Override
-		public int compare(SolrDocument o1, SolrDocument o2) {
-			Long ts1 = (Long) o1.getFieldValue("timestamp");
-			Long ts2 = (Long) o2.getFieldValue("timestamp");
-			int result = 0;
-
-			if ((ts1 == null) && (ts2 == null)) {
-				result = 0;
-			} else if (ts1 == null) {
-				result = -1;
-			} else if (ts2 == null) {
-				result = 1;
-			} else {
-				result = Long.compare(ts1, ts2);
 			}
 
 			return result;
@@ -634,115 +606,6 @@ public class MavenizerRepository {
 		}
 
 		return buffer.toString();
-	}
-
-	public void search(GatewayRepoSys sys, String url) throws SolrServerException, IOException {
-		SolrServer server = sys.getSolrServer(url);
-		Map<String, File> hashes = new HashMap<String, File>();
-
-		for (File file : remaining(new HashSet<File>())) {
-			if (file.exists() && file.isFile()) {
-				hashes.put(sha1(file), file);
-			}
-		}
-
-		for (Entry<String, File> entry : hashes.entrySet()) {
-			File file = file(entry.getValue());
-
-			if (file.exists() && file.isFile()) {
-				searchArtifact(server, file, entry.getKey());
-			}
-		}
-	}
-
-	private void searchArtifact(SolrServer server, File file, String hash) throws SolrServerException, IOException {
-		SolrParams query = new SolrQuery().set("q", String.format("1:\"%s\"", hash));
-		QueryResponse response = server.query(query);
-		SolrDocumentList results = response.getResults();
-
-		System.out.print(String.format("lookup of '%s'...", file.getName()));
-
-		try {
-			if (results.getNumFound() > 0) {
-				Artifact artifact = null;
-				boolean lock = false;
-
-				if (results.getNumFound() == 1) {
-					SolrDocument result = results.get(0);
-
-					String groupId = (String) result.getFieldValue("g");
-					String artifactId = (String) result.getFieldValue("a");
-					String version = (String) result.getFieldValue("v");
-					String classifier = (String) result.getFieldValue("l");
-					String extension = extension(file);
-					String name = null;
-
-					artifact = new DefaultArtifact(groupId, artifactId, classifier, extension, version).setFile(file);
-
-					if ((classifier == null) || (classifier.isEmpty())) {
-						name = String.format("%s-%s.%s", artifactId, version, extension);
-					} else {
-						name = String.format("%s-%s-%s.%s", artifactId, version, classifier, extension);
-					}
-
-					for (Map.Entry<File, File> entry : files.entrySet()) {
-						if (entry.getValue().equals(file)) {
-							if (entry.getKey().getName().equalsIgnoreCase(name)) {
-								lock |= true;
-							}
-						}
-					}
-				} else {
-					Collections.sort(results, SOLRDOCUMENT_COMPARATOR);
-					Iterator<SolrDocument> iterator = results.iterator();
-
-					while ((artifact == null) && iterator.hasNext()) {
-						SolrDocument result = iterator.next();
-						String artifactId = (String) result.getFieldValue("a");
-						String version = (String) result.getFieldValue("v");
-						String classifier = (String) result.getFieldValue("l");
-						String extension = extension(file);
-						String name = null;
-
-						if ((classifier == null) || (classifier.isEmpty())) {
-							name = String.format("%s-%s.%s", artifactId, version, extension);
-						} else {
-							name = String.format("%s-%s-%s.%s", artifactId, version, classifier, extension);
-						}
-
-						for (Map.Entry<File, File> entry : files.entrySet()) {
-							if (entry.getValue().equals(file)) {
-								if (entry.getKey().getName().equalsIgnoreCase(name)) {
-									String groupId = (String) result.getFieldValue("g");
-
-									artifact = new DefaultArtifact(groupId, artifactId, classifier, extension, version).setFile(file);
-									lock |= true;
-								}
-							}
-						}
-					}
-				}
-
-				if (artifact != null) {
-					Artifact previous = findArtifact(file, false);
-					boolean override = false;
-
-					if ((previous == null) || (override = (MATCH_COMPARATOR.compare(artifact, previous) < 0))) {
-						artifact = artifact(artifact, override);
-
-						if (lock) {
-							locked.add(artifact);
-						}
-					}
-				}
-
-				System.out.print(String.format("found %d artifact%s", results.getNumFound(), results.getNumFound() > 1 ? "s" : ""));
-			} else {
-				System.out.print("not found");
-			}
-		} finally {
-			System.out.println();
-		}
 	}
 
 	public void collect(Map<String, MetaPOM> meta, RepositorySystem system, RepositorySystemSession session) {

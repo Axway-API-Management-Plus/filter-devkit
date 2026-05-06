@@ -25,7 +25,6 @@ public class InitializerShortcutFilter extends DefaultFilter implements Delegati
 	private Map<String, Selector<?>> outputs = null;
 	private ESPK initializerPK = null;
 
-	@Override
 	public Class<? extends FilterContainerImpl> getConfigPanelClass() throws ClassNotFoundException {
 		return Class.forName("com.vordel.client.manager.filter.bind.InitializerShortcutGUIFilter").asSubclass(FilterContainerImpl.class);
 	}

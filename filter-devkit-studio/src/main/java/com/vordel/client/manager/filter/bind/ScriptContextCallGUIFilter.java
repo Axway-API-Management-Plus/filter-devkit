@@ -25,7 +25,6 @@ import com.vordel.trace.Trace;
 public class ScriptContextCallGUIFilter extends DefaultGUIFilterCompat {
 	private Circuit remoteCircuit = null;
 
-	@Override
 	public String getSmallIconId() {
 		return "filter_small";
 	}
@@ -50,7 +49,6 @@ public class ScriptContextCallGUIFilter extends DefaultGUIFilterCompat {
 		return resolve("SCRIPTCONTEXTCALL_PALETTE_NAME");
 	}
 
-	@Override
 	public List<VordelPage> getPropertyPages() {
 		Vector<VordelPage> pages = new Vector<VordelPage>();
 

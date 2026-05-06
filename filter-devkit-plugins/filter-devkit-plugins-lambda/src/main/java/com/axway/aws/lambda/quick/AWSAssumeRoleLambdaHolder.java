@@ -2,8 +2,6 @@ package com.axway.aws.lambda.quick;
 
 import java.time.Instant;
 
-import org.apache.commons.lang.StringUtils;
-
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.BasicSessionCredentials;
 import com.amazonaws.auth.InstanceProfileCredentialsProvider;
@@ -65,7 +63,7 @@ public class AWSAssumeRoleLambdaHolder extends AWSLambdaHolder {
 
 			AssumeRoleRequest vAssumeRoleRequest = new AssumeRoleRequest().withRoleArn(pRoleARN).withRoleSessionName(pRoleSessionName);
 			// Add externalId if provided
-			if (StringUtils.isNotBlank(pAwsExternalId)) {
+			if ((pAwsExternalId != null) && (!pAwsExternalId.isBlank())) {
 				Trace.debug("Adding external ID : " + pAwsExternalId);
 				vAssumeRoleRequest.withExternalId(pAwsExternalId);
 			}

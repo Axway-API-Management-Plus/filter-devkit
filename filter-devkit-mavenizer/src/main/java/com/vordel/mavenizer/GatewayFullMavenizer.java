@@ -19,7 +19,6 @@ import org.apache.maven.model.Dependency;
 import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
@@ -157,9 +156,6 @@ public class GatewayFullMavenizer {
 			/* finish jar registration */
 			repo.register(scanned);
 
-			/* search maven central artifacts */
-			repo.search(sys, "http://search.maven.org/solrsearch/");
-
 			repo.match("org.eclipse.swt", "org.eclipse.swt.gtk.linux.x86_64", scanned);
 			repo.match("org.eclipse.core", "org.eclipse.core.commands", scanned);
 			repo.match("org.eclipse.jface", "org.eclipse.jface", scanned);
@@ -206,8 +202,8 @@ public class GatewayFullMavenizer {
 			repo.remaining(uniques);
 			repo.unresolvable(uniques);
 		} catch (IOException e) {
-			usage("unexpected exception");
-		} catch (SolrServerException e) {
+			e.printStackTrace();
+			
 			usage("unexpected exception");
 		}
 	}

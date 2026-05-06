@@ -21,7 +21,6 @@ import com.vordel.es.EntityType;
 public class GroovyScriptFilter extends DefaultFilter {
 	private Selector<String> exportSelector = null;
 
-	@Override
 	public Class<? extends FilterContainerImpl> getConfigPanelClass() throws ClassNotFoundException {
 		return Class.forName("com.vordel.client.manager.filter.groovy.GroovyScriptGUIFilter").asSubclass(FilterContainerImpl.class);
 	}
