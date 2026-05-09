@@ -2,8 +2,10 @@ package com.vordel.circuit.filter.devkit.script.context;
 
 import com.vordel.circuit.CircuitAbortException;
 import com.vordel.circuit.Message;
+import com.vordel.circuit.filter.devkit.context.resources.AbstractContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.CacheResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
+import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
 import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
 import com.vordel.circuit.filter.devkit.context.resources.KPSResource;
@@ -18,6 +20,8 @@ import com.vordel.trace.Trace;
  * @author rdesaintleger@axway.com
  */
 public abstract class ScriptContext implements ScriptContextRuntime {
+	private final ContextResourceProvider exports = new ScriptContextResources();
+
 	@Override
 	public final InvocableResource getInvocableResource(String name) {
 		ContextResource resource = getContextResource(name);
@@ -80,5 +84,17 @@ public abstract class ScriptContext implements ScriptContextRuntime {
 		}
 
 		return result;
+	}
+
+	@Override
+	public final ContextResourceProvider getExportedResources() {
+		return exports;
+	}
+
+	private final class ScriptContextResources extends AbstractContextResourceProvider {
+		@Override
+		public ContextResource getContextResource(String name) {
+			return ScriptContext.this.getContextResource(name);
+		}
 	}
 }

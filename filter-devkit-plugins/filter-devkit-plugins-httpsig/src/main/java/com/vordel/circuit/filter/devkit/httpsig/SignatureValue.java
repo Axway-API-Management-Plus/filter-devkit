@@ -5,6 +5,7 @@ import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,8 @@ public class SignatureValue<H> extends SignatureTemplate<H> {
 
 	private static final Pattern KEYPAIR = Pattern.compile("\\s*([^\\s=]+)\\s*=\\s*\"((?:[^\"]|\\\\|\\\")*)\"\\s*", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
+	private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
+
 	private final byte[] signature;
 
 	public SignatureValue(String keyId, SignatureAlgorithm algorithm, byte[] signature, List<String> headers, HeaderParser<H> parser) {
@@ -32,15 +35,15 @@ public class SignatureValue<H> extends SignatureTemplate<H> {
 	}
 
 	public SignatureValue(String keyId, String algorithm, String signature, String headers, HeaderParser<H> parser) {
-		this(keyId, getAlgorithm(algorithm), signature == null ? null : DatatypeConverter.parseBase64Binary(signature), getHeaders(headers), parser);
+		this(keyId, getAlgorithm(algorithm), signature == null ? null : BASE64_DECODER.decode(signature), getHeaders(headers), parser);
 	}
 
 	/**
 	 * Parse the signature http header
 	 * 
-	 * @param <H> header object type
+	 * @param <H>     header object type
 	 * @param headers header object
-	 * @param parser header parser object
+	 * @param parser  header parser object
 	 * @return an unverified {@link SignatureValue} object
 	 */
 	public static <H> SignatureValue<H> parseSignatureHeader(H headers, HeaderParser<H> parser) {
@@ -57,9 +60,9 @@ public class SignatureValue<H> extends SignatureTemplate<H> {
 	/**
 	 * Parse a signature authorization scheme
 	 * 
-	 * @param <H> header object type
+	 * @param <H>     header object type
 	 * @param headers header object
-	 * @param parser header parser object
+	 * @param parser  header parser object
 	 * @return an unverified {@link SignatureValue} object
 	 */
 	public static <H> SignatureValue<H> parseSignatureAuthorization(H headers, HeaderParser<H> parser) {
@@ -86,7 +89,7 @@ public class SignatureValue<H> extends SignatureTemplate<H> {
 	/**
 	 * parse signature parameters and returns a SignatureHeader object
 	 * 
-	 * @param <H> header object type
+	 * @param <H>    header object type
 	 * @param header unparsed signature header
 	 * @param parser HeaderParser which will be used in the newly created
 	 *               SignatureHeader.

@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.vordel.apiportal.config.PortalConfiguration;
 import com.vordel.circuit.Message;
 import com.vordel.circuit.oauth.common.OAuth2Utils;
 import com.vordel.circuit.oauth.kps.ApplicationDetails;
@@ -17,11 +16,10 @@ import com.vordel.common.apiserver.controller.IStoreAccess;
 import com.vordel.common.apiserver.controller.StoreAccess;
 import com.vordel.common.apiserver.discovery.model.OAuthAppScope;
 import com.vordel.common.apiserver.model.OAuthClient;
+import com.vordel.kps.ObjectNotFound;
 import com.vordel.trace.Trace;
 
 public class OAuthGuavaCache {
-	public static final PortalConfiguration PORTAL_CONFIG;
-
 	private static final Cache<String, CacheValueHolder<ApplicationDetails>> DETAILS_CACHE;
 	private static final Cache<String, CacheValueHolder<OAuthClient>> CLIENT_CACHE;
 	private static final Cache<String, CacheValueHolder<List<OAuthAppScope>>> APPSCOPES_CACHE;
@@ -35,8 +33,6 @@ public class OAuthGuavaCache {
 
 		long CACHE_TTL = 3000L;
 		long CACHE_SIZE = 1000L;
-
-		PORTAL_CONFIG = PortalConfiguration.getInstance();
 
 		CLIENT_CACHE = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterWrite(CACHE_TTL, TimeUnit.MILLISECONDS).build();
 		DETAILS_CACHE = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterWrite(CACHE_TTL, TimeUnit.MILLISECONDS).build();
@@ -105,7 +101,13 @@ public class OAuthGuavaCache {
 					public CacheValueHolder<OAuthClient> call() throws Exception {
 						IStoreAccess storeAccess = StoreAccess.internalWithRole("admin");
 						CoreOAuthController controller = storeAccess.getOAuthController();
-						OAuthClient client = controller.internalGetOAuthClient(client_id);
+						OAuthClient client = null;
+						
+						try {
+							client = controller.internalGetOAuthClient(client_id);
+						} catch (ObjectNotFound e) {
+							/* ignore, this make this client id disabled for the cache duration */
+						}
 
 						return new CacheValueHolder<OAuthClient>(client);
 					}

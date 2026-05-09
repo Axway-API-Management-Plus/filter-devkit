@@ -13,3 +13,7 @@ sudo mv /home/theia/eclipse /opt/eclipse
 
 # create desktop shortcut for next start
 cp /home/project/filter-devkit/src/main/playground/eclipse.desktop /home/theia/.local/share/applications
+
+# install WebKit (for md files)
+sudo apt update
+sudo apt install -y libwebkit2gtk-4.0-37

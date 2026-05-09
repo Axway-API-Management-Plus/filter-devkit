@@ -8,6 +8,7 @@ import com.vordel.circuit.Message;
  * 
  * @author rdesaintleger@axway.com
  */
+@FunctionalInterface
 public interface InvocableResource extends ContextResource {
 	/**
 	 * Invoke an API Gateway runnable. underlying object may be any kind of API

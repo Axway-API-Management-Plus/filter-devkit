@@ -141,10 +141,23 @@ public class ExtensionScanner {
 	}
 
 	static List<Class<?>> scanExtensions(ClassLoader loader, Set<String> registered, Set<String> allowed) {
+		Map<String, ClassLoader> loaders = new HashMap<String, ClassLoader>();
+		Map<String,String> reverse = new HashMap<String, String>();
+
 		Set<String> clazzes = new HashSet<String>();
 
 		readExtensionResources(loader, "META-INF/vordel/extensions", (clazzName) -> {
+			/* also retrieve classes which must use the same classloader */
+			Set<String> linked = getForceLoads(loader, clazzName);
+
 			clazzes.add(clazzName);
+
+			if (linked != null) {
+				for(String slave : linked) {
+					/* for each class in the set, we must use this classloader */
+					reverse.put(slave, clazzName);
+				}
+			}
 		});
 
 		List<Class<?>> scanned = new ArrayList<Class<?>>();
@@ -180,7 +193,7 @@ public class ExtensionScanner {
 					/*
 					 * create classes which expose ExtensionContext or ExtensionInstance annotation
 					 */
-					scanned.add(Class.forName(clazzName, false, getClassLoader(loader, clazzName)));
+					scanned.add(Class.forName(clazzName, false, getClassLoader(reverse, loaders, loader, clazzName)));
 				} catch (Exception e) {
 					Trace.error(String.format("Got exception loading class '%s'", clazzName), e);
 				} catch (Error e) {
@@ -203,18 +216,22 @@ public class ExtensionScanner {
 		return scanned;
 	}
 
-	private static Set<String> getScriptExtensionInterfaces(ClassLoader loader, String clazzName) {
-		String resourceName = String.format("META-INF/vordel/scriptextensions/%s", clazzName);
-		URL scriptExtensions = loader.getResource(resourceName);
-		Set<String> interfaces = new HashSet<String>();
-
-		if (scriptExtensions != null) {
-			readExtensionResource(scriptExtensions, (interfaceName) -> {
-				interfaces.add(interfaceName);
-			});
+	private static ClassLoader getClassLoader(Map<String,String> reverse, Map<String, ClassLoader> loaders, ClassLoader loader, String clazzName) {
+		ClassLoader result = loaders.get(clazzName);
+		
+		if (result == null) {
+			String master = reverse.get(clazzName);
+			
+			if ((master != null) && (!master.equals(clazzName))) {
+				result = getClassLoader(reverse, loaders, loader, master);
+			} else {
+				result = getClassLoader(loader, clazzName);
+			}
+			
+			loaders.put(clazzName, result);
 		}
-
-		return interfaces;
+		
+		return result;
 	}
 
 	/**
@@ -265,34 +282,26 @@ public class ExtensionScanner {
 		scanned.add(clazzName);
 
 		if (forceLoad != null) {
-			try {
-				InputStream in = forceLoad.openStream();
-
-				try {
-					BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-
-					try {
-						String line = null;
-
-						while ((line = reader.readLine()) != null) {
-							line = line.trim();
-
-							if (!line.isEmpty()) {
-								scanned.add(line);
-							}
-						}
-					} finally {
-						reader.close();
-					}
-				} finally {
-					in.close();
-				}
-			} catch (IOException e) {
-				Trace.error(String.format("Got error reading module classes for '%s'", clazzName), e);
-			}
+			readExtensionResource(forceLoad, (linked) -> {
+				scanned.add(linked);
+			});
 		}
 
 		return scanned;
+	}
+
+	private static Set<String> getScriptExtensionInterfaces(ClassLoader loader, String clazzName) {
+		String resourceName = String.format("META-INF/vordel/scriptextensions/%s", clazzName);
+		URL scriptExtensions = loader.getResource(resourceName);
+		Set<String> interfaces = new HashSet<String>();
+
+		if (scriptExtensions != null) {
+			readExtensionResource(scriptExtensions, (interfaceName) -> {
+				interfaces.add(interfaceName);
+			});
+		}
+
+		return interfaces;
 	}
 
 	private static Set<File> scanJavaArchives(File root, Set<File> scanned) {

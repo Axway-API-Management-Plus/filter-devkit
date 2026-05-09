@@ -11,7 +11,8 @@ import com.vordel.common.Dictionary;
  * 
  * @author rdesaintleger@axway.com
  */
-public interface FunctionResource extends ContextResource {
+@FunctionalInterface
+public interface FunctionResource extends ResolvedResource {
 	/**
 	 * Invoke the target Java Method
 	 * 

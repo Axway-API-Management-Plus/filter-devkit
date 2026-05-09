@@ -8,20 +8,20 @@ Start by cloning the project on github and set working directory to the root of 
 git clone -b develop https://github.com/Axway-API-Management-Plus/filter-devkit.git
 ```
 
-Copy the Axway setup file (APIGateway_7.7.20240228_Install_linux-x86-64_BN01.run) and licence file in the project 'dist' directory
+Copy the Axway setup file (APIGateway_7.7.20260228_Install_linux-x86-64_BN03.run) and licence file in the project 'dist' directory
 
 Execute the following docker build command (replace filenames according to your need, but keep the dist prefix with a forward slash).
 
 *For Windows :*
 
 ```
-docker build --build-arg APIM_RUN_FILE=dist/APIGateway_7.7.20240228_Install_linux-x86-64_BN01.run --build-arg APIM_LIC_FILE=dist/licence.lic -t filter-devkit-docker -f src\main\docker\Dockerfile .
+docker build --build-arg APIM_RUN_FILE=dist/APIGateway_7.7.20260228_Install_linux-x86-64_BN03.run --build-arg APIM_LIC_FILE=dist/licence.lic -t filter-devkit-docker -f src\main\docker\Dockerfile .
 ```
 
 *For Linux :*
 
 ```
-docker build --build-arg APIM_RUN_FILE=dist/APIGateway_7.7.20240228_Install_linux-x86-64_BN01.run --build-arg APIM_LIC_FILE=dist/licence.lic -t filter-devkit-docker -f src/main/docker/Dockerfile .
+docker build --build-arg APIM_RUN_FILE=dist/APIGateway_7.7.20260228_Install_linux-x86-64_BN03.run --build-arg APIM_LIC_FILE=dist/licence.lic -t filter-devkit-docker -f src/main/docker/Dockerfile .
 ```
 
 At the end of the build, you should have a (big) docker image called 'filter-devkit-docker'. run it with the following docker command

@@ -46,12 +46,12 @@ public abstract class AbstractScriptExtension extends ScriptExtensionConfigurato
 	}
 
 	@Override
-	public FunctionResource getFunctionResource(String name) {
+	public final FunctionResource getFunctionResource(String name) {
 		return runtime.getFunctionResource(name);
 	}
 
 	@Override
-	public SubstitutableResource<?> getSubstitutableResource(String name) {
+	public final SubstitutableResource<?> getSubstitutableResource(String name) {
 		return runtime.getSubstitutableResource(name);
 	}
 

@@ -17,6 +17,7 @@ import com.vordel.circuit.filter.devkit.context.resources.ContextResource;
 import com.vordel.circuit.filter.devkit.context.resources.ContextResourceProvider;
 import com.vordel.circuit.filter.devkit.context.resources.FunctionResource;
 import com.vordel.circuit.filter.devkit.context.resources.InvocableResource;
+import com.vordel.circuit.filter.devkit.context.resources.ResolvedResource;
 import com.vordel.circuit.filter.devkit.context.resources.SubstitutableResource;
 import com.vordel.circuit.filter.devkit.context.resources.ViewableResource;
 import com.vordel.circuit.filter.devkit.script.context.ScriptContextRuntime;
@@ -354,8 +355,8 @@ public class ContextResourceResolver extends ELResolver {
 				if (result instanceof ViewableResource) {
 					/* got a selector special view, return it */
 					return ((ViewableResource) result).getResourceView();
-				} else if (result instanceof FunctionResource) {
-					/* special case for function resources, return it */
+				} else if (result instanceof ResolvedResource) {
+					/* resource is already resolved, return it */
 					return result;
 				} else if ((dict instanceof Message) && (result instanceof InvocableResource)) {
 					try {
