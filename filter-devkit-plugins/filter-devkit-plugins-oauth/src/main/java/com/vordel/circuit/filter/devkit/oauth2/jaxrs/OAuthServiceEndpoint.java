@@ -38,7 +38,6 @@ import com.vordel.circuit.filter.devkit.jaxrs.VordelBodyProvider;
 import com.vordel.circuit.filter.devkit.oauth2.model.OAuthParameters;
 import com.vordel.circuit.filter.devkit.oauth2.model.ResponseTypeSet;
 import com.vordel.circuit.oauth.kps.ApplicationDetails;
-import com.vordel.config.Circuit;
 import com.vordel.el.Selector;
 import com.vordel.mime.Body;
 import com.vordel.mime.HeaderSet;
@@ -71,7 +70,7 @@ public abstract class OAuthServiceEndpoint {
 		return (resource != null) && (resource.getCircuit() != null);
 	}
 
-	public static final boolean invokePolicy(Message msg, Circuit circuit, PolicyResource resource) throws CircuitAbortException {
+	public static final boolean invokePolicy(Message msg, PolicyResource resource) throws CircuitAbortException {
 		try {
 			return resource.invoke(msg);
 		} finally {
@@ -307,5 +306,5 @@ public abstract class OAuthServiceEndpoint {
 		return entity;
 	}
 
-	protected abstract Response service(Message msg, Circuit circuit, HttpHeaders headers, Request request, UriInfo info, OAuthParameters parsed, ObjectNode body, MultivaluedMap<String, String> merged);
+	protected abstract Response service(Message msg, HttpHeaders headers, Request request, UriInfo info, OAuthParameters parsed, ObjectNode body, MultivaluedMap<String, String> merged);
 }

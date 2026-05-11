@@ -98,7 +98,6 @@ import com.vordel.circuit.oauth.store.TokenStore;
 import com.vordel.circuit.oauth.token.AuthorizationCode;
 import com.vordel.circuit.oauth.token.OAuth2AccessToken;
 import com.vordel.circuit.oauth.token.OAuth2Authentication;
-import com.vordel.config.Circuit;
 import com.vordel.el.Selector;
 import com.vordel.mime.Body;
 import com.vordel.mime.FormURLEncodedBody;
@@ -149,13 +148,13 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 	protected abstract OAuthAccessTokenGenerator getOAuthAccessTokenGenerator();
 
 	@GET
-	public final Response serviceGET(@Context Circuit circuit, @Context Message msg, @Context HttpHeaders headers, @Context Request request, @Context UriInfo info) {
-		return serviceFormPOST(circuit, msg, headers, request, info, null);
+	public final Response serviceGET(@Context Message msg, @Context HttpHeaders headers, @Context Request request, @Context UriInfo info) {
+		return serviceFormPOST(msg, headers, request, info, null);
 	}
 
 	@POST
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	public final Response serviceFormPOST(@Context Circuit circuit, @Context Message msg, @Context HttpHeaders headers, @Context Request request, @Context UriInfo info, Form body) {
+	public final Response serviceFormPOST(@Context Message msg, @Context HttpHeaders headers, @Context Request request, @Context UriInfo info, Form body) {
 		MultivaluedMap<String, String> query = info.getQueryParameters();
 		MultivaluedMap<String, String> form = body == null ? null : body.asMap();
 
@@ -169,12 +168,12 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 
 		merged = MultivaluedHeaderMap.mergeHeaders(merged, query);
 
-		return service(msg, circuit, headers, request, info, parsed, MAPPER.createObjectNode(), cleanupHeaders(merged));
+		return service(msg, headers, request, info, parsed, MAPPER.createObjectNode(), cleanupHeaders(merged));
 	}
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	public final Response serviceJsonPOST(@Context Circuit circuit, @Context Message msg, @Context HttpHeaders headers, @Context Request request, @Context UriInfo info, ObjectNode body) {
+	public final Response serviceJsonPOST(@Context Message msg, @Context HttpHeaders headers, @Context Request request, @Context UriInfo info, ObjectNode body) {
 		if (!enableJsonPOST(msg)) {
 			throw new NotSupportedException("Json payload is not supported");
 		}
@@ -187,11 +186,11 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 		/* start by merging query, body and header parameters */
 		merged = MultivaluedHeaderMap.mergeHeaders(merged, query);
 
-		return service(msg, circuit, headers, request, info, parsed, body, cleanupHeaders(merged));
+		return service(msg, headers, request, info, parsed, body, cleanupHeaders(merged));
 	}
 
 	@Override
-	protected Response service(Message msg, Circuit circuit, HttpHeaders headers, Request request, UriInfo info, OAuthParameters parsed, ObjectNode body, MultivaluedMap<String, String> merged) {
+	protected Response service(Message msg, HttpHeaders headers, Request request, UriInfo info, OAuthParameters parsed, ObjectNode body, MultivaluedMap<String, String> merged) {
 		Set<String> response_types = new ResponseTypeSet(parsed.getObjectNode());
 		Set<String> scopes = new ScopeSet(parsed.getObjectNode());
 
@@ -262,7 +261,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 				setSoapMethod(msg, response_type);
 
 				/* retrieve and validate request object */
-				ObjectNode override = parseOpenIDRequest(msg, circuit, parsed, body, merged);
+				ObjectNode override = parseOpenIDRequest(msg, parsed, body, merged);
 
 				/* parse remaining body and query parameters */
 				parseRemainingParameters(parsed, body, merged);
@@ -333,7 +332,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 				}
 
 				OAuthAccessTokenGenerator tokenGenerator = getOAuthAccessTokenGenerator();
-				Set<String> requestedScopes = tokenGenerator.getScopesForToken(msg, circuit, parsed, details);
+				Set<String> requestedScopes = tokenGenerator.getScopesForToken(msg, parsed, details);
 				Set<String> additionalScopes = new LinkedHashSet<String>();
 
 				msg.put("oauth.scopes.requested", requestedScopes);
@@ -354,7 +353,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 					throw new OAuthException(Response.Status.SERVICE_UNAVAILABLE, err_rfc6749_temporarily_unavailable, null, "the server is not able to authenticate resource owner");
 				}
 
-				if (invokePolicy(msg, circuit, authenticator)) {
+				if (invokePolicy(msg, authenticator)) {
 					subject = AUTHENTICATED_SUBJECT.substitute(msg);
 
 					if ((subject != null) && (subject.length() == 0)) {
@@ -401,7 +400,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 
 					msg.put("oauth.scopes.missing", manager.getScopesForAuthorisation());
 
-					if (invokePolicy(msg, circuit, authorization)) {
+					if (invokePolicy(msg, authorization)) {
 						persistentAllowedScopes = getPersistentAllowedScopes(msg);
 						transientAllowedScopes = getTransientAllowedScopes(msg);
 						discardedScopes = getDiscardedScopes(msg);
@@ -512,7 +511,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 					}
 
 					if (response_types.contains(response_type_token)) {
-						token = tokenGenerator.generateToken(msg, circuit, parsed, details, authz.getScope(), additionalScopes, additional, false);
+						token = tokenGenerator.generateToken(msg, parsed, details, authz.getScope(), additionalScopes, additional, false);
 						tokenGenerator.setTokenOnMessage(msg, token);
 
 						/* existing filter compatibility */
@@ -525,7 +524,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 					if ((code != null) || (token != null)) {
 						PolicyResource transformer = tokenGenerator.getAccessTokenTransformer();
 
-						if (isValidPolicy(transformer) && (!invokePolicy(msg, circuit, transformer))) {
+						if (isValidPolicy(transformer) && (!invokePolicy(msg, transformer))) {
 							throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unable to generate token or authorization code");
 						}
 					}
@@ -535,7 +534,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 							throw new OAuthException(err_invalid_request, null, "id_token generation is not supported");
 						}
 
-						if (!invokePolicy(msg, circuit, idGenerator)) {
+						if (!invokePolicy(msg, idGenerator)) {
 							throw new OAuthException(err_invalid_request_uri, null, "unable to generate the id token");
 						}
 
@@ -604,7 +603,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 					}
 				}
 
-				return asOAuthRedirect(msg, circuit, parsed, Response.ok().type(MediaType.APPLICATION_JSON_TYPE).entity(result).cacheControl(cache).build());
+				return asOAuthRedirect(msg, parsed, Response.ok().type(MediaType.APPLICATION_JSON_TYPE).entity(result).cacheControl(cache).build());
 			} catch (CircuitAbortException e) {
 				Trace.error("Got Exception from circuit", e);
 
@@ -621,11 +620,11 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 				throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, "unexpected error occured", e);
 			}
 		} catch (OAuthException e) {
-			return asOAuthRedirect(msg, circuit, parsed, e.getResponse());
+			return asOAuthRedirect(msg, parsed, e.getResponse());
 		}
 	}
 
-	public Response asOAuthRedirect(Message msg, Circuit circuit, OAuthParameters parsed, Response response) {
+	public Response asOAuthRedirect(Message msg, OAuthParameters parsed, Response response) {
 		/* try to retrieve the Json Response Entity */
 		Object entity = getResponseJsonEntity(response);
 		ObjectNode claims = parsed.getObjectNode();
@@ -694,7 +693,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 							msg.remove(MessageProperties.HTTP_HEADERS);
 							msg.remove(MessageProperties.CONTENT_BODY);
 
-							if (invokePolicy(msg, circuit, generator)) {
+							if (invokePolicy(msg, generator)) {
 								response = toResponse(msg);
 							}
 						} catch (CircuitAbortException e) {
@@ -936,7 +935,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 		}
 	}
 
-	private ObjectNode parseOpenIDRequest(Message msg, Circuit circuit, OAuthParameters parsed, ObjectNode body, MultivaluedMap<String, String> merged) throws CircuitAbortException {
+	private ObjectNode parseOpenIDRequest(Message msg, OAuthParameters parsed, ObjectNode body, MultivaluedMap<String, String> merged) throws CircuitAbortException {
 		String request_uri = parsed.parse(param_request_uri, body, merged, null).asText(null);
 		String request = parsed.parse(param_request, body, merged, null).asText(null);
 		Body saved = (Body) msg.get(MessageProperties.CONTENT_BODY);
@@ -951,7 +950,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 				throw new OAuthException(err_request_uri_not_supported, null, "the request_uri parameter is not supported");
 			}
 
-			if (!invokePolicy(msg, circuit, retriever)) {
+			if (!invokePolicy(msg, retriever)) {
 				throw new OAuthException(err_invalid_request_uri, null, "the request_uri parameter is invalid");
 			}
 
@@ -969,7 +968,7 @@ public abstract class OAuthAuthorizeEndpoint extends OAuthServiceEndpoint {
 				throw new OAuthException(err_request_not_supported, null, "the request parameter is not supported");
 			}
 
-			if (!invokePolicy(msg, circuit, validator)) {
+			if (!invokePolicy(msg, validator)) {
 				throw new OAuthException(err_invalid_request_object, null, "the provided request object is invalid");
 			}
 

@@ -31,7 +31,6 @@ import com.vordel.circuit.filter.devkit.context.resources.PolicyResource;
 import com.vordel.circuit.filter.devkit.oauth2.OAuthGuavaCache;
 import com.vordel.circuit.filter.devkit.oauth2.model.OAuthParameters;
 import com.vordel.circuit.oauth.kps.ApplicationDetails;
-import com.vordel.config.Circuit;
 import com.vordel.trace.Trace;
 
 public abstract class OAuthAuthenticatedEndpoint extends OAuthServiceEndpoint {
@@ -66,7 +65,7 @@ public abstract class OAuthAuthenticatedEndpoint extends OAuthServiceEndpoint {
 	 * @return
 	 * @throws CircuitAbortException
 	 */
-	protected MultivaluedMap<String, String> authorization(Circuit circuit, Message msg, HttpHeaders headers) throws CircuitAbortException {
+	protected MultivaluedMap<String, String> authorization(Message msg, HttpHeaders headers) throws CircuitAbortException {
 		String authorization = headers.getHeaderString(HttpHeaders.AUTHORIZATION);
 		Matcher matcher = null;
 
@@ -117,7 +116,7 @@ public abstract class OAuthAuthenticatedEndpoint extends OAuthServiceEndpoint {
 					throw new OAuthException(err_invalid_request, null, String.format("%s authorization is not supported", scheme));
 				}
 
-				if (!invokePolicy(msg, circuit, signatureValidator)) {
+				if (!invokePolicy(msg, signatureValidator)) {
 					/* trace error, but report invalid credentails */
 					Trace.error("Provided http authorization is invalid, return unmodified message");
 
@@ -152,8 +151,8 @@ public abstract class OAuthAuthenticatedEndpoint extends OAuthServiceEndpoint {
 		return new Form().asMap();
 	}
 
-	protected ApplicationDetails parseAuthenticationParameters(Circuit circuit, Message msg, HttpHeaders headers, Request request, UriInfo info, OAuthParameters parsed, ObjectNode body, MultivaluedMap<String, String> merged) throws CircuitAbortException {
-		MultivaluedMap<String, String> authorization = authorization(circuit, msg, headers);
+	protected ApplicationDetails parseAuthenticationParameters(Message msg, HttpHeaders headers, Request request, UriInfo info, OAuthParameters parsed, ObjectNode body, MultivaluedMap<String, String> merged) throws CircuitAbortException {
+		MultivaluedMap<String, String> authorization = authorization(msg, headers);
 
 		Set<String> authentication_methods = new HashSet<String>();
 
@@ -242,7 +241,7 @@ public abstract class OAuthAuthenticatedEndpoint extends OAuthServiceEndpoint {
 				throw new OAuthException(err_invalid_request, null, "client_assertion parameter is not supported");
 			}
 
-			if (!invokePolicy(msg, circuit, assertionValidator)) {
+			if (!invokePolicy(msg, assertionValidator)) {
 				throw new OAuthException(err_rfc6749_invalid_client, null, "client_assertion is invalid");
 			}
 

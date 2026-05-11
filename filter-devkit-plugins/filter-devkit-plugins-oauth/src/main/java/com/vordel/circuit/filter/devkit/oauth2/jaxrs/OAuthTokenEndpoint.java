@@ -76,7 +76,6 @@ import com.vordel.circuit.oauth.token.AuthorizationCode;
 import com.vordel.circuit.oauth.token.OAuth2AccessToken;
 import com.vordel.circuit.oauth.token.OAuth2Authentication;
 import com.vordel.circuit.oauth.token.OAuth2RefreshToken;
-import com.vordel.config.Circuit;
 import com.vordel.trace.Trace;
 
 public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
@@ -151,8 +150,8 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 		}
 	}
 
-	private Set<String> getScopesForToken(Message msg, Circuit circuit, OAuthParameters parsed, ApplicationDetails details, OAuthAccessTokenGenerator generator, String subject, Set<String> additionalScopes) throws CircuitAbortException {
-		Set<String> requestedScopes = generator.getScopesForToken(msg, circuit, parsed, details);
+	private Set<String> getScopesForToken(Message msg, OAuthParameters parsed, ApplicationDetails details, OAuthAccessTokenGenerator generator, String subject, Set<String> additionalScopes) throws CircuitAbortException {
+		Set<String> requestedScopes = generator.getScopesForToken(msg, parsed, details);
 		
 		msg.put("oauth.scopes.requested", requestedScopes);
 
@@ -160,21 +159,21 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 			throw new OAuthException(err_rfc6749_invalid_scope, null, "scope 'openid' is not valid for token flows");
 		}
 
-		return generator.applyOwnerConsent(circuit, msg, subject, details, requestedScopes, additionalScopes, subject == null ? true : skipUserConsent(msg));
+		return generator.applyOwnerConsent(msg, subject, details, requestedScopes, additionalScopes, subject == null ? true : skipUserConsent(msg));
 	}
 
 	@GET
-	public final Response serviceGET(@Context Circuit circuit, @Context Message msg, @Context HttpHeaders headers, @Context Request request, @Context UriInfo info) {
+	public final Response serviceGET(@Context Message msg, @Context HttpHeaders headers, @Context Request request, @Context UriInfo info) {
 		if (!allowGET(msg)) {
 			throw new NotAllowedException("Usage of GET is not allowed on this service");
 		}
 
-		return serviceFormPOST(circuit, msg, headers, request, info, null);
+		return serviceFormPOST(msg, headers, request, info, null);
 	}
 
 	@POST
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	public final Response serviceFormPOST(@Context Circuit circuit, @Context Message msg, @Context HttpHeaders headers, @Context Request request, @Context UriInfo info, Form body) {
+	public final Response serviceFormPOST(@Context Message msg, @Context HttpHeaders headers, @Context Request request, @Context UriInfo info, Form body) {
 		MultivaluedMap<String, String> query = info.getQueryParameters();
 		MultivaluedMap<String, String> form = body == null ? null : body.asMap();
 
@@ -188,12 +187,12 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 		
 		merged = MultivaluedHeaderMap.mergeHeaders(merged, query);
 
-		return service(msg, circuit, headers, request, info, parsed, MAPPER.createObjectNode(), cleanupHeaders(merged));
+		return service(msg, headers, request, info, parsed, MAPPER.createObjectNode(), cleanupHeaders(merged));
 	}
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	public final Response serviceJsonPOST(@Context Circuit circuit, @Context Message msg, @Context HttpHeaders headers, @Context Request request, @Context UriInfo info, ObjectNode body) {
+	public final Response serviceJsonPOST(@Context Message msg, @Context HttpHeaders headers, @Context Request request, @Context UriInfo info, ObjectNode body) {
 		if (!enableJsonPOST(msg)) {
 			throw new NotSupportedException("Json payload is not supported");
 		}
@@ -206,10 +205,10 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 		/* start by merging query, body and header parameters */
 		merged = MultivaluedHeaderMap.mergeHeaders(merged, query);
 
-		return service(msg, circuit, headers, request, info, parsed, body, cleanupHeaders(merged));
+		return service(msg, headers, request, info, parsed, body, cleanupHeaders(merged));
 	}
 	@Override
-	protected Response service(Message msg, Circuit circuit, HttpHeaders headers, Request request, UriInfo info, OAuthParameters parsed, ObjectNode body, MultivaluedMap<String, String> merged) {
+	protected Response service(Message msg, HttpHeaders headers, Request request, UriInfo info, OAuthParameters parsed, ObjectNode body, MultivaluedMap<String, String> merged) {
 		/* save http client headers */
 		msg.put("oauth.request.parsed.headers", msg.get(MessageProperties.HTTP_HEADERS));
 
@@ -261,7 +260,7 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 			 * parse client_id/secret, client_assertion and authenticate client according to
 			 * provided credentials
 			 */
-			ApplicationDetails details = parseAuthenticationParameters(circuit, msg, headers, request, info, parsed, body, merged);
+			ApplicationDetails details = parseAuthenticationParameters(msg, headers, request, info, parsed, body, merged);
 
 			if (enableGrantTypeFilter(msg) && (!isGrantTypeAllowed(details, grant_type))) {
 				/* apply the grant filter if any */
@@ -299,15 +298,15 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 			if (GRANTTYPE_CODE.equals(grant_type)) {
 				AuthorizationCode code = checkAuthorizationCode(msg, generator, parsed, details);
 
-				return generator.createAccessToken(circuit, msg, parsed, details, code, additionalScopes);
+				return generator.createAccessToken(msg, parsed, details, code, additionalScopes);
 			} else if (GRANTTYPE_CLIENT.equals(grant_type)) {
 				if ((!allowPublicClientCredentials(msg)) && (!"confidential".equalsIgnoreCase(details.getClientType()))) {
 					throw new OAuthException(err_rfc6749_invalid_grant, null, "only confidential clients can use client_credentials grant (RFC6749 section 4.4)");
 				}
 
-				Set<String> scopes = getScopesForToken(msg, circuit, parsed, details, generator, null, additionalScopes);
+				Set<String> scopes = getScopesForToken(msg, parsed, details, generator, null, additionalScopes);
 
-				return generator.createAccessToken(circuit, msg, parsed, details, null, scopes, additionalScopes, false);
+				return generator.createAccessToken(msg, parsed, details, null, scopes, additionalScopes, false);
 			} else if (GRANTTYPE_JWT.equals(grant_type) || GRANTTYPE_SAML2.equals(grant_type) || GRANTTYPE_PASSWORD.equals(grant_type)) {
 				PolicyResource authenticator = getGrantAuthenticatorCircuit();
 
@@ -315,7 +314,7 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 					throw new OAuthException(err_rfc6749_unsupported_grant_type, null, String.format("grant type '%s' is not supported", grant_type));
 				}
 
-				if (!invokePolicy(msg, circuit, authenticator)) {
+				if (!invokePolicy(msg, authenticator)) {
 					/* trace error, but report invalid credentails */
 					Trace.error("Grant Authenticator returned false");
 
@@ -335,9 +334,9 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 					throw new OAuthException(err_rfc6749_invalid_grant, null, "provided grant is not valid");
 				}
 
-				Set<String> scopes = getScopesForToken(msg, circuit, parsed, details, generator, subject, additionalScopes);
+				Set<String> scopes = getScopesForToken(msg, parsed, details, generator, subject, additionalScopes);
 
-				return generator.createAccessToken(circuit, msg, parsed, details, subject, scopes, additionalScopes, false);
+				return generator.createAccessToken(msg, parsed, details, subject, scopes, additionalScopes, false);
 			} else if (GRANTTYPE_TOKEN.equals(grant_type)) {
 				String subject_token = (String) parsed.get(param_subject_token);
 
@@ -402,7 +401,7 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 						throw new OAuthException(err_rfc6749_unsupported_grant_type, null, String.format("grant type '%s' is not supported", grant_type));
 					}
 
-					if (!invokePolicy(msg, circuit, authenticator)) {
+					if (!invokePolicy(msg, authenticator)) {
 						/* trace error, but report invalid credentails */
 						Trace.error("Grant Authenticator returned false");
 
@@ -424,9 +423,9 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 				}
 
 				String requested_token_type = (String) parsed.get(param_requested_token_type);
-				Set<String> scopes = getScopesForToken(msg, circuit, parsed, details, generator, subjectName, additionalScopes);
+				Set<String> scopes = getScopesForToken(msg, parsed, details, generator, subjectName, additionalScopes);
 
-				return generator.createAccessToken(circuit, msg, parsed, details, subjectName, scopes, additionalScopes, uri_token_type_refresh_token.equals(requested_token_type));
+				return generator.createAccessToken(msg, parsed, details, subjectName, scopes, additionalScopes, uri_token_type_refresh_token.equals(requested_token_type));
 			} else if (GRANTTYPE_REFRESH.equals(grant_type)) {
 				String refresh_token = (String) parsed.get(param_refresh_token);
 
@@ -482,7 +481,7 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 
 				msg.put(MessageProperties.AUTHN_SUBJECT_ID, subjectName = authn.getUserAuthentication());
 
-				return generator.createAccessToken(circuit, msg, parsed, details, subjectName, scopes, additionalScopes, token);
+				return generator.createAccessToken(msg, parsed, details, subjectName, scopes, additionalScopes, token);
 			} else {
 				PolicyResource decoder = getGrantDecoderCircuit();
 
@@ -490,7 +489,7 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 					throw new OAuthException(err_rfc6749_unsupported_grant_type, null, String.format("grant type '%s' is not supported", grant_type));
 				}
 
-				if (!invokePolicy(msg, circuit, decoder)) {
+				if (!invokePolicy(msg, decoder)) {
 					/* trace error, but report invalid credentails */
 					Trace.error("Grant Decoder returned false");
 
@@ -503,7 +502,7 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 					throw new OAuthException(err_rfc6749_unsupported_grant_type, null, String.format("grant type '%s' is not supported", grant_type));
 				}
 
-				if (!invokePolicy(msg, circuit, authenticator)) {
+				if (!invokePolicy(msg, authenticator)) {
 					/* trace error, but report invalid credentails */
 					Trace.error("Grant Authenticator returned false");
 
@@ -523,9 +522,9 @@ public abstract class OAuthTokenEndpoint extends OAuthAuthenticatedEndpoint {
 					throw new OAuthException(err_rfc6749_invalid_grant, null, "provided grant is not valid");
 				}
 
-				Set<String> scopes = getScopesForToken(msg, circuit, parsed, details, generator, subject, additionalScopes);
+				Set<String> scopes = getScopesForToken(msg, parsed, details, generator, subject, additionalScopes);
 
-				return generator.createAccessToken(circuit, msg, parsed, details, subject, scopes, additionalScopes, false);
+				return generator.createAccessToken(msg, parsed, details, subject, scopes, additionalScopes, false);
 			}
 		} catch (WebApplicationException e) {
 			throw e;
