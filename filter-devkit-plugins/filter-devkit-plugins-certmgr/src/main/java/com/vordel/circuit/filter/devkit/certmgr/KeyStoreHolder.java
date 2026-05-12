@@ -8,7 +8,6 @@ import com.nimbusds.jose.jwk.JWK;
 
 public final class KeyStoreHolder extends KeyStoreResource {
 	public final KeyStoreResource store;
-	private int rcnt;
 
 	public static KeyStoreHolder fromKeyStoreResource(KeyStoreResource resource) {
 		if (resource instanceof KeyStoreHolder) {

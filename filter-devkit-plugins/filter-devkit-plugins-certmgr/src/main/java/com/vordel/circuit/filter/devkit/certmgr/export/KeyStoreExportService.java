@@ -87,7 +87,7 @@ public class KeyStoreExportService implements InvocableResource {
 		reload(true);
 	}
 
-	private void reload(boolean force) {
+	public void reload(boolean force) {
 		synchronized (sync) {
 			/* since certpath builder has all stores, do not check for exported reload */
 			if (trust.reload(force)) {
@@ -193,7 +193,7 @@ public class KeyStoreExportService implements InvocableResource {
 		return exported;
 	}
 
-	private KeyStoreEntry getKeyStoreEntry(Predicate<KeyStoreEntry> predicate) {
+	public KeyStoreEntry getKeyStoreEntry(Predicate<KeyStoreEntry> predicate) {
 		KeyStoreEntry entry = null;
 
 		synchronized (sync) {
@@ -543,7 +543,11 @@ public class KeyStoreExportService implements InvocableResource {
 
 		while (entries.hasNext()) {
 			KeyStoreEntry entry = entries.next();
-			JWK jwk = exportPrivate ? entry.getJWK() : entry.getPublicJWK();
+			JWK jwk = getTransformedJWK(entry);
+
+			if ((jwk != null) && (!exportPrivate)) {
+				jwk = jwk.toPublicJWK();
+			}
 
 			if (jwk != null) {
 				String kid = jwk.getKeyID();
@@ -613,7 +617,7 @@ public class KeyStoreExportService implements InvocableResource {
 		}
 
 		return getJWKResponse(request, (entry) -> {
-			String key = entry.getX5T();
+			String key = entry.getX5T256();
 
 			return x5t.equals(key);
 		});

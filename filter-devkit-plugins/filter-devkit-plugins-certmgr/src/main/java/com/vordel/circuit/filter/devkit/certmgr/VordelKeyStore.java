@@ -130,8 +130,9 @@ public final class VordelKeyStore extends KeyStoreMapper {
 	 *                       Objects. use 'false' when in script attachment phase,
 	 *                       'true' if handling a message.
 	 * @return true if any certificate has been successfully imported.
+	 * @throws InterruptedException if interrupted while importing
 	 */
-	public boolean importEntries(Iterable<KeyStoreEntry> entries, BiFunction<PersonalInfo, KeyStoreEntry, String> aliasGenerator, boolean useThread) {
+	public boolean importEntries(Iterable<KeyStoreEntry> entries, BiFunction<PersonalInfo, KeyStoreEntry, String> aliasGenerator, boolean useThread) throws InterruptedException {
 		Map<String, KeyStoreEntry> aliases = new HashMap<String, KeyStoreEntry>();
 		List<PersonalInfo> imported = new ArrayList<PersonalInfo>();
 		CertStore store = CertStore.getInstance();
@@ -166,11 +167,12 @@ public final class VordelKeyStore extends KeyStoreMapper {
 				Thread task = new Thread(installer);
 
 				try {
-					task.run();
+					task.start();
 					task.join();
 				} catch (InterruptedException e) {
 					Trace.error("interrupted while importing certificates", e);
-				} finally {
+					
+					throw e;
 				}
 			} else {
 				installer.run();

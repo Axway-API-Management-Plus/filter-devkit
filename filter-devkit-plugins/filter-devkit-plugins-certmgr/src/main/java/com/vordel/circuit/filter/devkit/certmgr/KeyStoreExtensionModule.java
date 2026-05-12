@@ -22,7 +22,7 @@ public class KeyStoreExtensionModule extends AbstractScriptExtension implements 
 	}
 
 	@Override
-	public boolean importEntries(Iterable<KeyStoreEntry> entries, BiFunction<PersonalInfo, KeyStoreEntry, String> aliasGenerator, boolean useThread) {
+	public boolean importEntries(Iterable<KeyStoreEntry> entries, BiFunction<PersonalInfo, KeyStoreEntry, String> aliasGenerator, boolean useThread) throws InterruptedException {
 		VordelKeyStore store = VordelKeyStore.getInstance();
 
 		return store.importEntries(entries, aliasGenerator, useThread);

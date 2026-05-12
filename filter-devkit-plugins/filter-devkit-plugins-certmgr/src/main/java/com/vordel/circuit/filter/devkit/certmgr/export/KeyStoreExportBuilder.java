@@ -123,7 +123,7 @@ public class KeyStoreExportBuilder {
 	 * 
 	 * @return certificate export service
 	 */
-	public InvocableResource build() {
+	public KeyStoreExportService build() {
 		KeyStorePathBuilder pathBuilder = new KeyStorePathBuilder(cache, trusted.toArray(new KeyStoreResource[0]));
 
 		return new KeyStoreExportService(exported, pathBuilder, filters, transforms, exportPrivate);

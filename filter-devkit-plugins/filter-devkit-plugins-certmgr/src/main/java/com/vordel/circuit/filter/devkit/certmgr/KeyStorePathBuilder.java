@@ -204,6 +204,8 @@ public class KeyStorePathBuilder {
 
 		return null;
 	}
+	
+	private static final String CERTSTORE_COLLECTION_TYPE = "Collection";
 
 	private static CertPathHolder getCertPathHolder(X509Certificate certificate, Set<TrustAnchor> anchors, Collection<? extends Certificate> authorities, List<? extends Certificate> untrusted) {
 		String name = certificate.getSubjectX500Principal().toString();
@@ -216,13 +218,13 @@ public class KeyStorePathBuilder {
 			PKIXBuilderParameters parameters = new PKIXBuilderParameters(anchors, getPublicKeySelector(key));
 
 			parameters.setRevocationEnabled(false);
-			parameters.addCertStore(CertStore.getInstance("Collection", new CollectionCertStoreParameters(authorities)));
+			parameters.addCertStore(CertStore.getInstance(CERTSTORE_COLLECTION_TYPE, new CollectionCertStoreParameters(authorities)));
 
 			if (untrusted != null) {
-				parameters.addCertStore(CertStore.getInstance("Collection", new CollectionCertStoreParameters(untrusted)));
+				parameters.addCertStore(CertStore.getInstance(CERTSTORE_COLLECTION_TYPE, new CollectionCertStoreParameters(untrusted)));
 			}
 
-			parameters.addCertStore(CertStore.getInstance("Collection", new CollectionCertStoreParameters(Collections.singleton(certificate))));
+			parameters.addCertStore(CertStore.getInstance(CERTSTORE_COLLECTION_TYPE, new CollectionCertStoreParameters(Collections.singleton(certificate))));
 
 			CertPathBuilderResult result = builder.build(parameters);
 
@@ -263,7 +265,7 @@ public class KeyStorePathBuilder {
 	private static final TrustAnchor getTrustAnchor(X509Certificate certificate, List<? extends Certificate> path, Set<TrustAnchor> anchors) {
 		Certificate last = null;
 
-		if (path.size() > 0) {
+		if (!path.isEmpty()) {
 			last = path.get(path.size() - 1);
 		} else {
 			X500Principal subject = certificate.getSubjectX500Principal();

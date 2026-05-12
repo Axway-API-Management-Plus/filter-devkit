@@ -37,6 +37,9 @@ import com.vordel.security.cert.PersonalInfo;
 import com.vordel.trace.Trace;
 
 public final class KeyStoreEntry implements Entry<String, Certificate> {
+	private static final String JCA_SHA1_DIGEST = "SHA-1";
+	private static final String JCA_SHA256_DIGEST = "SHA-256";
+	
 	private final String alias;
 	private final Certificate certificate;
 	private final PrivateKey privateKey;
@@ -101,8 +104,8 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 		this.privateJWK = privateJWK;
 		this.publicJWK = publicJWK;
 
-		this.x5t = getX5Tx(certificate, x5t, "SHA-1");
-		this.x5t256 = getX5Tx(certificate, x5t256, "SHA-256");
+		this.x5t = getX5Tx(certificate, x5t, JCA_SHA1_DIGEST);
+		this.x5t256 = getX5Tx(certificate, x5t256, JCA_SHA256_DIGEST);
 	}
 
 	private KeyStoreEntry(String alias, Certificate certificate, PublicKey publicKey, PrivateKey privateKey) {
@@ -126,8 +129,8 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 		this.privateJWK = privateJWK;
 		this.publicJWK = publicJWK;
 
-		this.x5t = getX5Tx(certificate, x5t, "SHA-1");
-		this.x5t256 = getX5Tx(certificate, x5t256, "SHA-256");
+		this.x5t = getX5Tx(certificate, x5t, JCA_SHA1_DIGEST);
+		this.x5t256 = getX5Tx(certificate, x5t256, JCA_SHA256_DIGEST);
 	}
 
 	public KeyStoreEntry(KeyStore store, String alias, char[] password) {
@@ -180,8 +183,8 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 		this.privateJWK = privateJWK;
 		this.publicJWK = publicJWK;
 
-		this.x5t = getX5Tx(certificate, x5t, "SHA-1");
-		this.x5t256 = getX5Tx(certificate, x5t256, "SHA-256");
+		this.x5t = getX5Tx(certificate, x5t, JCA_SHA1_DIGEST);
+		this.x5t256 = getX5Tx(certificate, x5t256, JCA_SHA256_DIGEST);
 	}
 
 	private KeyStoreEntry(JWK jwk) {
@@ -216,8 +219,8 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 		this.privateJWK = jwk;
 		this.publicJWK = publicJWK;
 
-		this.x5t = getX5Tx(null, x5t, "SHA-1");
-		this.x5t256 = getX5Tx(null, x5t256, "SHA-256");
+		this.x5t = getX5Tx(null, x5t, JCA_SHA1_DIGEST);
+		this.x5t256 = getX5Tx(null, x5t256, JCA_SHA256_DIGEST);
 	}
 
 	public static KeyStoreEntry fromJWK(JWK jwk) {
@@ -232,8 +235,8 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 		return fromCertificate(alias, info.certificate, null, info.privateKey);
 	}
 
-	public static KeyStoreEntry fromCertificate(Certificate certificate, PrivateKey privateKey) {
-		return fromCertificate(null, certificate, null, privateKey);
+	public static KeyStoreEntry fromCertificate(String alias, Certificate certificate, PrivateKey privateKey) {
+		return fromCertificate(alias, certificate, null, privateKey);
 	}
 
 	private static KeyStoreEntry fromCertificate(String alias, Certificate certificate, PublicKey publicKey, PrivateKey privateKey) {
@@ -322,7 +325,7 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 		Certificate[] chain = null;
 
 		if (isX509Certificate()) {
-			List<Certificate> path = new ArrayList<Certificate>();
+			List<Certificate> path = new ArrayList<>();
 
 			trust.getCertPathWithCache((X509Certificate) certificate, path);
 
@@ -334,7 +337,7 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 
 	public CertPath getCertificatePath(KeyStorePathBuilder trust) throws CircuitAbortException {
 		if (isX509Certificate()) {
-			List<Certificate> path = new ArrayList<Certificate>();
+			List<Certificate> path = new ArrayList<>();
 
 			return trust.getCertPathWithCache((X509Certificate) certificate, path);
 		}
@@ -376,7 +379,7 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 				if (certificate instanceof X509Certificate) {
 					builder = builder.keyUse(KeyUse.from((X509Certificate) certificate));
 					builder = builder.x509CertChain(Collections.singletonList(Base64.encode(certificate.getEncoded())));
-					builder = builder.x509CertSHA256Thumbprint(getX5Tx(certificate, "SHA-256"));
+					builder = builder.x509CertSHA256Thumbprint(getX5Tx(certificate, JCA_SHA256_DIGEST));
 				}
 
 				privateJWK = builder.build();
@@ -390,7 +393,7 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 				if (certificate instanceof X509Certificate) {
 					builder = builder.keyUse(KeyUse.from((X509Certificate) certificate));
 					builder = builder.x509CertChain(Collections.singletonList(Base64.encode(certificate.getEncoded())));
-					builder = builder.x509CertSHA256Thumbprint(getX5Tx(certificate, "SHA-256"));
+					builder = builder.x509CertSHA256Thumbprint(getX5Tx(certificate, JCA_SHA256_DIGEST));
 				}
 
 				privateJWK = builder.build();
@@ -422,5 +425,4 @@ public final class KeyStoreEntry implements Entry<String, Certificate> {
 		/* entries are immutable */
 		throw new UnsupportedOperationException();
 	}
-
 }

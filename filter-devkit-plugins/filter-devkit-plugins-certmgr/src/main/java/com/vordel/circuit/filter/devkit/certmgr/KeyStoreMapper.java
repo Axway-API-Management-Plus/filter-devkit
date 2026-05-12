@@ -88,6 +88,7 @@ public abstract class KeyStoreMapper extends KeyStoreResource {
 			x5t256s.clear();
 			x5ts.clear();
 
+			subjects.clear();
 			certificates.clear();
 			publicKeys.clear();
 
@@ -268,7 +269,7 @@ public abstract class KeyStoreMapper extends KeyStoreResource {
 			synchronized (sync) {
 				byte[] encoded = key.getEncoded();
 
-				publicKeys.get(ByteBuffer.wrap(encoded));
+				return publicKeys.get(ByteBuffer.wrap(encoded));
 			}
 		}
 
