@@ -1,5 +1,4 @@
 <ui>
-<validator class="com.vordel.client.manager.filter.oauth2.provider.ScopeGenerationValidator" />
 	<panel columns="2">
 		<panel columns="2" fill="false">
 			<NameAttribute />
@@ -110,7 +109,7 @@
 									<choice value="Application" label="USING_APPLICATION" />
 									<panel indent="30" columns="3" span="4" margin="1">
 										<ComboAttribute field="scopesMustMatch" label="SCOPES_MATCH"
-											contentSource="com.vordel.client.manager.filter.oauth2.provider.ScopesMatch.VALUES"
+											contentSource="com.vordel.client.manager.filter.devkit.oauth2.UIConstants.SCOPES_MATCH"
 											includeBlank="false" required="true" readOnly="true" />
 										<label label="SCOPES_REGISTERED" />
 									</panel>

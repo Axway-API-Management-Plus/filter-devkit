@@ -49,8 +49,6 @@ jar {
 	}
 	bundle {
 		bnd '''
-			-include: ../../src/main/bundle/studio.bnd
-			-include: ../../src/main/bundle/quick.bnd
 			-include: src/main/bundle/bundle.bnd
 		'''
 	  }

@@ -1,6 +1,0 @@
-Import-Package: \
-	com.vordel.circuit.filter.devkit.quick.annotations,\
-	com.vordel.circuit.filter.devkit.context.annotations,\
-	com.vordel.client.manager.filter.devkit.studio,\
-	com.vordel.client.manager.filter.devkit.studio.quick,\
-	com.vordel.client.manager.filter.devkit.runtime;

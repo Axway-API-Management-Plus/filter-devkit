@@ -36,10 +36,17 @@ import com.vordel.el.Selector;
 import com.vordel.trace.Trace;
 
 public class ExtensionScanner {
-	private ExtensionScanner() {
+	private final ExtensionLoader extensions;
+
+	ExtensionScanner(ExtensionLoader extensions) {
+		this.extensions = extensions;
+	}
+	
+	final ExtensionLoader getExtensionLoader() {
+		return extensions;
 	}
 
-	private static void fromClass(ConfigContext ctx, Class<?> clazz) {
+	private void fromClass(ConfigContext ctx, Class<?> clazz) {
 		ExtensionContext annotation = clazz.getAnnotation(ExtensionContext.class);
 		Object instance = null;
 
@@ -47,7 +54,7 @@ public class ExtensionScanner {
 			try {
 				instance = newInstance(clazz);
 
-				ExtensionLoader.registerExtensionInstance(ctx, instance);
+				extensions.registerExtensionInstance(ctx, instance);
 			} catch (InstantiationException e) {
 				Trace.error(String.format("the class '%s' can't be instantiated", clazz.getName()), e);
 			} catch (InvocationTargetException e) {
@@ -62,7 +69,7 @@ public class ExtensionScanner {
 				/* class is annotated is an extension module */
 				Constructor<? extends AbstractScriptExtension> constructor = clazz.asSubclass(AbstractScriptExtension.class).getDeclaredConstructor(ScriptExtensionBuilder.class);
 
-				ExtensionLoader.registerScriptExtension(constructor);
+				extensions.registerScriptExtension(constructor);
 			} catch (NoSuchMethodException e) {
 				Trace.error(String.format("the class '%s' must have a no-arg constructor", clazz.getName()), e);
 			}
@@ -73,11 +80,11 @@ public class ExtensionScanner {
 		}
 	}
 
-	public static ExtensionResourceProvider fromClass(Class<?> clazz) {
+	public final ExtensionResourceProvider fromClass(Class<?> clazz) {
 		return register(null, clazz);
 	}
 
-	public static <T> ExtensionResourceProvider fromInstance(T object) {
+	public final <T> ExtensionResourceProvider fromInstance(T object) {
 		if (object == null) {
 			throw new IllegalArgumentException("null cannot be reflected as resource provider");
 		}
@@ -140,7 +147,7 @@ public class ExtensionScanner {
 		}
 	}
 
-	static List<Class<?>> scanExtensions(ClassLoader loader, Set<String> registered, Set<String> allowed) {
+	static final List<Class<?>> scanExtensions(ClassLoader loader, Set<String> registered, Set<String> allowed) {
 		Map<String, ClassLoader> loaders = new HashMap<String, ClassLoader>();
 		Map<String,String> reverse = new HashMap<String, String>();
 
@@ -372,7 +379,7 @@ public class ExtensionScanner {
 		return (!isAbstract) && isInstance && isEntension && hasExtensionContructor;
 	}
 
-	static void registerClasses(ConfigContext ctx, Iterable<Class<?>> clazzes) {
+	final void registerClasses(ConfigContext ctx, Iterable<Class<?>> clazzes) {
 		if (clazzes != null) {
 			List<Class<?>> sorted = new ArrayList<Class<?>>();
 
@@ -393,7 +400,7 @@ public class ExtensionScanner {
 		}
 	}
 
-	private static <T> ExtensionResourceProvider register(T script, Class<? extends T> clazz) {
+	private <T> ExtensionResourceProvider register(T script, Class<? extends T> clazz) {
 		ExtensionResourceProvider resources = ExtensionResourceProvider.create(script, clazz);
 
 		if (resources != null) {
@@ -406,7 +413,7 @@ public class ExtensionScanner {
 					name = clazz.getName();
 				}
 
-				ExtensionLoader.registerExtensionContext(name, resources);
+				extensions.registerExtensionContext(name, resources);
 
 				Trace.info(String.format("registered class '%s' as extension '%s'", clazz.getName(), name));
 			}
@@ -415,7 +422,7 @@ public class ExtensionScanner {
 		return resources;
 	}
 
-	static Object newInstance(Class<?> clazz) throws NoSuchMethodException, InstantiationException, InvocationTargetException {
+	static final Object newInstance(Class<?> clazz) throws NoSuchMethodException, InstantiationException, InvocationTargetException {
 		/* class is annotated is an extension module */
 		Constructor<?> constructor = clazz.getDeclaredConstructor();
 
