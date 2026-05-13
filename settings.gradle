@@ -12,6 +12,7 @@ include 'filter-devkit-plugins-oauth'
 include 'filter-devkit-plugins-loop'
 include 'filter-devkit-plugins-scriptextensions'
 include 'filter-devkit-plugins-certmgr'
+include 'filter-devkit-plugins-jabber'
 
 include 'filter-devkit-playground'
 
@@ -23,3 +24,4 @@ project(':filter-devkit-plugins-oauth').projectDir = file('filter-devkit-plugins
 project(':filter-devkit-plugins-loop').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-loop')
 project(':filter-devkit-plugins-scriptextensions').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-scriptextensions')
 project(':filter-devkit-plugins-certmgr').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-certmgr')
+project(':filter-devkit-plugins-jabber').projectDir = file('filter-devkit-plugins/filter-devkit-plugins-jabber')

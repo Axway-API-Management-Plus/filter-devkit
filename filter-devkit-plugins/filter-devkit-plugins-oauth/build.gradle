@@ -1,5 +1,5 @@
 plugins {
-	id 'biz.aQute.bnd.builder' version '6.4.0'
+	id 'biz.aQute.bnd.builder' version "${bndBuilderVersion}"
 }
 
 java {
@@ -9,6 +9,9 @@ java {
 
 apply from: rootProject.file('apigateway.gradle')
 apply from: rootProject.file('policystudio.gradle')
+
+deployRuntime.enabled = true
+deployPlugin.enabled = true
 
 configurations {
 	compileOnly.extendsFrom(apigw_central, studio_plugins)
@@ -41,7 +44,13 @@ jar {
 	manifest {
 		// to be recognized as filter, symbolic name MUST start with 'com.vordel.filter.'
 		// or 'com.vordel.policystudio.ext.' and it must not end with '.help'
-		attributes("Bundle-SymbolicName": "com.vordel.filter.${project.name};singleton:=true",
-		"-include": "src/main/bundle/bundle.bnd")
+		attributes("Bundle-SymbolicName": "com.vordel.filter.${project.name};singleton:=true")
 	}
+	bundle {
+		bnd '''
+			-include: ../../src/main/bundle/studio.bnd
+			-include: ../../src/main/bundle/quick.bnd
+			-include: src/main/bundle/bundle.bnd
+		'''
+	  }
 }

@@ -1,0 +1,10 @@
+Bundle-Name: Filter-DevKit Jabber Plugin
+Bundle-Description: API Gateway implementation for Jabber sample filter
+Bundle-Vendor: Axway
+Bundle-DocURL: https://github.com/Axway-API-Management-Plus/filter-devkit
+Bundle-ClassPath: .
+Export-Package: com.vordel.client.manager.filter.devkit.jabber
+Import-Package: \
+	*;'resolution:'=optional
+
+-noee=true

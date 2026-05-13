@@ -3,6 +3,10 @@ apply plugin: 'base'
 group = 'com.axway.apigw'
 version = '7.7.0.20260228-3'
 
+ext {
+	bndBuilderVersion = '6.4.0'
+}
+
 subprojects {
 	apply plugin: 'eclipse'
 
