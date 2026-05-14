@@ -82,8 +82,8 @@ public final class ExtensionLoader implements LoadableModule {
 
 	private static final ExtensionLoader getActiveInstance(boolean required) {
 		ExtensionScanner scanner = getActiveScanner(required);
-		
-		return scanner.getExtensionLoader();
+
+		return scanner == null ? null : scanner.getExtensionLoader();
 	}
 
 	private static final ExtensionLoader getLoadedInstance() {
@@ -101,26 +101,37 @@ public final class ExtensionLoader implements LoadableModule {
 			configured.detach();
 		}
 
-		synchronized (SYNC) {
-			// set active extension scanner
-			activeScanner = instanceScanner;
-			instance = null;
+		try {
+			synchronized (SYNC) {
+				// set active extension scanner
+				activeScanner = instanceScanner;
+				instance = this;
+			}
+
+			loaded = true;
+			
+			Trace.info("scanning services for Extensions");
+
+			registered.clear();
+
+			/* scan class path for extensions */
+			Thread current = Thread.currentThread();
+			ClassLoader loader = current.getContextClassLoader();
+
+			scanClasses(ctx, loader);
+
+			Trace.info("services scanned");
+		} catch (RuntimeException e) {
+			synchronized (SYNC) {
+				instance = null;
+			}
+
+			loaded = false;
+			Trace.error("got error scanning services", e);
+			
+			throw e;
 		}
 
-		loaded = true;
-
-		Trace.info("scanning services for Extensions");
-
-		registered.clear();
-
-		/* scan class path for extensions */
-		scanClasses(ctx, Thread.currentThread().getContextClassLoader());
-
-		Trace.info("services scanned");
-
-		synchronized (SYNC) {
-			instance = this;
-		}
 	}
 
 	public static final boolean isLoaded() {
@@ -135,6 +146,7 @@ public final class ExtensionLoader implements LoadableModule {
 	}
 
 	private final void checkLoadState() {
+		// use local 'loaded' boolean, this avoids sync for checking instance
 		if (!loaded) {
 			throw new IllegalStateException("ExtensionLoader module is not yet loaded");
 		}
@@ -158,41 +170,41 @@ public final class ExtensionLoader implements LoadableModule {
 	private void detach() {
 		Iterator<ExtensionModule> modules = new ArrayList<ExtensionModule>(loadedModules).iterator();
 		Iterator<Runnable> callbacks = new ArrayList<Runnable>(unloadCallbacks).iterator();
-		
-		loaded = false;
 
-		while (callbacks.hasNext()) {
-			try {
-				callbacks.next().run();
-			} catch (Exception e) {
-				Trace.error("got error with unload callback", e);
+		try {
+			while (callbacks.hasNext()) {
+				try {
+					callbacks.next().run();
+				} catch (Exception e) {
+					Trace.error("got error with unload callback", e);
+				}
+
+				callbacks.remove();
 			}
 
-			callbacks.remove();
-		}
+			while (modules.hasNext()) {
+				try {
+					ExtensionModule module = modules.next();
 
-		while (modules.hasNext()) {
-			try {
-				ExtensionModule module = modules.next();
+					module.detachModule();
 
-				module.detachModule();
+					Trace.info(String.format("unloaded '%s'", module.getClass().getName()));
+				} catch (Exception e) {
+					Trace.error("got error calling detach", e);
+				}
 
-				Trace.info(String.format("unloaded '%s'", module.getClass().getName()));
-			} catch (Exception e) {
-				Trace.error("got error calling detach", e);
+				modules.remove();
 			}
+		} finally {
+			loaded = false;
 
-			modules.remove();
+			loadedModules.clear();
+			unloadCallbacks.clear();
+			loadedPlugins.clear();
+			loadedInterfaces.clear();
+			loadedScriptExtensions.clear();
+			registered.clear();
 		}
-
-		loaded = false;
-
-		loadedModules.clear();
-		unloadCallbacks.clear();
-		loadedPlugins.clear();
-		loadedInterfaces.clear();
-		loadedScriptExtensions.clear();
-		registered.clear();
 	}
 
 	public static final void scanClasses(ConfigContext ctx, ClassLoader loader) {
@@ -527,7 +539,7 @@ public final class ExtensionLoader implements LoadableModule {
 	 */
 	public static final ExtensionResourceProvider getExtensionContext(String name) {
 		ExtensionLoader extensions = getActiveInstance(true);
-		
+
 		return extensions.loadedPlugins.get(name);
 	}
 

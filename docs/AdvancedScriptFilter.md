@@ -94,7 +94,7 @@ Selectors are used everywhere in Filters but are not available in base script sy
 ```javascript
 function invoke(circuit, msg) {
 	// assume that 'querystring.name' has been bound to expression '{http.querystring.name}' with coercion set to String.
-	var name = substituteResource("querystring.name");
+	var name = substituteResource(msg, "querystring.name");
 
 	// you code to handle name resolution
 	return true;

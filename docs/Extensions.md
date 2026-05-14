@@ -6,7 +6,7 @@ The Filter DevKit comes with rich extensions capabilities. Except for filters, a
  - [Extension context](ExtensionContext.md) : Exported Java methods callable from selectors or scripts (and custom filters).
  - [Script extensions](ScriptExtensions.md) : Additional top level functions and resources for advanced script filter
 
-Each of these extensions are Java class based and may use a [child first ClassLoader](ChildFirstClassLoader.md) so they can be interface with a class path foreign to the API Gateway. This special class loading feture is activated when the extension class is annotated with [ExtensionLibraries](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionLibraries.java).
+Each of these extensions are Java class based and may use a [child first ClassLoader](ChildFirstClassLoader.md) so they can be interface with a class path foreign to the API Gateway. This special class loading feature is activated when the extension class is annotated with [ExtensionLibraries](../filter-devkit-annotations/src/main/java/com/vordel/circuit/filter/devkit/context/annotations/ExtensionLibraries.java).
 
 Extension interfaces and contexts can also be called when the configuration is deployed or undeployed by implementing the [ExtensionModule](../filter-devkit-runtime/src/main/java/com/vordel/circuit/filter/devkit/context/ExtensionModule.java).
 
