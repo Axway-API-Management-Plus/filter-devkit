@@ -1,9 +1,9 @@
 plugins {
-	id 'biz.aQute.bnd.builder' version '6.4.0'
+	id 'biz.aQute.bnd.builder' version "${bndBuilderVersion}"
 }
 
 java {
-	sourceCompatibility = '8'
+	sourceCompatibility = '11'
 	targetCompatibility = '11'
 }
 
@@ -11,9 +11,13 @@ jar {
 	manifest {
 		// to be recognized as filter, symbolic name MUST start with 'com.vordel.filter.'
 		// or 'com.vordel.policystudio.ext.' and it must not end with '.help'
-		attributes("Bundle-SymbolicName": "com.vordel.filter.${project.name};singleton:=true",
-		"-include": "src/main/bundle/bundle.bnd")
+		attributes("Bundle-SymbolicName": "com.vordel.filter.${project.name};singleton:=true") // Add specific bundle section
 	}
+	bundle {
+		bnd '''
+			-include: src/main/bundle/bundle.bnd
+		'''
+	  }
 }
 
 apply from: rootProject.file('policystudio.gradle')

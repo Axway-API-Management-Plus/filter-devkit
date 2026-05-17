@@ -68,7 +68,6 @@ import com.vordel.circuit.oauth.token.OAuth2AccessToken;
 import com.vordel.circuit.oauth.token.OAuth2Authentication;
 import com.vordel.circuit.oauth.token.OAuth2RefreshToken;
 import com.vordel.common.apiserver.discovery.model.OAuthAppScope;
-import com.vordel.config.Circuit;
 import com.vordel.mime.QueryStringHeaderSet;
 import com.vordel.trace.Trace;
 
@@ -171,7 +170,7 @@ public abstract class OAuthAccessTokenGenerator {
 		PUBLIC_INFORMATION = Collections.unmodifiableSet(publicClaims);
 	}
 
-	public Set<String> getScopesForToken(Message msg, Circuit circuit, OAuthParameters parsed, ApplicationDetails details) throws CircuitAbortException {
+	public Set<String> getScopesForToken(Message msg, OAuthParameters parsed, ApplicationDetails details) throws CircuitAbortException {
 		String from = getScopesFrom(msg);
 		Set<String> scopes = null;
 
@@ -184,9 +183,9 @@ public abstract class OAuthAccessTokenGenerator {
 				throw new OAuthException(err_rfc6749_invalid_scope, null, null);
 			}
 
-			scopes = getScopesForToken(msg, circuit, parsed, details, validator, null);
+			scopes = getScopesForToken(msg, parsed, details, validator, null);
 		} else if ("Application".equals(from)) {
-			scopes = getScopesForToken(msg, circuit, parsed, details, null, getScopesMustMatchSelection(msg));
+			scopes = getScopesForToken(msg, parsed, details, null, getScopesMustMatchSelection(msg));
 		} else {
 			Trace.error("Bad configuration for scope validation");
 
@@ -196,7 +195,7 @@ public abstract class OAuthAccessTokenGenerator {
 		return scopes;
 	}
 
-	protected Set<String> getScopesForToken(Message msg, Circuit circuit, OAuthParameters parsed, ApplicationDetails details, PolicyResource scopeCircuit, ScopesMustMatchSelection matchSelection) throws CircuitAbortException {
+	protected Set<String> getScopesForToken(Message msg, OAuthParameters parsed, ApplicationDetails details, PolicyResource scopeCircuit, ScopesMustMatchSelection matchSelection) throws CircuitAbortException {
 		/* create a scope set from parsed parameters */
 		Set<String> scopes = new LinkedHashSet<String>();
 
@@ -227,7 +226,7 @@ public abstract class OAuthAccessTokenGenerator {
 		}
 
 		if (OAuthServiceEndpoint.isValidPolicy(scopeCircuit)) {
-			if (!OAuthServiceEndpoint.invokePolicy(msg, circuit, scopeCircuit)) {
+			if (!OAuthServiceEndpoint.invokePolicy(msg, scopeCircuit)) {
 				throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_invalid_scope, null, "provided scopes are invalid");
 			}
 
@@ -247,7 +246,7 @@ public abstract class OAuthAccessTokenGenerator {
 		return scopes;
 	}
 
-	public Set<String> applyOwnerConsent(Circuit circuit, Message msg, String subject, ApplicationDetails details, Set<String> requestedScopes, Set<String> additionalScopes, boolean skipUserConsent) throws CircuitAbortException {
+	public Set<String> applyOwnerConsent(Message msg, String subject, ApplicationDetails details, Set<String> requestedScopes, Set<String> additionalScopes, boolean skipUserConsent) throws CircuitAbortException {
 		if (OAuthGuavaCache.getOAuthClient(subject) != null) {
 			subject = null;
 		}
@@ -274,7 +273,7 @@ public abstract class OAuthAccessTokenGenerator {
 					msg.put("oauth.scopes.requested", requestedScopes);
 					msg.put("oauth.scopes.missing", manager.getScopesForAuthorisation());
 
-					if (OAuthServiceEndpoint.invokePolicy(msg, circuit, authorization)) {
+					if (OAuthServiceEndpoint.invokePolicy(msg, authorization)) {
 						/*
 						 * retrieve policy output. Only transient and discarded scopes are supported for
 						 * token service
@@ -310,13 +309,13 @@ public abstract class OAuthAccessTokenGenerator {
 		return requestedScopes;
 	}
 
-	public Response createAccessToken(Circuit circuit, Message msg, OAuthParameters parsed, ApplicationDetails details, String subject, Set<String> scopes, Set<String> additionalScopes, OAuth2RefreshToken refresh_token) throws CircuitAbortException {
+	public Response createAccessToken(Message msg, OAuthParameters parsed, ApplicationDetails details, String subject, Set<String> scopes, Set<String> additionalScopes, OAuth2RefreshToken refresh_token) throws CircuitAbortException {
 		PolicyResource validator = getGrantValidatorCircuit();
 
 		/* save the current refresh token in the message */
 		msg.put("oauth.request.refresh_token", refresh_token);
 		
-		if (OAuthServiceEndpoint.isValidPolicy(validator) && (!OAuthServiceEndpoint.invokePolicy(msg, circuit, validator))) {
+		if (OAuthServiceEndpoint.isValidPolicy(validator) && (!OAuthServiceEndpoint.invokePolicy(msg, validator))) {
 			/* trace error, but report invalid credentials */
 			Trace.error("Grant Validator returned false");
 
@@ -348,7 +347,7 @@ public abstract class OAuthAccessTokenGenerator {
 			}
 		}
 
-		if (!storeToken(circuit, msg, parsed, setTokenOnMessage(msg, token), subject, preserveRefresh)) {
+		if (!storeToken(msg, parsed, setTokenOnMessage(msg, token), subject, preserveRefresh)) {
 			Trace.error("unable to store Access Token to persistent store");
 
 			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, null);
@@ -357,7 +356,7 @@ public abstract class OAuthAccessTokenGenerator {
 		return returnToken(msg, token, null, saved_refresh_token, (String) parsed.get(param_grant_type));
 	}
 
-	public Response createAccessToken(Circuit circuit, Message msg, OAuthParameters parsed, ApplicationDetails details, AuthorizationCode code, Set<String> additionalScopes) throws CircuitAbortException {
+	public Response createAccessToken(Message msg, OAuthParameters parsed, ApplicationDetails details, AuthorizationCode code, Set<String> additionalScopes) throws CircuitAbortException {
 		String subject = code.getUserIdentity();
 		Set<String> scopes = code.getScopes();
 
@@ -367,9 +366,9 @@ public abstract class OAuthAccessTokenGenerator {
 		/* set requested scopes from authorization code */
 		msg.put("oauth.scopes.requested", scopes);
 
-		OAuth2AccessToken token = generateToken(msg, circuit, parsed, details, scopes, additionalScopes, code.getAdditionalInformation(), false);
+		OAuth2AccessToken token = generateToken(msg, parsed, details, scopes, additionalScopes, code.getAdditionalInformation(), false);
 
-		if (!storeToken(circuit, msg, parsed, setTokenOnMessage(msg, token), subject, false)) {
+		if (!storeToken(msg, parsed, setTokenOnMessage(msg, token), subject, false)) {
 			Trace.error("unable to store Access Token to persistent store");
 
 			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, null);
@@ -378,10 +377,10 @@ public abstract class OAuthAccessTokenGenerator {
 		return returnToken(msg, token, (String) parsed.get(param_state), null, (String) parsed.get(param_grant_type));
 	}
 
-	public Response createAccessToken(Circuit circuit, Message msg, OAuthParameters parsed, ApplicationDetails details, String subject, Set<String> scopes, Set<String> additionalScopes, boolean forceRefresh) throws CircuitAbortException {
-		OAuth2AccessToken token = generateToken(msg, circuit, parsed, details, scopes, additionalScopes, null, forceRefresh);
+	public Response createAccessToken(Message msg, OAuthParameters parsed, ApplicationDetails details, String subject, Set<String> scopes, Set<String> additionalScopes, boolean forceRefresh) throws CircuitAbortException {
+		OAuth2AccessToken token = generateToken(msg, parsed, details, scopes, additionalScopes, null, forceRefresh);
 
-		if (!storeToken(circuit, msg, parsed, setTokenOnMessage(msg, token), subject, false)) {
+		if (!storeToken(msg, parsed, setTokenOnMessage(msg, token), subject, false)) {
 			Trace.error("unable to store Access Token to persistent store");
 
 			throw new OAuthException(Response.Status.INTERNAL_SERVER_ERROR, err_rfc6749_server_error, null, null);
@@ -475,7 +474,7 @@ public abstract class OAuthAccessTokenGenerator {
 		return Response.ok(filterTokenAdditionalInformation(node, msg), MediaType.APPLICATION_JSON_TYPE).cacheControl(cache).header("Pragma", "no-cache").build();
 	}
 
-	protected boolean storeToken(Circuit circuit, Message msg, OAuthParameters parsed, OAuth2AccessToken token, String subject, boolean preserveRefresh) throws CircuitAbortException {
+	protected boolean storeToken(Message msg, OAuthParameters parsed, OAuth2AccessToken token, String subject, boolean preserveRefresh) throws CircuitAbortException {
 		Set<String> scopes = new ScopeSet(parsed.getObjectNode());
 		Set<String> requestedScopes = token.getScope();
 
@@ -531,7 +530,7 @@ public abstract class OAuthAccessTokenGenerator {
 		if (OAuthServiceEndpoint.isValidPolicy(transformer)) {
 			String saved_refresh_token = token.getRefreshToken();
 
-			if (!OAuthServiceEndpoint.invokePolicy(msg, circuit, transformer)) {
+			if (!OAuthServiceEndpoint.invokePolicy(msg, transformer)) {
 				throw new OAuthException(err_invalid_request, null, "the requested token type is not supported");
 			}
 
@@ -626,10 +625,10 @@ public abstract class OAuthAccessTokenGenerator {
 		}
 	}
 	
-	protected OAuth2AccessToken generateToken(Message msg, Circuit circuit, OAuthParameters parsed, ApplicationDetails details, Set<String> scopes, Set<String> additionalScopes, Map<String, String> data, boolean forceRefresh) throws CircuitAbortException {
+	protected OAuth2AccessToken generateToken(Message msg, OAuthParameters parsed, ApplicationDetails details, Set<String> scopes, Set<String> additionalScopes, Map<String, String> data, boolean forceRefresh) throws CircuitAbortException {
 		PolicyResource validator = getGrantValidatorCircuit();
 
-		if (OAuthServiceEndpoint.isValidPolicy(validator) && (!OAuthServiceEndpoint.invokePolicy(msg, circuit, validator))) {
+		if (OAuthServiceEndpoint.isValidPolicy(validator) && (!OAuthServiceEndpoint.invokePolicy(msg, validator))) {
 			/* trace error, but report invalid credentials */
 			Trace.error("Grant Validator returned false");
 

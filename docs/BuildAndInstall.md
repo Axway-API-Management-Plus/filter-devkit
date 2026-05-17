@@ -1,82 +1,196 @@
 # Build and Install
 
-The Filter DevKit uses a Gradle build process. The process of building and installing from sources is quite simple.
+This document covers building the FDK from source and installing it into an existing API Gateway. If you just want to try the FDK quickly, use the [Docker playground](GettingStarted.md) instead.
+
+---
 
 ## Prerequisites
 
-As a prerequisite, you need to have API Gateway and Policy Studio installed locally. A JDK is also required. The required version depends on the installed API Gateway. If developping on Windows, you can inflate an API Gateway installation archive which comes from Linux and use it for building. Otherwise, you may use WSL2 for build.
+| Tool | Version | Notes |
+|---|---|---|
+| JDK | 11 | Required by API Gateway 7.7.20260228 |
+| API Gateway | 7.7.20260228 | Must be installed locally |
+| Policy Studio | 7.7.20260228 | Must be installed locally |
+| Gradle | (wrapper included) | Use `./gradlew` on Linux, `gradlew.bat` on Windows |
+| `git` | any | For cloning |
 
-You must set two properties in the global gradle properties file (*Home Directory*/.gradle/gradle.properties).
+On Windows you can either point Gradle at a Linux API Gateway installation extracted from the archive, or use WSL2 for the entire build.
+
+---
+
+## Gradle properties
+
+Set the following in `~/.gradle/gradle.properties` on Linux/macOS, or `%USERPROFILE%\.gradle\gradle.properties` on Windows (create the file if it does not exist).
+
+**Linux / macOS:**
 
 ```properties
-# installation directory for api gateway
 apigw_vdistdir=/opt/axway/apigateway
-
-# installation directory for the policy studio
 studio_vdistdir=/opt/axway/policystudio
 ```
 
-In order to launch the gradle build, you must set the JAVA_HOME variable if not already set.
+**Windows:**
 
-git is also required.
-
-## Building
-
-Start by cloning the project on github and set working directory to the root of the project
-
+```properties
+apigw_vdistdir=C:/Axway/apigateway
+studio_vdistdir=C:/Axway/policystudio
 ```
+
+> Use forward slashes on Windows — Gradle accepts them on all platforms and avoids the need to double-escape backslashes.
+
+Set `JAVA_HOME` in your shell or system environment if it does not already point to JDK 11.
+
+---
+
+## Gateway dependency model
+
+Each supported API Gateway release has a corresponding branch in the repository (e.g. `7.7.20260228`). The branch contains a pre-generated, versioned `apigateway.gradle` committed to the repository. A standard build requires only a local Gateway installation — the `GatewayScanner` step is not needed unless you are creating a branch for a new release.
+
+`GatewayScanner` reconstructs a reproducible Gradle dependency model from a Gateway installation: it identifies Maven coordinates for all public dependencies via JAR manifest analysis, resolves them through Maven Aether, and writes a versioned `apigateway.gradle`. A secondary benefit is that public dependencies become proper Maven artefacts — IDEs can attach sources and Javadoc automatically, so extension authors can browse API documentation from their editor.
+
+If no branch exists for your target release, open a GitHub issue to request generation of a suitable `apigateway.gradle`.
+
+---
+
+## Clone and build
+
+```bash
 git clone -b develop https://github.com/Axway-API-Management-Plus/filter-devkit.git
+cd filter-devkit
 ```
 
-Once prerequisites are set (api gateway install, gradle global properties and JAVA_HOME) and repository cloned, you're ready to launch the build process. The following tasks are available
+### Available Gradle tasks
 
- - *clean* : clean build files and directories (but keep gradle cache)
- - *cleanEclipse* : remove eclipse IDE configuration
- - *eclipse* : create eclipse project configuration
- - *build* : build all projects without deploy
- - *copyArchives* : Copies all produced jars into the root build directory (filter-devkit/build/archives)
- - *deployRuntime* : Install runtime jars in the local installed API Gateway (in the distribution ext/lib directory). Some projects will also install jars in additional directory (like the dynamic compiler)
- - *deployPlugin* : Deploy Filters and filter-devkit runtime in Policy Studio (drop jars in the plugins directory)
+| Task | What it does |
+|---|---|
+| `clean` | Removes build files and directories (Gradle cache is preserved) |
+| `cleanEclipse` | Removes Eclipse IDE configuration files |
+| `eclipse` | Generates Eclipse project configuration |
+| `build` | Compiles all projects (no deployment) |
+| `copyArchives` | Copies all produced JARs to `build/archives/` |
+| `deployRuntime` | Installs runtime JARs to `$apigw_vdistdir/ext/lib` |
+| `deployPlugin` | Copies filter JARs and the runtime to the Policy Studio `plugins/` directory |
 
-When *deployPlugin* task is used, do not forget to restart the Policy Studio with the *-clean* command line argument.
+### Full build and install
 
-Typical command to rebuild and install everything
+**Linux / macOS:**
 
-*For Windows :*
-
-```
-gradlew.bat clean cleanEclipse eclipse build copyArchives deployRuntime deployPlugin
-```
-
-*For Linux :*
-
-```
+```bash
 ./gradlew clean cleanEclipse eclipse build copyArchives deployRuntime deployPlugin
 ```
 
-## Additional steps after install
+**Windows:**
 
-After libraries installation, the filter DevKit must be registered in the Entity Store. This task is done under policy studio.
-Any new Quick Filter must also be registered in the policy studio.
+```bat
+gradlew.bat clean cleanEclipse eclipse build copyArchives deployRuntime deployPlugin
+```
 
-You must stop and start each instance after runtime installation in the API Gateway directory (*deployRuntime*). Restart option will not work.
+After `deployPlugin`, restart Policy Studio with `-clean`:
 
-### Base Filter DevKit activation (optional)
+**Linux / macOS:**
 
-Open a configuration in the Policy Studio and choose File -> Import -> Import Custom Filter (this option is not available in YAML entity store as time of writing) and choose the [apigwsdkset.xml](../filter-devkit-runtime/src/main/typesets/apigwsdkset.xml) file.
+```bash
+/opt/axway/policystudio/policystudio -clean
+```
 
-If importing the typeset  is not an option, Filter DevKit features will be limited (see top [README](../README.md) for list). When using this type of install annotations and runtime jars must be set in Policy Studio runtime dependencies instead of plugins.
+**Windows:**
 
-### Quick Filter activation
+```bat
+C:\Axway\policystudio\policystudio.exe -clean
+```
 
-Each QuickFilter archive embeds the typesets for Policy Studio. Prior to filter registration, you must inflate those files. Once typesets are inflated, Open a configuration in the Policy Studio and choose File -> Import -> Import Custom Filter and choose the typeset.xml inflated file (which is the root typeset for each QuickFilter archive).
+---
 
-### Enable Java Debug Agent
+## Post-install steps
 
-If you're using your instance for extension development purpose ensure the [Dynamic compilation support](../filter-devkit-dynamic/README.md) is installed and activated and adds the following jwm.xml file in your instance configuration subdirectory (adapt the port number according to your needs)
+### 1. Stop and start gateway instances
+
+After `deployRuntime` copies JARs to `ext/lib`, perform a **full stop and start** of each gateway instance using the Admin Node Manager or your usual gateway management tooling. A simple *restart* (which reloads configuration without restarting the JVM) is not sufficient — new JARs are not loaded until the JVM restarts.
+
+### 2. Activate the base FDK typeset in Policy Studio (optional — enables full feature set)
+
+Open a configuration in Policy Studio, then:  
+**File → Import → Import Custom Filter → select `filter-devkit-runtime/src/main/typesets/apigwsdkset.xml`**
+
+> This step is not available with the YAML Entity Store. Without it, the Advanced Script Filter, Extension Interface, and child-first ClassLoader are not available. See [Architecture — Installation modes](Architecture.md#installation-modes) for what works without the typeset.
+
+### 3. Register Quick Filter plugins in Policy Studio
+
+Quick Filter JARs must be registered as OSGi plugins in Policy Studio before their typeset can be imported. There are three methods — choose the one that fits your environment.
+
+#### Method A — P2 reconcile (recommended for first-time install)
+
+1. Copy the Quick Filter JAR to `<PS_INSTALL>/dropins/`.
+2. Open `<PS_INSTALL>/configuration/config.ini` and set:
+
+   ```
+   eclipse.p2.reconciler=true
+   ```
+3. Restart Policy Studio. The P2 reconciler scans the `dropins/` directory and registers all new bundles.
+4. Reset `eclipse.p2.reconciler=false` after restart to keep future startups fast.
+
+#### Method B — Edit bundles.info directly
+
+1. Copy the Quick Filter JAR to `<PS_INSTALL>/plugins/`.
+2. Open `<PS_INSTALL>/configuration/org.eclipse.equinox.simpleconfigurator/bundles.info`.
+3. Add a line for the new bundle:
+
+   ```
+   <Bundle-SymbolicName>,<Bundle-Version>,plugins/<jar-filename>.jar,4,false
+   ```
+   Symbolic name and version come from `META-INF/MANIFEST.MF` inside the JAR.
+4. Restart Policy Studio.
+
+#### Method C — Runtime dependencies (compatibility mode)
+
+For releases that predate filter bundle support, or when full OSGi registration is not required:
+
+1. In Policy Studio: **Window → Preferences → Runtime Dependencies** (or the equivalent project-level setting).
+2. Add the Quick Filter JAR to the runtime dependency list.
+3. Restart Policy Studio.
+
+> In this mode the filter is functional but some Policy Studio features that depend on OSGi metadata (category icons, bundle versioning) may not be available. Prefer Method A or B for current releases.
+
+### 4. Import Quick Filter typesets into the Entity Store
+
+After the plugin is registered (step 3), import its typeset:
+
+1. Extract `typeset.xml` from the Quick Filter JAR:
+
+   **Linux / macOS:**
+
+   ```bash
+   unzip /path/to/quick-filter.jar "typeset/*" -d /tmp/typeset-extract/
+   ```
+
+   **Windows (PowerShell):**
+
+   ```powershell
+   Expand-Archive -Path C:\path\to\quick-filter.jar -DestinationPath C:\temp\typeset-extract\
+   ```
+
+   *(A `.jar` is a ZIP archive — rename it to `.zip` if your tool does not accept it directly.)*
+
+2. In Policy Studio: **File → Import → Import Custom Filter → select `typeset.xml`**.
+
+### 5. Enable the Java Debug Agent (development only)
+
+To enable remote debugging on a gateway instance, create a `jvm.xml` file in the instance configuration subdirectory and adjust the port as needed:
 
 ```xml
 <ConfigurationFragment>
-        <VMArg name="-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9777"/>
+    <VMArg name="-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9777"/>
 </ConfigurationFragment>
 ```
+
+In the Docker playground, port 9777 is already exposed and the agent is pre-configured. Connect via **Debug Remote Java Application** in your IDE pointing to `localhost:9777`.
+
+---
+
+## IDE setup
+
+After running `./gradlew eclipse` (or `gradlew.bat eclipse` on Windows), import the generated projects into Eclipse or open the repository root in Theia. In the Docker playground the workspace is pre-configured at `/home/project/filter-devkit`.
+
+For changes to static JARs, re-run `deployRuntime` and perform a full stop/start of the gateway instance.
+
+For changes to Dynamic Compiler source files (`ext/dynamic/`), trigger a policy deployment from Policy Studio — no gateway restart is needed. See [Dynamic Compiler](DynamicCompiler.md).

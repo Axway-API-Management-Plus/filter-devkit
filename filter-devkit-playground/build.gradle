@@ -1,7 +1,7 @@
 apply plugin: 'java'
 
 java {
-	sourceCompatibility = '8'
+	sourceCompatibility = '11'
 	targetCompatibility = '11'
 }
 

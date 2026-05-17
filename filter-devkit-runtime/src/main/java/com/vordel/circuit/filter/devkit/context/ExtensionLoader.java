@@ -39,16 +39,21 @@ import com.vordel.trace.Trace;
  * @author rdesaintleger@axway.com
  */
 public final class ExtensionLoader implements LoadableModule {
-	private static final Map<String, ExtensionResourceProvider> LOADED_PLUGINS = new HashMap<String, ExtensionResourceProvider>();
-	private static final Map<String, ScriptExtensionFactory> LOADED_SCRIPT_EXTENSIONS = new HashMap<String, ScriptExtensionFactory>();
-	private static final Map<Class<?>, Object> LOADED_INTERFACES = new HashMap<Class<?>, Object>();
+	private final Map<String, ExtensionResourceProvider> loadedPlugins = new HashMap<String, ExtensionResourceProvider>();
+	private final Map<String, ScriptExtensionFactory> loadedScriptExtensions = new HashMap<String, ScriptExtensionFactory>();
+	private final Map<Class<?>, Object> loadedInterfaces = new HashMap<Class<?>, Object>();
 
-	private static final List<ExtensionModule> LOADED_MODULES = new LinkedList<ExtensionModule>();
-	private static final List<Runnable> UNLOAD_CALLBACKS = new LinkedList<Runnable>();
-	private static final Set<String> REGISTERED = new HashSet<String>();
+	private final List<ExtensionModule> loadedModules = new LinkedList<ExtensionModule>();
+	private final List<Runnable> unloadCallbacks = new LinkedList<Runnable>();
+	private final Set<String> registered = new HashSet<String>();
+
+	private final ExtensionScanner instanceScanner = new ExtensionScanner(this);
+
 	private static final Object SYNC = new Object();
+	private static ExtensionScanner activeScanner = null;
+	private static ExtensionLoader instance = null;
 
-	private static boolean loaded = false;
+	private boolean loaded = false;
 
 	/**
 	 * extensions dictionary for selector only access.
@@ -65,27 +70,73 @@ public final class ExtensionLoader implements LoadableModule {
 		Selector.addGlobalNamespace("extensions", EXTENSIONS_NAMESPACE);
 	}
 
+	private static final ExtensionScanner getActiveScanner(boolean required) {
+		synchronized (SYNC) {
+			if (required && (activeScanner == null)) {
+				throw new IllegalStateException("ExtensionScanner is not available");
+			}
+
+			return activeScanner;
+		}
+	}
+
+	private static final ExtensionLoader getActiveInstance(boolean required) {
+		ExtensionScanner scanner = getActiveScanner(required);
+
+		return scanner == null ? null : scanner.getExtensionLoader();
+	}
+
+	private static final ExtensionLoader getLoadedInstance() {
+		synchronized (SYNC) {
+			return instance;
+		}
+	}
+
 	@Override
 	public void configure(ConfigContext ctx, Entity entity) throws EntityStoreException, FatalException {
-		synchronized (SYNC) {
-			reset();
+		ExtensionLoader configured = getLoadedInstance();
 
-			loaded = true;
-
-			Trace.info("scanning services for Extensions");
-
-			REGISTERED.clear();
-
-			/* scan class path for extensions */
-			scanClasses(ctx, Thread.currentThread().getContextClassLoader());
+		if (configured != null) {
+			// detach remaining instance (if any)
+			configured.detach();
 		}
 
-		Trace.info("services scanned");
+		try {
+			synchronized (SYNC) {
+				// set active extension scanner
+				activeScanner = instanceScanner;
+				instance = this;
+			}
+
+			loaded = true;
+			
+			Trace.info("scanning services for Extensions");
+
+			registered.clear();
+
+			/* scan class path for extensions */
+			Thread current = Thread.currentThread();
+			ClassLoader loader = current.getContextClassLoader();
+
+			scanClasses(ctx, loader);
+
+			Trace.info("services scanned");
+		} catch (RuntimeException e) {
+			synchronized (SYNC) {
+				instance = null;
+			}
+
+			loaded = false;
+			Trace.error("got error scanning services", e);
+			
+			throw e;
+		}
+
 	}
 
 	public static final boolean isLoaded() {
 		synchronized (SYNC) {
-			return loaded;
+			return instance != null && instance.loaded;
 		}
 	}
 
@@ -94,71 +145,77 @@ public final class ExtensionLoader implements LoadableModule {
 		/* nothing to load */
 	}
 
-	private static final void checkLoadState() {
-		synchronized (SYNC) {
-			if (!loaded) {
-				throw new IllegalStateException("ExtensionLoader module is not available");
-			}
+	private final void checkLoadState() {
+		// use local 'loaded' boolean, this avoids sync for checking instance
+		if (!loaded) {
+			throw new IllegalStateException("ExtensionLoader module is not yet loaded");
 		}
 	}
 
 	@Override
 	public void unload() {
+		ExtensionLoader configured = getLoadedInstance();
+
+		if (configured != null) {
+			// detach remaining instance (if any)
+			configured.detach();
+		}
+
 		synchronized (SYNC) {
-			reset();
+			activeScanner = null;
+			instance = null;
 		}
 	}
 
-	private void reset() {
-		synchronized (SYNC) {
-			if (loaded) {
-				Iterator<ExtensionModule> modules = new ArrayList<ExtensionModule>(LOADED_MODULES).iterator();
-				Iterator<Runnable> callbacks = new ArrayList<Runnable>(UNLOAD_CALLBACKS).iterator();
+	private void detach() {
+		Iterator<ExtensionModule> modules = new ArrayList<ExtensionModule>(loadedModules).iterator();
+		Iterator<Runnable> callbacks = new ArrayList<Runnable>(unloadCallbacks).iterator();
 
-				while (callbacks.hasNext()) {
-					try {
-						callbacks.next().run();
-					} catch (Exception e) {
-						Trace.error("got error with unload callback", e);
-					}
-
-					callbacks.remove();
+		try {
+			while (callbacks.hasNext()) {
+				try {
+					callbacks.next().run();
+				} catch (Exception e) {
+					Trace.error("got error with unload callback", e);
 				}
 
-				while (modules.hasNext()) {
-					try {
-						ExtensionModule module = modules.next();
-
-						module.detachModule();
-
-						Trace.info(String.format("unloaded '%s'", module.getClass().getName()));
-					} catch (Exception e) {
-						Trace.error("got error calling detach", e);
-					}
-
-					modules.remove();
-				}
-
-				loaded = false;
+				callbacks.remove();
 			}
 
-			LOADED_MODULES.clear();
-			UNLOAD_CALLBACKS.clear();
-			LOADED_PLUGINS.clear();
-			LOADED_INTERFACES.clear();
-			LOADED_SCRIPT_EXTENSIONS.clear();
-			REGISTERED.clear();
+			while (modules.hasNext()) {
+				try {
+					ExtensionModule module = modules.next();
+
+					module.detachModule();
+
+					Trace.info(String.format("unloaded '%s'", module.getClass().getName()));
+				} catch (Exception e) {
+					Trace.error("got error calling detach", e);
+				}
+
+				modules.remove();
+			}
+		} finally {
+			loaded = false;
+
+			loadedModules.clear();
+			unloadCallbacks.clear();
+			loadedPlugins.clear();
+			loadedInterfaces.clear();
+			loadedScriptExtensions.clear();
+			registered.clear();
 		}
 	}
 
 	public static final void scanClasses(ConfigContext ctx, ClassLoader loader) {
-		synchronized (SYNC) {
-			/* scan class path for extensions */
-			List<Class<?>> scanned = ExtensionScanner.scanExtensions(loader, REGISTERED, null);
+		ExtensionScanner scanner = getActiveScanner(true);
+		ExtensionLoader extensions = scanner.getExtensionLoader();
 
-			/* register scanned classes */
-			ExtensionScanner.registerClasses(ctx, scanned);
-		}
+		/* scan class path for extensions */
+		List<Class<?>> scanned = ExtensionScanner.scanExtensions(loader, extensions.registered, null);
+
+		/* register scanned classes */
+		scanner.registerClasses(ctx, scanned);
 	}
 
 	/**
@@ -168,19 +225,19 @@ public final class ExtensionLoader implements LoadableModule {
 	 */
 	public static final void registerUndeployCallback(Runnable callback) {
 		if (callback != null) {
-			synchronized (SYNC) {
-				checkLoadState();
+			ExtensionScanner scanner = getActiveScanner(true);
+			ExtensionLoader extensions = scanner.getExtensionLoader();
+			List<Runnable> callbacks = extensions.unloadCallbacks;
 
-				Iterator<Runnable> iterator = UNLOAD_CALLBACKS.iterator();
-				boolean contained = false;
+			Iterator<Runnable> iterator = callbacks.iterator();
+			boolean contained = false;
 
-				while ((!contained) && iterator.hasNext()) {
-					contained = iterator.next() == callback;
-				}
+			while ((!contained) && iterator.hasNext()) {
+				contained = iterator.next() == callback;
+			}
 
-				if (!contained) {
-					UNLOAD_CALLBACKS.add(0, callback);
-				}
+			if (!contained) {
+				callbacks.add(0, callback);
 			}
 		}
 	}
@@ -191,13 +248,9 @@ public final class ExtensionLoader implements LoadableModule {
 	 * @param name      name of context (exposed to global namespace)
 	 * @param resources context to be registered
 	 */
-	static final void registerExtensionContext(String name, ExtensionResourceProvider resources) {
+	final void registerExtensionContext(String name, ExtensionResourceProvider resources) {
 		if ((name != null) && (resources != null)) {
-			synchronized (SYNC) {
-				checkLoadState();
-
-				LOADED_PLUGINS.put(name, resources);
-			}
+			loadedPlugins.put(name, resources);
 		}
 	}
 
@@ -212,7 +265,7 @@ public final class ExtensionLoader implements LoadableModule {
 	 *               applicable
 	 * @param module instance of the object to be registered.
 	 */
-	static final void registerExtensionInstance(ConfigContext ctx, Object module) {
+	final void registerExtensionInstance(ConfigContext ctx, Object module) {
 		if (module != null) {
 			checkLoadState();
 
@@ -228,14 +281,14 @@ public final class ExtensionLoader implements LoadableModule {
 				if (plugin != null) {
 					for (Class<?> iclazz : plugin.value()) {
 						if (iclazz.isInterface()) {
-							Object pred = LOADED_INTERFACES.get(iclazz);
+							Object pred = loadedInterfaces.get(iclazz);
 
 							if (pred != null) {
 								Trace.error(String.format("Duplicate instance for interface '%s'", iclazz.getName()));
 							} else if (iclazz.isAssignableFrom(mclazz)) {
 								Trace.info(String.format("registering interface instance for '%s'", iclazz.getName()));
 
-								LOADED_INTERFACES.put(iclazz, module);
+								loadedInterfaces.put(iclazz, module);
 							} else {
 								Trace.error(String.format("'%s' is not a valid interface for '%s'", iclazz.getName(), mclazz.getName()));
 							}
@@ -246,7 +299,7 @@ public final class ExtensionLoader implements LoadableModule {
 				}
 
 				if (script != null) {
-					registerScriptExtension(LOADED_SCRIPT_EXTENSIONS, mclazz, (iclazz) -> createScriptExtensionInstanceFactory(module, iclazz), true);
+					registerScriptExtension(loadedScriptExtensions, mclazz, (iclazz) -> createScriptExtensionInstanceFactory(module, iclazz), true);
 				}
 			}
 		}
@@ -259,14 +312,14 @@ public final class ExtensionLoader implements LoadableModule {
 	 * @param <T>         represent the contructor declaring class.
 	 * @param constructor reflected contructor for the extension.
 	 */
-	static final <T extends AbstractScriptExtension> void registerScriptExtension(Constructor<T> constructor) {
+	final <T extends AbstractScriptExtension> void registerScriptExtension(Constructor<T> constructor) {
 		if (constructor != null) {
 			synchronized (SYNC) {
 				checkLoadState();
 
 				Class<T> mclazz = constructor.getDeclaringClass();
 
-				registerScriptExtension(LOADED_SCRIPT_EXTENSIONS, mclazz, (iclazz) -> createScriptExtensionFactory(constructor, iclazz), true);
+				registerScriptExtension(loadedScriptExtensions, mclazz, (iclazz) -> createScriptExtensionFactory(constructor, iclazz), true);
 			}
 		}
 	}
@@ -400,8 +453,8 @@ public final class ExtensionLoader implements LoadableModule {
 	 *               {@link ExtensionModule#attachModule(ConfigContext)}
 	 * @param module module to be registered
 	 */
-	private static final void registerExtensionModule(ConfigContext ctx, ExtensionModule module) {
-		Iterator<ExtensionModule> iterator = LOADED_MODULES.iterator();
+	private final void registerExtensionModule(ConfigContext ctx, ExtensionModule module) {
+		Iterator<ExtensionModule> iterator = loadedModules.iterator();
 		boolean contained = false;
 
 		while ((!contained) && iterator.hasNext()) {
@@ -413,16 +466,17 @@ public final class ExtensionLoader implements LoadableModule {
 
 			module.attachModule(ctx);
 
-			LOADED_MODULES.add(0, module);
+			loadedModules.add(0, module);
 		}
 	}
 
 	public static final ScriptExtensionFactory getScriptExtensionFactory(String name) throws ScriptException {
 		synchronized (SYNC) {
 			ScriptExtensionFactory factory = null;
+			ExtensionLoader extensions = getActiveInstance(false);
 
-			if (isLoaded()) {
-				factory = LOADED_SCRIPT_EXTENSIONS.get(name);
+			if (extensions != null) {
+				factory = extensions.loadedScriptExtensions.get(name);
 			} else {
 				Set<String> allowed = Collections.singleton(name);
 				ClassLoader loader = ScriptExtension.class.getClassLoader();
@@ -484,11 +538,9 @@ public final class ExtensionLoader implements LoadableModule {
 	 * @return the registered context or <code>null</code> if none.
 	 */
 	public static final ExtensionResourceProvider getExtensionContext(String name) {
-		synchronized (SYNC) {
-			checkLoadState();
+		ExtensionLoader extensions = getActiveInstance(true);
 
-			return LOADED_PLUGINS.get(name);
-		}
+		return extensions.loadedPlugins.get(name);
 	}
 
 	/**
@@ -499,12 +551,9 @@ public final class ExtensionLoader implements LoadableModule {
 	 * @return registered instance or <code>null</code> if none
 	 */
 	public static final <T> T getExtensionInstance(Class<T> clazz) {
-		synchronized (SYNC) {
-			checkLoadState();
+		ExtensionLoader extensions = getActiveInstance(true);
+		Object instance = extensions.loadedInterfaces.get(clazz);
 
-			Object instance = LOADED_INTERFACES.get(clazz);
-
-			return instance == null ? null : clazz.cast(instance);
-		}
+		return instance == null ? null : clazz.cast(instance);
 	}
 }

@@ -8,6 +8,8 @@ public class <resourcesSimpleName> extends NLS {
 	public static String FILTER_DISPLAYNAME;
 	public static String FILTER_DESCRIPTION;
 
+<resourcesFields>
+
 	static {
 		// initialize resource bundle
 		NLS.initializeMessages(BUNDLE_NAME, <resourcesSimpleName>.class);

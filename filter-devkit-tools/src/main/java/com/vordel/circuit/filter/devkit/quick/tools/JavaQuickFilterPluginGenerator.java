@@ -234,6 +234,22 @@ public class JavaQuickFilterPluginGenerator extends AbstractProcessor {
 			String template = filter.generateJavaTemplate("filter_resources_template.txt");
 			String qualifiedName = filter.getResourcesQualifiedName();
 
+			/*
+			 * Additional code to avoid 'unused message' NLS Warnings. Public properties
+			 * have to be created otherwise this annoying message appears
+			 */
+			Properties resources = getFilterResources(roundEnv, filter);
+
+			StringBuilder staticNames = new StringBuilder();
+
+			for (String resourceName : resources.stringPropertyNames()) {
+				if (!("FILTER_DISPLAYNAME".equals(resourceName) || "FILTER_DESCRIPTION".equals(resourceName))) {
+					staticNames.append(String.format("\tpublic static String %s;\n", resourceName));
+				}
+			}
+
+			template = template.replace("<resourcesFields>", staticNames.toString());
+
 			writeTemplate(qualifiedName, template);
 		} catch (IOException e) {
 			throw new IllegalStateException("Unable to write output resources template", e);
