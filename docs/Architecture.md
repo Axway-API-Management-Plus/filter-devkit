@@ -160,7 +160,7 @@ The shared interface must not reference any class from the isolated library. The
 
 ## Dynamic Compiler
 
-The Dynamic Compiler is an extension module with the highest load priority. It runs during `attachModule`, before any other extension scanning, using the Eclipse Compiler for Java (ECJ) running in its own isolated child-first class loader.
+The Dynamic Compiler is an extension module with the lowest load priority (`@Priority(Integer.MAX_VALUE)`), so it is configured last — after all static extensions are already loaded. This means dynamic sources can reference classes from any static JAR already on the class path. It uses the Eclipse Compiler for Java (ECJ) running in its own isolated child-first class loader.
 
 No compiled class is available outside registered extensions — the compiler output is only accessible through the normal extension discovery mechanism described above.
 

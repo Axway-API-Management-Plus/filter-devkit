@@ -223,7 +223,7 @@ public class MyExtension implements ExtensionModule {
 
 `attachModule` receives the `ConfigContext`, which provides access to the Entity Store. Use it to read configuration that your extension needs at startup. `detachModule` is always called before a new `attachModule`, so resources from the previous deployment are guaranteed to be released before a redeployment is applied.
 
-Loading order across multiple extension modules is controlled with `@Priority` — lower value means higher priority. The Dynamic Compiler uses `@Priority(Integer.MAX_VALUE)` to ensure it runs before all other extensions.
+Loading order across multiple extension modules is controlled with `@Priority` — lower value means higher priority (configured earlier). The Dynamic Compiler uses `@Priority(Integer.MAX_VALUE)` to ensure it is configured last, after all static extensions are already loaded.
 
 ---
 

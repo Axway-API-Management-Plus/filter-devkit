@@ -6,7 +6,7 @@ The Dynamic Compiler compiles Java source files at gateway deployment time, with
 
 ## How it works
 
-The Dynamic Compiler is itself an FDK extension module (`DynamicCompilerModule`) with the highest load priority. It runs during `attachModule`, before any other extension scanning, using the Eclipse Compiler for Java (ECJ) running in an isolated child-first class loader.
+The Dynamic Compiler is itself an FDK extension module (`DynamicCompilerModule`) with the lowest load priority (`@Priority(Integer.MAX_VALUE)`), so its `attachModule` is called last — after all static extensions are already loaded. This allows dynamic sources to reference classes from any static JAR already on the class path. It uses the Eclipse Compiler for Java (ECJ) running in an isolated child-first class loader.
 
 ```mermaid
 sequenceDiagram
