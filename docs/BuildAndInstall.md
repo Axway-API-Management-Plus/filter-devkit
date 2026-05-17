@@ -23,12 +23,14 @@ On Windows you can either point Gradle at a Linux API Gateway installation extra
 Set the following in `~/.gradle/gradle.properties` on Linux/macOS, or `%USERPROFILE%\.gradle\gradle.properties` on Windows (create the file if it does not exist).
 
 **Linux / macOS:**
+
 ```properties
 apigw_vdistdir=/opt/axway/apigateway
 studio_vdistdir=/opt/axway/policystudio
 ```
 
 **Windows:**
+
 ```properties
 apigw_vdistdir=C:/Axway/apigateway
 studio_vdistdir=C:/Axway/policystudio
@@ -62,11 +64,13 @@ cd filter-devkit
 ### Full build and install
 
 **Linux / macOS:**
+
 ```bash
 ./gradlew clean cleanEclipse eclipse build copyArchives deployRuntime deployPlugin
 ```
 
 **Windows:**
+
 ```bat
 gradlew.bat clean cleanEclipse eclipse build copyArchives deployRuntime deployPlugin
 ```
@@ -74,11 +78,13 @@ gradlew.bat clean cleanEclipse eclipse build copyArchives deployRuntime deployPl
 After `deployPlugin`, restart Policy Studio with `-clean`:
 
 **Linux / macOS:**
+
 ```bash
 /opt/axway/policystudio/policystudio -clean
 ```
 
 **Windows:**
+
 ```bat
 C:\Axway\policystudio\policystudio.exe -clean
 ```
@@ -89,19 +95,7 @@ C:\Axway\policystudio\policystudio.exe -clean
 
 ### 1. Stop and start gateway instances
 
-After `deployRuntime` copies JARs to `ext/lib`, perform a **full stop and start** of each gateway instance. A simple *restart* (which reloads configuration without restarting the JVM) is not sufficient — new JARs are not loaded until the JVM restarts.
-
-**Linux:**
-```bash
-$VDISTDIR/posix/bin/gatewaymanager stop
-$VDISTDIR/posix/bin/gatewaymanager start
-```
-
-**Windows:**
-```bat
-%VDISTDIR%\Win32\bin\gatewaymanager.bat stop
-%VDISTDIR%\Win32\bin\gatewaymanager.bat start
-```
+After `deployRuntime` copies JARs to `ext/lib`, perform a **full stop and start** of each gateway instance using the Admin Node Manager or your usual gateway management tooling. A simple *restart* (which reloads configuration without restarting the JVM) is not sufficient — new JARs are not loaded until the JVM restarts.
 
 ### 2. Activate the base FDK typeset in Policy Studio (optional — enables full feature set)
 
@@ -118,6 +112,7 @@ Quick Filter JARs must be registered as OSGi plugins in Policy Studio before the
 
 1. Copy the Quick Filter JAR to `<PS_INSTALL>/dropins/`.
 2. Open `<PS_INSTALL>/configuration/config.ini` and set:
+
    ```
    eclipse.p2.reconciler=true
    ```
@@ -129,6 +124,7 @@ Quick Filter JARs must be registered as OSGi plugins in Policy Studio before the
 1. Copy the Quick Filter JAR to `<PS_INSTALL>/plugins/`.
 2. Open `<PS_INSTALL>/configuration/org.eclipse.equinox.simpleconfigurator/bundles.info`.
 3. Add a line for the new bundle:
+
    ```
    <Bundle-SymbolicName>,<Bundle-Version>,plugins/<jar-filename>.jar,4,false
    ```
@@ -152,11 +148,13 @@ After the plugin is registered (step 3), import its typeset:
 1. Extract `typeset.xml` from the Quick Filter JAR:
 
    **Linux / macOS:**
+
    ```bash
    unzip /path/to/quick-filter.jar "typeset/*" -d /tmp/typeset-extract/
    ```
 
    **Windows (PowerShell):**
+
    ```powershell
    Expand-Archive -Path C:\path\to\quick-filter.jar -DestinationPath C:\temp\typeset-extract\
    ```
