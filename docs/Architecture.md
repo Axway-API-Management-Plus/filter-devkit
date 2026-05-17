@@ -102,6 +102,21 @@ child-first ClassLoader, or Dynamic Compiler?}
 
 ---
 
+## Metadata layout
+
+The annotation processor generates index files embedded in extension JARs at build time. At startup the gateway reads those files directly — no classpath walk, no bytecode analysis.
+
+| File | Purpose |
+|---|---|
+| `META-INF/vordel/extensions` | List of extension class names to instantiate at startup |
+| `META-INF/vordel/libraries/{className}` | JARs to include in the extension's isolated child-first ClassLoader |
+| `META-INF/vordel/forceLoad/{className}` | Classes that must share the extension's ClassLoader (inner classes, anonymous classes) |
+| `META-INF/vordel/scriptextensions/{className}` | Script extension interfaces implemented by the class |
+
+This layout means extension discovery has zero startup overhead proportional to classpath size — the gateway reads a fixed set of small index files rather than scanning all loaded classes.
+
+---
+
 ## Extension discovery
 
 FDK extensions are discovered at gateway startup via a service-loader-like mechanism driven by the annotation processor. No manual registration is needed.

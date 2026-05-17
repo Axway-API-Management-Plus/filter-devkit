@@ -42,6 +42,16 @@ Set `JAVA_HOME` in your shell or system environment if it does not already point
 
 ---
 
+## Gateway dependency model
+
+Each supported API Gateway release has a corresponding branch in the repository (e.g. `7.7.20260228`). The branch contains a pre-generated, versioned `apigateway.gradle` committed to the repository. A standard build requires only a local Gateway installation — the `GatewayScanner` step is not needed unless you are creating a branch for a new release.
+
+`GatewayScanner` reconstructs a reproducible Gradle dependency model from a Gateway installation: it identifies Maven coordinates for all public dependencies via JAR manifest analysis, resolves them through Maven Aether, and writes a versioned `apigateway.gradle`. A secondary benefit is that public dependencies become proper Maven artefacts — IDEs can attach sources and Javadoc automatically, so extension authors can browse API documentation from their editor.
+
+If no branch exists for your target release, open a GitHub issue to request generation of a suitable `apigateway.gradle`.
+
+---
+
 ## Clone and build
 
 ```bash

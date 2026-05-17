@@ -64,7 +64,7 @@ When an attribute does not exist at any level of the lookup chain, the standard 
 
 Without FDK resources, calling a policy from a script means hardcoding its name as a string. Policy Studio cannot track that reference. If the policy is renamed, the script breaks silently, and exporting the script does not export the policy it calls.
 
-With FDK resources, you declare the association in the filter configuration. Policy Studio sees the reference, tracks renames, and includes the target in fragment exports.
+With FDK resources, you declare the association in the filter configuration. These declared dependencies are called **context links** — they are stored in the Entity Store so that Policy Studio can see the reference, propagate renames, and include the target in fragment exports. Plain string references inside script text are invisible to Policy Studio and receive none of these guarantees.
 
 | Resource type | Backed by | Retrieved with |
 |---|---|---|

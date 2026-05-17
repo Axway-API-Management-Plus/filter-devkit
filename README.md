@@ -69,6 +69,7 @@ Do you want to create a new filter that appears in the Policy Studio palette?
 | [Java Quick Filters](docs/QuickFilters.md) | You are building a new filter with a Policy Studio UI |
 | [Dynamic Compiler](docs/DynamicCompiler.md) | You want faster iteration without gateway restarts |
 | [Build & Install](docs/BuildAndInstall.md) | You are setting up the build from source |
+| [Migration](docs/Migration.md) | You are migrating from a legacy FDK release |
 | [Reference](docs/Reference.md) | You need the full annotation and runtime API |
 
 ---
@@ -86,6 +87,21 @@ The codebase has been tested from version 20220530 (JDK 8) through 20260228 (JDK
 
 ---
 
+## Available plugins
+
+| Plugin | Description | Typeset required |
+|---|---|:---:|
+| **Extended Eval Selector** | Selector evaluation with native `CircuitAbortException` propagation | Yes (own typeset) |
+| **OAuth 2.0 extended Token service** | Token exchange, `assertion` and `client_assertion` grant support | Yes (own typeset) |
+| **OAuth 2.0 extended Authorize service** | Built-in PKCE support | Yes (own typeset) |
+| **HTTP Signature** | Generation and validation per draft-cavage-http-signatures-12 | Yes (own typeset) |
+| **JAXRS support** | JAX-RS web service behaviour in Groovy scripts | No (extension loading) |
+| **Circuit Loop** | Controlled iteration within policy execution | Yes (own typeset) |
+| **Script Extensions** | Built-in script extension module | No (extension loading) |
+| **Certificate Manager** | Certificate manipulation and JWKS export *(work in progress)* | No (extension loading) |
+
+---
+
 ## Known limitations and TODO
 
 | Area | Limitation | Status |
@@ -94,3 +110,4 @@ The codebase has been tested from version 20220530 (JDK 8) through 20260228 (JDK
 | **Docker playground** | No gateway configuration is provided out of the box. The user must create an XML configuration and import typesets manually before policies can run. Automation of this step is under investigation. | In progress |
 | **Entity Store** | YAML Entity Store is not supported. The typeset import mechanism requires the XML Entity Store. | Not planned |
 | **Quick Filter UI** | No sub-dialogs in generated filter UIs. Complex multi-panel configurations requiring sub-dialogs (such as the Resources tab) cannot be expressed with the current `xmlui` code generator. | Not planned |
+| **Certificate Manager plugin** | Certificate manipulation and JWKS export for OpenID/OAuth services. | In progress |

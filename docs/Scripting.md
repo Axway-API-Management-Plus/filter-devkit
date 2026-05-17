@@ -135,6 +135,8 @@ String greet(Dictionary dict,
 
 The **Advanced Script Filter** is a dedicated filter type that appears in the Policy Studio palette. It requires the FDK typeset — without it, the filter type does not exist. All JSR-223 languages are supported.
 
+The filter is backward compatible with the stock gateway scripting filter: existing scripts run unchanged. FDK capabilities are unlocked progressively through explicit declarations in the `attach` hook.
+
 ### Lifecycle
 
 See [Concepts — Script lifecycle](Concepts.md#script-lifecycle). The three functions `attach`, `invoke`, and `detach` map directly to the lifecycle phases.
