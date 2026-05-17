@@ -21,9 +21,32 @@ configurations {
 	studio_dist.extendsFrom(studio_plugins)
 }
 
+task updateConfigIni {
+	def configFile = file("${studio_vdistdir}/configuration/config.ini")
+	if (!configFile.exists()) {
+		throw new GradleException("config.ini not found at ${configFile}")
+	}
+
+	def originalText = configFile.text
+	def updatedText = originalText.replace(
+		'org.eclipse.update.reconcile=false',
+		'org.eclipse.update.reconcile=true'
+	)
+
+	// Only write if the file was modified
+	if (updatedText != originalText) {
+		configFile.text = updatedText
+	} else if (!originalText.contains('org.eclipse.update.reconcile=true')) {
+		// Append the key if it doesn't exist
+		configFile.append("\norg.eclipse.update.reconcile=true\n")
+	}
+}
+
 task deployPlugin(type: Copy) {
+	dependsOn updateConfigIni
 	from jar, configurations.studio_deploy
-    into file("${studio_vdistdir}/plugins")
+
+	into file("${studio_vdistdir}/dropins")
 }
 
 deployPlugin.enabled = false

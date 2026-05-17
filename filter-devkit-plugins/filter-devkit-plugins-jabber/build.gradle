@@ -10,8 +10,9 @@ java {
 apply from: rootProject.file('apigateway.gradle')
 apply from: rootProject.file('policystudio.gradle')
 
-deployRuntime.enabled = true
-deployPlugin.enabled = true
+// Code actually outdated just here to compare with the existing docs
+deployRuntime.enabled = false
+deployPlugin.enabled = false
 
 configurations {
 	compileOnly.extendsFrom(apigw_central, studio_plugins)
