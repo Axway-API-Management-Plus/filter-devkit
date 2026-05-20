@@ -112,7 +112,7 @@ After `deployRuntime` copies JARs to `ext/lib`, perform a **full stop and start*
 Open a configuration in Policy Studio, then:  
 **File → Import → Import Custom Filter → select `filter-devkit-runtime/src/main/typesets/apigwsdkset.xml`**
 
-> This step is not available with the YAML Entity Store. Without it, the Advanced Script Filter, Extension Interface, and child-first ClassLoader are not available. See [Architecture — Installation modes](Architecture.md#installation-modes) for what works without the typeset.
+> **Note:** The FDK runtime contains no code specific to either Entity Store variant (one log directive in `AbstractScriptProcessor` aside), so YAML should work at runtime — it has simply not been tested. Typeset generation targets the XML Entity Store tooling; YAML tooling support is not currently planned.
 
 ### 3. Register Quick Filter plugins in Policy Studio
 

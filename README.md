@@ -83,7 +83,7 @@ Do you want to create a new filter that appears in the Policy Studio palette?
 
 The codebase has been tested from version 20220530 (JDK 8) through 20260228 (JDK 11). Always use artifacts built for the API Gateway version you are targeting — bytecode differences between releases can trigger `MethodNotFoundException`. If no matching branch exists, open an issue or submit a pull request.
 
-> **Note:** The YAML Entity Store is not currently supported.
+> **Note:** The FDK runtime contains no code specific to either Entity Store variant (one log directive in `AbstractScriptProcessor` aside), so YAML should work at runtime — it has simply not been tested. Typeset generation targets the XML Entity Store tooling; YAML tooling support is not currently planned.
 
 ---
 
@@ -106,8 +106,7 @@ The codebase has been tested from version 20220530 (JDK 8) through 20260228 (JDK
 
 | Area | Limitation | Status |
 |---|---|---|
-| **Advanced Script Filter** | KPS table and cache binding are not yet available in the Resources tab UI. KPS and cache resources can be bound programmatically via Script Context (`attachKPSResourceByAlias`, `attachCacheResourceByName`). | Planned |
 | **Docker playground** | No gateway configuration is provided out of the box. The user must create an XML configuration and import typesets manually before policies can run. Automation of this step is under investigation. | In progress |
-| **Entity Store** | YAML Entity Store is not supported. The typeset import mechanism requires the XML Entity Store. | Not planned |
+| **Entity Store** | The FDK runtime contains no code specific to either Entity Store variant (one log directive in `AbstractScriptProcessor` aside), so YAML should work at runtime — it has simply not been tested. Typeset generation targets the XML Entity Store tooling; YAML tooling support is not currently planned. | Not planned |
 | **Quick Filter UI** | No sub-dialogs in generated filter UIs. Complex multi-panel configurations requiring sub-dialogs (such as the Resources tab) cannot be expressed with the current `xmlui` code generator. | Not planned |
 | **Certificate Manager plugin** | Certificate manipulation and JWKS export for OpenID/OAuth services. | In progress |

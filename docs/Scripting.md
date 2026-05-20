@@ -261,7 +261,24 @@ def invoke(msg) {
 }
 ```
 
-The exported `ContextResourceProvider` does not expose `getKPSResource()` or `getCacheResource()` shorthand methods — those are only valid as top-level functions in a live script context. Access KPS and caches through the regular selector syntax on the exported attribute.
+The exported `ContextResourceProvider` does not expose `getKPSResource()` or `getCacheResource()` shorthand methods — those are only valid as top-level functions in a live script context.
+
+When the exported context is accessed from a JUEL selector expression, resources that implement `ViewableResource` are automatically represented with JUEL-adapted syntax. KPS and cache resources both implement this interface:
+
+```
+// KPS resource bound as "users" — mirrors the native kps.<alias> API
+// These two expressions are equivalent:
+${kps.usersAlias.username}
+${exported.users.username}
+
+// Cache resource bound as "sessions" — exposed as a JUEL Map
+${exported.sessions['sessionId']}
+${exported.sessions.sessionId}
+```
+
+The exported form carries an Entity Store dependency link — the KPS table is tracked by Policy Studio and survives alias changes. The native `kps.<alias>` form does not provide this guarantee.
+
+See [Concepts — ViewableResource](Concepts.md#viewableresource) for the full explanation.
 
 ---
 

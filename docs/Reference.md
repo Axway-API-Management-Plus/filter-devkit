@@ -4,6 +4,34 @@ Complete reference for all FDK annotations, script runtime functions, and the `S
 
 ---
 
+## ViewableResource
+
+`ViewableResource` is an optional interface that resource implementations can implement to control how they are represented in a JUEL evaluation context.
+
+| Access mode | Without ViewableResource | With ViewableResource |
+|---|---|---|
+| From script (`getKPSResource`, `getCacheResource`) | Resource object with full Java API | Same — ViewableResource does not affect script-side access |
+| From JUEL selector on exported context | Raw resource object | Viewable object with JUEL-adapted syntax |
+
+### Implementations
+
+**KPS resources** — the Viewable mirrors the native `kps.<alias>` selector API. Field access, entry lookup, and iteration use the same syntax as the built-in KPS selectors. The exported form additionally carries an Entity Store dependency link.
+
+**Cache resources** — the Viewable exposes the cache as a standard JUEL Map. Values are retrieved with map syntax (`cache['key']` or `cache.key`).
+
+### Selector syntax comparison
+
+```
+// KPS — native selector vs exported resource (equivalent result, different tracking)
+${kps.myAlias.field}
+${exported.myKPS.field}
+
+// Cache — exported resource as Map
+${exported.myCache['key']}
+```
+
+---
+
 ## Annotations
 
 ### Extension Context annotations

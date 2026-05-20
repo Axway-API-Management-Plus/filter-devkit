@@ -13,9 +13,7 @@ import com.vordel.circuit.cache.CacheContainer;
 import com.vordel.config.ConfigContext;
 import com.vordel.es.ESPK;
 import com.vordel.es.Entity;
-import com.vordel.es.EntityStore;
 import com.vordel.es.EntityStoreException;
-import com.vordel.es.xes.PortableESPK;
 import com.vordel.mime.Body;
 import com.vordel.trace.Trace;
 
@@ -39,10 +37,9 @@ public class EHCacheResource extends CacheResource {
 	}
 
 	private static String getCacheName(ConfigContext ctx, ESPK cacheToUse) {
-		EntityStore es = ctx.getStore();
-		PortableESPK ppk = PortableESPK.toPortableKey(es, cacheToUse);
+		Entity cacheEntity = ctx.getEntity(cacheToUse);
 
-		return ppk.getFieldValueOfReferencedEntity("name");
+		return cacheEntity.getStringValue("name");
 	}
 
 	public static Cache getCache(String cacheName) throws CircuitAbortException {

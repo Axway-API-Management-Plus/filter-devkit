@@ -74,6 +74,21 @@ With FDK resources, you declare the association in the filter configuration. The
 | `CacheResource` | A cache | `getCacheResource(name)` |
 | `FunctionResource` | A Java or Groovy method | `getFunctionResource(name)` |
 
+### ViewableResource
+
+Some resource types implement the `ViewableResource` interface, which controls how the resource is represented when accessed from a JUEL selector expression — as opposed to from script code.
+
+The distinction matters because the two access modes have different needs:
+
+- **From script code** — `getKPSResource(name)` or `getCacheResource(name)` returns the resource object with its full Java API.
+- **From a JUEL expression** — if the resource implements `ViewableResource`, the JUEL evaluation context receives the *Viewable* object instead of the raw resource. The Viewable provides a JUEL-adapted syntax suited to selector expressions.
+
+**KPS resources** implement `ViewableResource` to mirror the native `kps.<alias>` selector API. Accessing `${kps.myAlias.fieldName}` and `${exported.myKPS.fieldName}` produce the same result — the difference is that the exported form carries an Entity Store dependency link, so the KPS table is tracked by Policy Studio and survives alias changes.
+
+**Cache resources** implement `ViewableResource` to expose the cache as a standard JUEL Map. Values are retrieved with map syntax: `${exported.myCache['key']}` or equivalently `${exported.myCache.key}`.
+
+This means exported script resources and global extension resources are usable in selector expressions with natural syntax — no intermediary script or filter needed to bridge between the Java API and JUEL.
+
 ---
 
 ## The method export triad
