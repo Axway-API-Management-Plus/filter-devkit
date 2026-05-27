@@ -1,7 +1,5 @@
 package com.vordel.circuit.script.context.resources;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,12 +11,15 @@ import com.vordel.kps.Store;
 import com.vordel.kps.Transaction;
 import com.vordel.kps.impl.KPS;
 import com.vordel.kps.query.KeyQuery;
+import com.vordel.persistence.kps.KPSInterface;
 
 public abstract class KPSResource implements ContextResource, ViewableResource {
 	public static Model getModel() {
-		return (Model) KPS.getInstance();
-	}
+		KPSInterface instance = KPS.getInstance();
 
+		return instance.getModel();
+	}
+	
 	public abstract Store getStore();
 
 	public String getPrimaryKey() {

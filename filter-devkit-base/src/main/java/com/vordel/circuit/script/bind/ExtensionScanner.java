@@ -218,9 +218,9 @@ public class ExtensionScanner {
 				InputStream is = jar.getInputStream(item);
 
 				try {
-					listener.process(is);
+					listener.process(is, name);
 				} catch(RuntimeException e) {
-					Trace.debug(String.format("skipping class '%s'", name));
+					Trace.error(String.format("skipping class '%s'", name), e);
 				} finally {
 					is.close();
 				}

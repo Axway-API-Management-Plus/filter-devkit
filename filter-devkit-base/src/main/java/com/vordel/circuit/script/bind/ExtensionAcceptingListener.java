@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.vordel.trace.Trace;
+
 /*
  * XXX using repackaged is BAD, really bad... but it allows to support Java 8 instead of 7 using asm 4.0
  * maybe we should repackage ourselves the last asm release.
@@ -59,10 +61,18 @@ class ExtensionAcceptingListener {
 		}
 	}
 
-	public void process(final InputStream in) throws IOException {
-		ClassReader reader = new ClassReader(in);
+	public void process(final InputStream in, final String name) throws IOException {
+		ClassReader reader = null;
+		
+		try {
+			reader = new ClassReader(in);
+		} catch(RuntimeException e) {
+			Trace.debug(String.format("skipping class '%s' (can't be read by runtime)", name));
+		}
 
-		reader.accept(visitor, 0);
+		if (reader != null) {
+			reader.accept(visitor, 0);
+		}
 	}
 
 	public void processInheritance() {
@@ -108,7 +118,7 @@ class ExtensionAcceptingListener {
 		private boolean hasSuperClass;
 
 		public AnnotatedClassVisitor() {
-			super(Opcodes.ASM5);
+			super(Opcodes.ASM7);
 		}
 
 		@Override
